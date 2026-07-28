@@ -6,6 +6,7 @@ import '../../data/models/app_user.dart';
 import '../../features/auth/sign_in_screen.dart';
 import '../../features/leaderboard/leaderboard_screen.dart';
 import '../../features/learn/learn_screen.dart';
+import '../../features/learn/lesson_player_screen.dart';
 import '../../features/onboarding/disclaimer_screen.dart';
 import '../../features/practice/practice_screen.dart';
 import '../../features/profile/profile_screen.dart';
@@ -22,6 +23,12 @@ abstract final class Routes {
   static const String practice = '/practice';
   static const String leaderboard = '/ranks';
   static const String profile = '/profile';
+
+  /// The card/reel player, pushed over the tab shell so a lesson gets the
+  /// whole screen.
+  static const String lesson = '/lesson/:lessonId';
+
+  static String lessonPath(String lessonId) => '/lesson/$lessonId';
 }
 
 final GlobalKey<NavigatorState> _rootKey = GlobalKey<NavigatorState>(
@@ -81,6 +88,14 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
       GoRoute(
         path: Routes.signIn,
         builder: (_, _) => const SignInScreen(),
+      ),
+      GoRoute(
+        path: Routes.lesson,
+        parentNavigatorKey: _rootKey,
+        builder: (BuildContext context, GoRouterState state) =>
+            LessonPlayerScreen(
+              lessonId: state.pathParameters['lessonId'] ?? '',
+            ),
       ),
       StatefulShellRoute.indexedStack(
         builder:

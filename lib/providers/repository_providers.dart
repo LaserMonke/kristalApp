@@ -1,10 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../data/local/asset_lesson_repo.dart';
 import '../data/local/local_auth_repo.dart';
 import '../data/local/local_profile_repo.dart';
 import '../data/local/local_progress_repo.dart';
 import '../data/repositories/auth_repo.dart';
+import '../data/repositories/lesson_repo.dart';
 import '../data/repositories/profile_repo.dart';
 import '../data/repositories/progress_repo.dart';
 
@@ -44,4 +46,10 @@ final Provider<ProfileRepo> profileRepoProvider = Provider<ProfileRepo>(
 
 final Provider<ProgressRepo> progressRepoProvider = Provider<ProgressRepo>(
   (Ref ref) => LocalProgressRepo(ref.watch(sharedPreferencesProvider)),
+);
+
+/// Lesson content. Bundled as an asset for now; a Supabase-backed
+/// implementation would let content ship without an app-store release.
+final Provider<LessonRepo> lessonRepoProvider = Provider<LessonRepo>(
+  (Ref ref) => AssetLessonRepo(),
 );

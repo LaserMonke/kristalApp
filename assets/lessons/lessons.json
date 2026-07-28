@@ -1,0 +1,286 @@
+{
+  "version": 1,
+  "note": "Lesson content is data. Adding a lesson means adding an entry here, not changing engine code. All wording is original; concepts follow standard references (Hull) but no text is reproduced. 'reviewed_by' must be filled in by someone with real derivatives knowledge before release — null means not yet reviewed, and the app says so.",
+  "lessons": [
+    {
+      "id": "what-is-an-option",
+      "order": 1,
+      "title": "What is an option?",
+      "summary": "Calls, puts, and why a right is not the same as an obligation.",
+      "estimated_minutes": 4,
+      "reviewed_by": null,
+      "reviewed_on": null,
+      "cards": [
+        {
+          "type": "title",
+          "kicker": "Lesson 1",
+          "title": "What is an option?",
+          "subtitle": "A contract where one side buys a choice, and the other side takes on an obligation."
+        },
+        {
+          "type": "text",
+          "heading": "The core idea",
+          "body": "An option is an agreement about a possible future trade. It fixes the price today — the strike — and gives the buyer until a set date to decide whether to go ahead. The seller does not get to decide. If the buyer exercises, the seller must deliver.",
+          "bullets": [
+            "The buyer pays for the choice. That payment is the premium.",
+            "The seller keeps the premium whatever happens, and carries the obligation."
+          ]
+        },
+        {
+          "type": "term",
+          "term": "Call option",
+          "definition": "The right to buy the underlying at the strike price.",
+          "example": "A call struck at $100 lets you buy at $100 even if the shares are trading at $130."
+        },
+        {
+          "type": "term",
+          "term": "Put option",
+          "definition": "The right to sell the underlying at the strike price.",
+          "example": "A put struck at $100 lets you sell at $100 even if the shares have fallen to $70."
+        },
+        {
+          "type": "text",
+          "heading": "Right versus obligation",
+          "body": "This asymmetry is the whole product. A buyer can always walk away, and loses no more than the premium. A seller has no such exit — they were paid up front precisely to give up the choice.",
+          "bullets": [
+            "Long means you bought it and hold the right.",
+            "Short means you sold it and hold the obligation.",
+            "Exercising is using the right. Assignment is being on the receiving end of someone else's exercise."
+          ]
+        },
+        {
+          "type": "text",
+          "heading": "Four positions, not two",
+          "body": "Every option can be bought or sold, so there are four basic positions. Which one you hold decides what you want the underlying to do — and how badly it can go.",
+          "bullets": [
+            "Long call — gains if the underlying rises well above the strike.",
+            "Long put — gains if the underlying falls well below the strike.",
+            "Short call — you were paid a premium, and want the underlying to stay below the strike.",
+            "Short put — you were paid a premium, and want the underlying to stay above the strike."
+          ]
+        },
+        {
+          "type": "text",
+          "heading": "What defines a contract",
+          "body": "Two options on the same company can behave completely differently. These are the fields that make them different.",
+          "bullets": [
+            "Underlying — the asset the contract refers to.",
+            "Strike — the fixed price written into the agreement.",
+            "Expiry — the date the right runs out.",
+            "Style — European options are exercisable only at expiry; American ones any time up to it.",
+            "Premium — the market price of the contract itself.",
+            "Contract size — one listed contract usually covers 100 shares, so a quoted premium is per share."
+          ]
+        },
+        {
+          "type": "warning",
+          "heading": "An option has a deadline",
+          "body": "It is a wasting asset. Being right too late produces the same result as being wrong.",
+          "points": [
+            "If the underlying never moves usefully past the strike, a long option expires worthless and 100% of the premium is gone.",
+            "That is an ordinary outcome, not a rare failure — plenty of options end their life at zero.",
+            "Selling inverts the shape: the premium arrives up front, but the loss is not capped by the amount received."
+          ]
+        },
+        {
+          "type": "summary",
+          "heading": "What to remember",
+          "takeaways": [
+            "An option gives the buyer a choice and the seller an obligation, at a price fixed today.",
+            "A call is the right to buy. A put is the right to sell.",
+            "A buyer's worst case is losing the whole premium. A seller's worst case is larger."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "payoff-at-expiry",
+      "order": 2,
+      "title": "Payoff at expiry",
+      "summary": "Reading a payoff diagram, and where break-even actually sits.",
+      "estimated_minutes": 5,
+      "reviewed_by": null,
+      "reviewed_on": null,
+      "cards": [
+        {
+          "type": "title",
+          "kicker": "Lesson 2",
+          "title": "Payoff at expiry",
+          "subtitle": "At the deadline there is no time left, so an option is worth exactly what it is worth right then."
+        },
+        {
+          "type": "text",
+          "heading": "Intrinsic value is all that remains",
+          "body": "Before expiry an option carries extra value because the underlying might still move. At expiry that possibility is gone. What is left is intrinsic value: the amount by which exercising beats the market, or nothing at all.",
+          "bullets": [
+            "Call at expiry: underlying price minus strike, or zero — whichever is larger.",
+            "Put at expiry: strike minus underlying price, or zero.",
+            "Never negative. Nobody is forced to use a right."
+          ]
+        },
+        {
+          "type": "payoff",
+          "heading": "Long call — strike $100, premium $5",
+          "caption": "Below $100 the call is not worth exercising and the loss stays flat at the $5 premium. Above $100 it tracks the underlying dollar for dollar.",
+          "spot_min": 60,
+          "spot_max": 140,
+          "legs": [
+            { "kind": "call", "side": "long", "strike": 100, "premium": 5 }
+          ]
+        },
+        {
+          "type": "text",
+          "heading": "Reading the diagram",
+          "body": "The horizontal axis is where the underlying finishes at expiry. The vertical axis is profit or loss on the position — the payoff, net of what you paid.",
+          "bullets": [
+            "The flat section is the region where you simply don't exercise.",
+            "The bend sits exactly at the strike.",
+            "Break-even is strike plus premium: $105 here. Finishing at $102 still loses money, even though the call is worth exercising."
+          ]
+        },
+        {
+          "type": "payoff",
+          "heading": "Long put — strike $100, premium $6",
+          "caption": "The mirror image. Break-even is $94, the strike minus the premium. The gain is large but bounded, because the underlying cannot fall below zero.",
+          "spot_min": 60,
+          "spot_max": 140,
+          "legs": [
+            { "kind": "put", "side": "long", "strike": 100, "premium": 6 }
+          ]
+        },
+        {
+          "type": "text",
+          "heading": "Payoff, or profit?",
+          "body": "The two words get used loosely. Payoff usually means the value of the contract at expiry, before the premium. Profit subtracts what you paid, or adds what you received. Every diagram in this app plots profit, because that is the number that decides whether the position worked."
+        },
+        {
+          "type": "payoff",
+          "heading": "Short call — strike $100, premium $5",
+          "caption": "The long call flipped. The most you can make is the $5 premium. The line keeps falling to the right; this chart stops at $160 only because an axis has to end somewhere.",
+          "spot_min": 60,
+          "spot_max": 160,
+          "legs": [
+            { "kind": "call", "side": "short", "strike": 100, "premium": 5 }
+          ]
+        },
+        {
+          "type": "warning",
+          "heading": "The line does not stop at the edge of the chart",
+          "body": "A payoff diagram is cropped. For a short call, losses keep growing as the underlying rises, and there is no price at which they level off.",
+          "points": [
+            "An uncovered short call has no fixed maximum loss.",
+            "A short put's loss is bounded only by the underlying reaching zero, which can still be many times the premium received.",
+            "Losing positions can require more collateral before expiry, so a position may become unsustainable well before the deadline."
+          ]
+        },
+        {
+          "type": "summary",
+          "heading": "What to remember",
+          "takeaways": [
+            "At expiry an option is worth its intrinsic value and nothing more.",
+            "Break-even is the strike adjusted by the premium, not the strike itself.",
+            "The shape tells you the risk: flat lines are capped, sloping lines are not."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "why-use-options",
+      "order": 3,
+      "title": "Why use options — and what can go wrong",
+      "summary": "Three real reasons people use options, and the honest downside of each.",
+      "estimated_minutes": 6,
+      "reviewed_by": null,
+      "reviewed_on": null,
+      "cards": [
+        {
+          "type": "title",
+          "kicker": "Lesson 3",
+          "title": "Why use options",
+          "subtitle": "Three honest reasons — each with a cost attached."
+        },
+        {
+          "type": "text",
+          "heading": "Reason 1 — moving a risk you don't want",
+          "body": "An investor holding shares can buy a put and set a floor under the position. The loss below the strike stops being theirs and becomes the problem of whoever sold the put.",
+          "bullets": [
+            "The cost is the premium, paid whether or not the protection is ever needed.",
+            "The trade-off is the same as insurance: a known, certain cost against an unknown, uncertain one."
+          ]
+        },
+        {
+          "type": "payoff",
+          "heading": "Protective put — shares at $100, put struck at $95 for $4",
+          "caption": "Below $95 the line flattens: the loss stops at $9 per share. The premium shifts everything down by $4, so the upside is $4 worse than simply holding the shares.",
+          "spot_min": 60,
+          "spot_max": 140,
+          "legs": [
+            { "kind": "underlying", "side": "long", "premium": 100 },
+            { "kind": "put", "side": "long", "strike": 95, "premium": 4 }
+          ]
+        },
+        {
+          "type": "text",
+          "heading": "Reason 2 — a known worst case",
+          "body": "Buying an option costs a fixed amount, and that amount is the entire downside. Some people prefer a small, certain, capped loss to a large, uncertain one — even though the capped loss occurs far more often.",
+          "bullets": [
+            "The premium buys exposure to a move without borrowing money.",
+            "The trade-off is time: the move has to happen before expiry, not eventually."
+          ]
+        },
+        {
+          "type": "text",
+          "heading": "Reason 3 — being paid to take an obligation",
+          "body": "Sellers receive the premium immediately. Someone has to be on the other side of every option, and that side is compensated for accepting an outcome they do not control.",
+          "bullets": [
+            "The income is real and arrives up front.",
+            "So does the obligation, and it is open-ended in a way the income is not."
+          ]
+        },
+        {
+          "type": "warning",
+          "heading": "For a buyer, zero is a common outcome",
+          "body": "Options are one of the few instruments where a total loss is unremarkable. If the underlying doesn't move far enough in the right direction before expiry, the contract simply ends at nothing.",
+          "points": [
+            "Being directionally right but early still ends in a 100% loss of the premium.",
+            "Repeated small losses add up fast, because each one is complete.",
+            "A cheaper option is not a safer one. It is cheap because the market judges a payout less likely."
+          ]
+        },
+        {
+          "type": "warning",
+          "heading": "Selling is where the large losses live",
+          "body": "A seller's profit is capped at the premium received. The loss is not capped in the same way.",
+          "points": [
+            "An uncovered short call has no fixed maximum loss.",
+            "A short put can lose far more than the premium if the underlying falls sharply.",
+            "A broker can demand more collateral as the position moves against you, forcing it closed at the worst moment.",
+            "Nothing in this app is a suggestion to sell options."
+          ]
+        },
+        {
+          "type": "text",
+          "heading": "What a payoff diagram leaves out",
+          "body": "Every chart here assumes a frictionless world. Real trading adds costs and complications, and they move break-even against you.",
+          "bullets": [
+            "The bid/ask spread — you buy at the higher price and sell at the lower one.",
+            "Commissions, exchange fees and taxes.",
+            "Dividends, and for American-style options, early exercise or assignment.",
+            "Liquidity — a thinly traded contract can be hard to leave at a fair price.",
+            "Value before expiry, which depends on volatility as much as direction."
+          ]
+        },
+        {
+          "type": "summary",
+          "heading": "What to remember",
+          "takeaways": [
+            "Options move risk between parties. The premium is the price of that transfer.",
+            "A buyer's worst case is a total loss of the premium, and it happens often.",
+            "A seller's worst case is larger than their best case, sometimes without a fixed limit.",
+            "Diagrams are idealised. Real markets add costs the chart does not show."
+          ]
+        }
+      ]
+    }
+  ]
+}
