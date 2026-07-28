@@ -128,7 +128,11 @@ class _MultipleChoiceViewState extends State<_MultipleChoiceView> {
   int? _selected;
 
   void _choose(int index) {
-    if (widget.verdict != null) return; // Locked once answered.
+    // Both guards are needed. The parent's verdict only arrives on the next
+    // rebuild, so two taps in the same frame would otherwise record the first
+    // answer while the panel explained the second.
+    if (_selected != null || widget.verdict != null) return;
+
     setState(() => _selected = index);
     widget.onAnswer(correct: widget.question.isCorrectChoice(index));
   }
@@ -304,6 +308,10 @@ class _NumericViewState extends State<_NumericView> {
   final TextEditingController _controller = TextEditingController();
   bool _hintShown = false;
 
+  /// Set the moment an answer is sent up, before the parent's verdict comes
+  /// back down — otherwise a fast double-tap submits the same question twice.
+  bool _submitted = false;
+
   @override
   void dispose() {
     _controller.dispose();
@@ -315,7 +323,9 @@ class _NumericViewState extends State<_NumericView> {
   bool get _hasNumber => parseNumericAnswer(_controller.text) != null;
 
   void _submit() {
-    if (widget.verdict != null || !_hasNumber) return;
+    if (_submitted || widget.verdict != null || !_hasNumber) return;
+    _submitted = true;
+
     FocusScope.of(context).unfocus();
     widget.onAnswer(correct: widget.question.acceptsInput(_controller.text));
   }

@@ -42,8 +42,6 @@ class LessonProgress {
   final DateTime? lastOpenedAt;
   final DateTime? completedAt;
 
-  bool get isUnlockedNext => quizCompleted;
-
   double get score => totalQuestions == 0 ? 0 : correctAnswers / totalQuestions;
 
   LessonProgress copyWith({

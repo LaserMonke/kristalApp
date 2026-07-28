@@ -445,7 +445,7 @@
           "tolerance": 0.01,
           "unit_prefix": "$",
           "hint": "The shares fall all the way, but the put lets you sell at $95. Do not forget what the put itself cost.",
-          "explanation": "The shares lose $70, and the put is worth $95 - $30 = $65, so the position is $5 down before costs. Subtracting the $4 premium gives a $9 loss per share — the same as it would be at $60, or at $1.",
+          "explanation": "The shares lose $70, and the put is worth $95 - $30 = $65, so the position is $5 down before the premium is counted. Subtracting the $4 premium gives a $9 loss per share — the same as it would be at $60, or at $1.",
           "teaching_note": "That $9 is the floor. Below the strike the loss stops moving, which is exactly what the premium bought."
         },
         {

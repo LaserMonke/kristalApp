@@ -33,9 +33,9 @@ class QuizResultsView extends StatelessWidget {
   final VoidCallback onDone;
 
   /// Below this, the material has probably not landed yet.
-  static const double _reviewThreshold = 0.6;
+  static const double reviewThreshold = 0.6;
 
-  bool get _shouldReview => session.score < _reviewThreshold;
+  bool get _shouldReview => session.score < reviewThreshold;
 
   String get _headline {
     if (session.correct == session.total) return 'All correct';
@@ -142,7 +142,7 @@ class _ScoreDial extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    final Color tone = session.score >= 0.6
+    final Color tone = session.score >= QuizResultsView.reviewThreshold
         ? theme.pnl.correct
         : theme.colorScheme.primary;
 

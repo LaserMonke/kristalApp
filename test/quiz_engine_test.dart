@@ -394,6 +394,61 @@ void main() {
       expect(find.text('Correct'), findsNothing);
     });
 
+    testWidgets('two taps in one frame do not disagree with the score', (
+      WidgetTester tester,
+    ) async {
+      final _MemoryProgressRepo repo = await _pumpQuiz(tester);
+
+      // Both taps land before the parent can rebuild with a verdict. Without a
+      // guard the panel would explain the second answer while the first was
+      // the one recorded.
+      await tester.tap(find.text('The seller'));
+      await tester.tap(find.text('The buyer'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Not quite'), findsOneWidget);
+      expect(find.text('Correct'), findsNothing);
+
+      await tester.tap(find.text('Next question'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), '105');
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'Check answer'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'See results'));
+      await tester.pumpAndSettle();
+
+      // The displayed verdict and the saved score tell the same story.
+      expect(find.text('1/2'), findsOneWidget);
+      expect(repo.store['one']!.correctAnswers, 1);
+    });
+
+    testWidgets('a double-tapped finish is recorded as one attempt', (
+      WidgetTester tester,
+    ) async {
+      final _MemoryProgressRepo repo = await _pumpQuiz(tester);
+
+      await tester.tap(find.text('The buyer'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Next question'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), '105');
+      await tester.pumpAndSettle();
+
+      final Finder check = find.widgetWithText(FilledButton, 'Check answer');
+      await tester.tap(check);
+      await tester.tap(check, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      final Finder finish = find.widgetWithText(FilledButton, 'See results');
+      await tester.tap(finish);
+      await tester.tap(finish, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(repo.store['one']!.quizAttempts, 1);
+      expect(repo.store['one']!.correctAnswers, 2);
+    });
+
     testWidgets('a short answer is graded and the working is shown', (
       WidgetTester tester,
     ) async {

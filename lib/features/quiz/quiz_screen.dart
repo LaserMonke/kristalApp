@@ -31,6 +31,11 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
   bool _finished = false;
   int _attempts = 1;
 
+  /// True while the result is being written. Guards against a double-tap on
+  /// "See results" recording the same run twice, which would count two
+  /// attempts and make the results screen misreport how many goes it took.
+  bool _saving = false;
+
   /// Bumped on a retake so every question widget is rebuilt from scratch —
   /// otherwise a text field would still hold the previous run's answer.
   int _run = 0;
@@ -46,6 +51,7 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
   }
 
   Future<void> _advance(Lesson lesson) async {
+    if (_saving) return;
     if (_index < _session!.total - 1) {
       setState(() => _index++);
       return;
@@ -56,6 +62,8 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
   /// Writes the result through the ProgressRepo. This is the moment the next
   /// lesson opens (see `LessonNode.isFinished`).
   Future<void> _complete(Lesson lesson) async {
+    _saving = true;
+
     final QuizSession session = _session!;
     await ref
         .read(progressControllerProvider.notifier)
@@ -79,6 +87,7 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
       _session = QuizSession(questions: lesson.questions);
       _index = 0;
       _finished = false;
+      _saving = false;
       _run++;
     });
   }
