@@ -449,6 +449,93 @@ void main() {
       expect(repo.store['one']!.correctAnswers, 2);
     });
 
+    testWidgets('the submit control never scrolls with the question', (
+      WidgetTester tester,
+    ) async {
+      await _pumpQuiz(tester);
+      await _reachNumericQuestion(tester);
+
+      final Finder check = find.widgetWithText(FilledButton, 'Check answer');
+      expect(check, findsOneWidget);
+
+      // On iOS the numeric keypad has no return key, so this button is the
+      // only way to submit. Inside the scroll view it ends up behind the
+      // keyboard once the focused field is scrolled clear of it, stranding a
+      // typed answer with nowhere to go.
+      expect(
+        find.descendant(
+          of: find.byType(SingleChildScrollView),
+          matching: check,
+        ),
+        findsNothing,
+      );
+    });
+
+    testWidgets('a short answer can still be sent on a cramped screen', (
+      WidgetTester tester,
+    ) async {
+      // Roughly what is left of an iPhone 17 Pro with the keypad up.
+      tester.view.physicalSize = const Size(402 * 3, 380 * 3);
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+
+      final _MemoryProgressRepo repo = await _pumpQuiz(tester);
+      await _reachNumericQuestion(tester);
+
+      await tester.enterText(find.byType(TextField), '105');
+      await tester.pumpAndSettle();
+
+      final Finder check = find.widgetWithText(FilledButton, 'Check answer');
+      final Rect rect = tester.getRect(check);
+      final Size screen =
+          tester.view.physicalSize / tester.view.devicePixelRatio;
+
+      expect(
+        rect.bottom,
+        lessThanOrEqualTo(screen.height),
+        reason: 'the only way to submit is off screen',
+      );
+      expect(tester.widget<FilledButton>(check).onPressed, isNotNull);
+
+      await tester.tap(check);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Correct'), findsOneWidget);
+
+      await tester.tap(find.widgetWithText(FilledButton, 'See results'));
+      await tester.pumpAndSettle();
+      expect(repo.store['one']!.correctAnswers, 2);
+    });
+
+    testWidgets('the field starts empty on each question and on a retake', (
+      WidgetTester tester,
+    ) async {
+      await _pumpQuiz(tester);
+      await _reachNumericQuestion(tester);
+
+      await tester.enterText(find.byType(TextField), '105');
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'Check answer'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'See results'));
+      await tester.pumpAndSettle();
+
+      await tester.scrollUntilVisible(
+        find.text('Retake the Q&A'),
+        250,
+        scrollable: find.byType(Scrollable).last,
+      );
+      await tester.tap(find.text('Retake the Q&A').first);
+      await tester.pumpAndSettle();
+
+      await _reachNumericQuestion(tester);
+      expect(
+        tester.widget<TextField>(find.byType(TextField)).controller?.text,
+        isEmpty,
+        reason: 'a retake must not reuse the previous run\'s answer',
+      );
+    });
+
     testWidgets('a short answer is graded and the working is shown', (
       WidgetTester tester,
     ) async {
@@ -611,6 +698,14 @@ ProviderContainer _containerWith(Map<String, LessonProgress> seed) {
       currentUserProvider.overrideWithValue(_learner),
     ],
   );
+}
+
+/// Answers the opening choice question to land on the short-answer one.
+Future<void> _reachNumericQuestion(WidgetTester tester) async {
+  await tester.tap(find.text('The buyer'));
+  await tester.pumpAndSettle();
+  await tester.tap(find.widgetWithText(FilledButton, 'Next question'));
+  await tester.pumpAndSettle();
 }
 
 /// Drives the Q&A the way a learner does, returning the store it writes to.

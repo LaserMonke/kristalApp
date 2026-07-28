@@ -36,9 +36,20 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
   /// attempts and make the results screen misreport how many goes it took.
   bool _saving = false;
 
-  /// Bumped on a retake so every question widget is rebuilt from scratch —
-  /// otherwise a text field would still hold the previous run's answer.
+  /// Bumped on a retake so every question widget is rebuilt from scratch.
   int _run = 0;
+
+  /// The short-answer field, owned here rather than by the question widget so
+  /// the pinned footer button can grade what is in it. On iOS the numeric
+  /// keypad has no return key, so the submit control has to sit above the
+  /// keyboard where it is always reachable.
+  final TextEditingController _answer = TextEditingController();
+
+  @override
+  void dispose() {
+    _answer.dispose();
+    super.dispose();
+  }
 
   void _ensureSession(Lesson lesson) {
     _session ??= QuizSession(questions: lesson.questions);
@@ -50,9 +61,20 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
     });
   }
 
+  /// Grades whatever is in the field. No-op unless there is a number to grade,
+  /// so an empty field is never submitted as a wrong answer.
+  void _submitNumeric(NumericQuestion question) {
+    if (_session!.verdictFor(question.id) != null) return;
+    if (parseNumericAnswer(_answer.text) == null) return;
+
+    FocusScope.of(context).unfocus();
+    _onAnswer(question, correct: question.acceptsInput(_answer.text));
+  }
+
   Future<void> _advance(Lesson lesson) async {
     if (_saving) return;
     if (_index < _session!.total - 1) {
+      _answer.clear(); // The next question starts on an empty field.
       setState(() => _index++);
       return;
     }
@@ -83,6 +105,7 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
   }
 
   void _retry(Lesson lesson) {
+    _answer.clear();
     setState(() {
       _session = QuizSession(questions: lesson.questions);
       _index = 0;
@@ -176,27 +199,86 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
         Expanded(
           child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+            // A numeric keypad cannot be dismissed with a return key, so
+            // dragging the question is the way out of it.
+            keyboardDismissBehavior:
+                ScrollViewKeyboardDismissBehavior.onDrag,
             child: QuizQuestionView(
               // Identity per question AND per run: a retake starts clean.
               key: ValueKey<String>('$_run:${question.id}'),
               question: question,
               verdict: verdict,
+              answerController: _answer,
+              onSubmitAnswer: question is NumericQuestion
+                  ? () => _submitNumeric(question)
+                  : () {},
               onAnswer: ({required bool correct}) =>
                   _onAnswer(question, correct: correct),
             ),
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-          child: SizedBox(
-            width: double.infinity,
-            child: FilledButton(
-              onPressed: verdict == null ? null : () => _advance(lesson),
-              child: Text(isLast ? 'See results' : 'Next question'),
-            ),
-          ),
+        _Footer(
+          question: question,
+          verdict: verdict,
+          isLast: isLast,
+          answer: _answer,
+          onSubmitNumeric: _submitNumeric,
+          onAdvance: () => _advance(lesson),
         ),
       ],
+    );
+  }
+}
+
+/// The one action for the current question, pinned above the keyboard.
+///
+/// Being the only primary control is the point: an unanswered short-answer
+/// question grades from here, an answered question moves on from here, and
+/// neither can end up somewhere the keyboard covers.
+class _Footer extends StatelessWidget {
+  const _Footer({
+    required this.question,
+    required this.verdict,
+    required this.isLast,
+    required this.answer,
+    required this.onSubmitNumeric,
+    required this.onAdvance,
+  });
+
+  final QuizQuestion question;
+  final bool? verdict;
+  final bool isLast;
+  final TextEditingController answer;
+  final void Function(NumericQuestion) onSubmitNumeric;
+  final VoidCallback onAdvance;
+
+  @override
+  Widget build(BuildContext context) {
+    final Widget button = switch ((question, verdict)) {
+      // Short answer, not yet graded: the button checks it, and stays disabled
+      // until there is actually a number to check.
+      (final NumericQuestion q, null) => ValueListenableBuilder<
+        TextEditingValue
+      >(
+        valueListenable: answer,
+        builder: (BuildContext context, TextEditingValue value, Widget? _) {
+          final bool ready = parseNumericAnswer(value.text) != null;
+          return FilledButton(
+            onPressed: ready ? () => onSubmitNumeric(q) : null,
+            child: const Text('Check answer'),
+          );
+        },
+      ),
+      // Anything else: advance, once the question has been answered.
+      _ => FilledButton(
+        onPressed: verdict == null ? null : onAdvance,
+        child: Text(isLast ? 'See results' : 'Next question'),
+      ),
+    };
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+      child: SizedBox(width: double.infinity, child: button),
     );
   }
 }

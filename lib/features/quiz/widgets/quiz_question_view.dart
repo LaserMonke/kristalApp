@@ -18,6 +18,8 @@ class QuizQuestionView extends StatelessWidget {
     required this.question,
     required this.verdict,
     required this.onAnswer,
+    required this.answerController,
+    required this.onSubmitAnswer,
     super.key,
   });
 
@@ -27,6 +29,13 @@ class QuizQuestionView extends StatelessWidget {
   final bool? verdict;
 
   final void Function({required bool correct}) onAnswer;
+
+  /// Owned by the screen so the pinned footer button can read and submit it.
+  /// A short-answer field must never depend on a button that scrolls with the
+  /// content — the keyboard would cover it and the answer could not be sent.
+  final TextEditingController answerController;
+
+  final VoidCallback onSubmitAnswer;
 
   @override
   Widget build(BuildContext context) {
@@ -53,7 +62,8 @@ class QuizQuestionView extends StatelessWidget {
             final NumericQuestion q => _NumericView(
               question: q,
               verdict: verdict,
-              onAnswer: onAnswer,
+              controller: answerController,
+              onSubmit: onSubmitAnswer,
             ),
           },
           if (verdict != null && question.teachingNote != null) ...<Widget>[
@@ -289,46 +299,30 @@ class _ChoiceTile extends StatelessWidget {
 }
 
 /// Short answer: compute the number and type it in.
+///
+/// The field is here but the submit button is NOT — it lives in the screen's
+/// pinned footer. On iOS the numeric keypad has no return key, so a submit
+/// control that scrolls with the content ends up behind the keyboard with no
+/// way to reach it, leaving a typed answer that cannot be sent.
 class _NumericView extends StatefulWidget {
   const _NumericView({
     required this.question,
     required this.verdict,
-    required this.onAnswer,
+    required this.controller,
+    required this.onSubmit,
   });
 
   final NumericQuestion question;
   final bool? verdict;
-  final void Function({required bool correct}) onAnswer;
+  final TextEditingController controller;
+  final VoidCallback onSubmit;
 
   @override
   State<_NumericView> createState() => _NumericViewState();
 }
 
 class _NumericViewState extends State<_NumericView> {
-  final TextEditingController _controller = TextEditingController();
   bool _hintShown = false;
-
-  /// Set the moment an answer is sent up, before the parent's verdict comes
-  /// back down — otherwise a fast double-tap submits the same question twice.
-  bool _submitted = false;
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  /// Whether there is a number in the field worth grading. Keeps the Check
-  /// button from submitting empty or nonsense input as a wrong answer.
-  bool get _hasNumber => parseNumericAnswer(_controller.text) != null;
-
-  void _submit() {
-    if (_submitted || widget.verdict != null || !_hasNumber) return;
-    _submitted = true;
-
-    FocusScope.of(context).unfocus();
-    widget.onAnswer(correct: widget.question.acceptsInput(_controller.text));
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -340,8 +334,11 @@ class _NumericViewState extends State<_NumericView> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         TextField(
-          controller: _controller,
+          controller: widget.controller,
           enabled: !answered,
+          // Lands the learner in the field without a hunt, and raises the
+          // keyboard while the question is still on screen above it.
+          autofocus: !answered,
           autocorrect: false,
           keyboardType: const TextInputType.numberWithOptions(
             decimal: true,
@@ -351,8 +348,10 @@ class _NumericViewState extends State<_NumericView> {
             FilteringTextInputFormatter.allow(RegExp(r'[0-9.\-, ]')),
           ],
           textInputAction: TextInputAction.done,
-          onChanged: (_) => setState(() {}), // Re-evaluates the Check button.
-          onSubmitted: (_) => _submit(),
+          onSubmitted: (_) => widget.onSubmit(),
+          // Keeps room above the field when it is scrolled clear of the
+          // keyboard, so the question stays readable while typing.
+          scrollPadding: const EdgeInsets.only(bottom: 120),
           style: theme.textTheme.headlineSmall,
           decoration: InputDecoration(
             labelText: 'Your answer',
@@ -368,21 +367,12 @@ class _NumericViewState extends State<_NumericView> {
         ),
         const SizedBox(height: 12),
         if (!answered) ...<Widget>[
-          Row(
-            children: <Widget>[
-              FilledButton(
-                onPressed: _hasNumber ? _submit : null,
-                child: const Text('Check answer'),
-              ),
-              if (question.hint != null && !_hintShown) ...<Widget>[
-                const SizedBox(width: 8),
-                TextButton(
-                  onPressed: () => setState(() => _hintShown = true),
-                  child: const Text('Hint'),
-                ),
-              ],
-            ],
-          ),
+          if (question.hint != null && !_hintShown)
+            TextButton.icon(
+              onPressed: () => setState(() => _hintShown = true),
+              icon: const Icon(Icons.lightbulb_outline, size: 16),
+              label: const Text('Show a hint'),
+            ),
           if (_hintShown && question.hint != null) ...<Widget>[
             const SizedBox(height: 12),
             Row(
