@@ -6,6 +6,10 @@ import '../data/repositories/progress_repo.dart';
 import 'auth_controller.dart';
 import 'repository_providers.dart';
 
+/// Placeholder award per correct answer until Phase 5 defines the real
+/// points/streak/level scheme.
+const int _pointsPerCorrectAnswer = 10;
+
 /// Every lesson's progress for the signed-in learner, keyed by lesson id.
 ///
 /// Rebuilds when the user changes, so signing out and back in as someone else
@@ -57,6 +61,38 @@ class ProgressController extends AsyncNotifier<Map<String, LessonProgress>> {
         lessonCompleted: true,
         lastOpenedAt: now,
         completedAt: current.completedAt ?? now,
+      ),
+    );
+  }
+
+  /// Records a finished run through a lesson's Q&A.
+  ///
+  /// Completion — not a pass mark — is what unlocks the next lesson: a learner
+  /// who answers badly has still met the material, and the results screen sends
+  /// them back to the cards rather than a locked door. The stored score keeps
+  /// the BEST attempt, so retaking can only help.
+  Future<void> recordQuizResult({
+    required String lessonId,
+    required int correct,
+    required int total,
+  }) async {
+    final LessonProgress current = _existing(lessonId);
+    final bool improved = correct > current.correctAnswers ||
+        current.totalQuestions != total;
+
+    await _write(
+      current.copyWith(
+        quizCompleted: true,
+        correctAnswers: improved ? correct : current.correctAnswers,
+        totalQuestions: total,
+        quizAttempts: current.quizAttempts + 1,
+        // Phase 5 owns the real points scheme; this is a placeholder so the
+        // field is populated consistently until then.
+        pointsEarned: improved
+            ? correct * _pointsPerCorrectAnswer
+            : current.pointsEarned,
+        lastOpenedAt: DateTime.now(),
+        completedAt: current.completedAt ?? DateTime.now(),
       ),
     );
   }

@@ -40,6 +40,11 @@ class LessonNode {
 
   bool get isStarted => progress.cardsViewed > 0 && !isFinished;
 
+  /// Cards read, questions still outstanding — so the tile should open the
+  /// Q&A rather than replay a deck the learner has already been through.
+  bool get needsQuiz =>
+      lesson.hasQuiz && progress.lessonCompleted && !progress.quizCompleted;
+
   /// Where to drop the learner back in, clamped to a valid card index.
   int get resumeCardIndex {
     if (isFinished || lesson.cards.isEmpty) return 0;

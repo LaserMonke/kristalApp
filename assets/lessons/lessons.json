@@ -10,6 +10,91 @@
       "estimated_minutes": 5,
       "reviewed_by": null,
       "reviewed_on": null,
+      "questions": [
+        {
+          "type": "choice",
+          "id": "q1-put-definition",
+          "prompt": "What does a put option give its holder?",
+          "choices": [
+            {
+              "text": "The right to sell the underlying at the strike price",
+              "correct": true,
+              "explanation": "A put is the right to sell. It becomes worth exercising when the underlying is below the strike, because selling at the strike then beats selling at the market price."
+            },
+            {
+              "text": "The right to buy the underlying at the strike price",
+              "correct": false,
+              "explanation": "That is a call. Calls and puts point in opposite directions: a call is a right to buy, a put is a right to sell."
+            },
+            {
+              "text": "An obligation to sell the underlying at the strike price",
+              "correct": false,
+              "explanation": "The holder of any option never has an obligation. The obligation sits with the seller of the put, who must buy if the holder decides to exercise."
+            }
+          ],
+          "teaching_note": "Holder of a put sells; holder of a call buys. The other side of each contract does whatever they are told."
+        },
+        {
+          "type": "choice",
+          "id": "q2-right-vs-obligation",
+          "setup": "A trader sells a call option and receives the premium. At expiry the buyer decides to exercise.",
+          "prompt": "What can the seller do?",
+          "choices": [
+            {
+              "text": "Nothing — they must deliver at the strike price",
+              "correct": true,
+              "explanation": "The seller gave up the choice when they took the premium. Once the buyer exercises, the seller has to deliver at the strike regardless of what the market price is."
+            },
+            {
+              "text": "Decline, and keep the premium instead",
+              "correct": false,
+              "explanation": "The premium is payment for accepting the obligation, not a fee that can be forfeited to escape it. There is no opt-out on the seller side."
+            },
+            {
+              "text": "Exercise their own side of the contract first",
+              "correct": false,
+              "explanation": "There is no second right to exercise. An option contract has exactly one right, and it belongs to the buyer."
+            }
+          ],
+          "teaching_note": "This asymmetry is what the premium pays for. It is also why a seller's downside is not capped the way a buyer's is."
+        },
+        {
+          "type": "numeric",
+          "id": "q3-contract-size",
+          "setup": "A listed call option is quoted at a premium of $2.30. One contract covers 100 shares.",
+          "prompt": "What does one contract cost the buyer, ignoring fees?",
+          "answer": 230,
+          "tolerance": 0.01,
+          "unit_prefix": "$",
+          "hint": "Quoted premiums are per share. Multiply by the number of shares the contract covers.",
+          "explanation": "$2.30 per share x 100 shares = $230 for one contract.",
+          "teaching_note": "Premiums are quoted per share but traded per contract. A contract that looks like pocket change at $2.30 is a $230 commitment — and every cent of it can be lost."
+        },
+        {
+          "type": "choice",
+          "id": "q4-short-put-view",
+          "setup": "You have sold a put struck at $50 and received the premium.",
+          "prompt": "What outcome suits your position best?",
+          "choices": [
+            {
+              "text": "The underlying stays above $50 through expiry",
+              "correct": true,
+              "explanation": "Above the strike the put is not worth exercising, so it expires worthless and you keep the premium. That is the whole of your upside."
+            },
+            {
+              "text": "The underlying falls well below $50",
+              "correct": false,
+              "explanation": "That is the outcome that hurts a short put. You would be obliged to buy at $50 something now worth far less, and the loss can be many times the premium received."
+            },
+            {
+              "text": "The underlying rises as far as possible",
+              "correct": false,
+              "explanation": "A big rise does not help beyond the strike. Your gain is capped at the premium whether the underlying finishes at $51 or $510 — the extra move is worth nothing to you."
+            }
+          ],
+          "teaching_note": "A short option position has a capped gain and an uncapped, or barely capped, loss. Sellers are paid up front precisely because that shape is unattractive."
+        }
+      ],
       "cards": [
         {
           "type": "title",
@@ -147,6 +232,80 @@
       "estimated_minutes": 7,
       "reviewed_by": null,
       "reviewed_on": null,
+      "questions": [
+        {
+          "type": "numeric",
+          "id": "q1-call-break-even",
+          "setup": "A call option is struck at $80. The premium paid was $7 per share.",
+          "prompt": "At what finishing price does the position break even?",
+          "answer": 87,
+          "tolerance": 0.01,
+          "unit_prefix": "$",
+          "hint": "Exercising only recovers what the underlying is worth above the strike. You need to recover the premium as well.",
+          "explanation": "Break-even for a long call is strike plus premium: $80 + $7 = $87. At $87 exercising is worth exactly $7, which cancels the premium and leaves nothing either way.",
+          "teaching_note": "The bend in the chart sits at the strike, but break-even sits one premium further out. Between the two, exercising is worth doing and the trade still loses money."
+        },
+        {
+          "type": "numeric",
+          "id": "q2-put-profit",
+          "setup": "You bought a put struck at $100 for a premium of $6. At expiry the underlying finishes at $88.",
+          "prompt": "What is your profit per share?",
+          "answer": 6,
+          "tolerance": 0.01,
+          "unit_prefix": "$",
+          "hint": "Work out what the put is worth at expiry first, then subtract what it cost.",
+          "explanation": "The put is worth $100 - $88 = $12 at expiry. Subtracting the $6 premium leaves a profit of $6 per share.",
+          "teaching_note": "Payoff and profit are different numbers. The payoff here is $12; the profit is $6. Every chart in this app plots the second one."
+        },
+        {
+          "type": "choice",
+          "id": "q3-short-call-max-gain",
+          "setup": "You sold a call struck at $100 and received $5.",
+          "prompt": "What is the most this position can make, and the most it can lose?",
+          "choices": [
+            {
+              "text": "Make $5 at most; the loss has no fixed limit",
+              "correct": true,
+              "explanation": "The premium is the entire upside. On the downside the loss grows with the underlying, and since there is no ceiling on how far a price can rise, an uncovered short call has no fixed maximum loss."
+            },
+            {
+              "text": "Make $5 at most; lose $100 at most",
+              "correct": false,
+              "explanation": "The $100 strike is not a floor under the loss. If the underlying finishes at $250 the loss is $145 per share, and nothing in the contract stops it going further."
+            },
+            {
+              "text": "Make and lose the same amount either way",
+              "correct": false,
+              "explanation": "The position is deliberately lopsided. A capped gain paired with an uncapped loss is exactly the shape the seller is being paid to accept."
+            }
+          ],
+          "teaching_note": "A payoff chart is cropped at the edge of the page. For a short call the line keeps falling past that edge — the chart ending is not the risk ending."
+        },
+        {
+          "type": "choice",
+          "id": "q4-exercise-vs-profit",
+          "setup": "A call struck at $100 cost $5. At expiry the underlying finishes at $101.",
+          "prompt": "Should the holder exercise, and did the position work out?",
+          "choices": [
+            {
+              "text": "Exercise, but the position still lost $4",
+              "correct": true,
+              "explanation": "Exercising is worth $1, so it beats letting the option expire. But $1 recovered against $5 paid is a net loss of $4 — worth exercising and profitable are separate questions."
+            },
+            {
+              "text": "Do not exercise — the position lost money",
+              "correct": false,
+              "explanation": "Refusing to exercise throws away the $1 the contract is worth and turns a $4 loss into a $5 loss. Take the recovery even when the trade overall was a loser."
+            },
+            {
+              "text": "Exercise, for a $1 profit",
+              "correct": false,
+              "explanation": "$1 is the payoff, not the profit. The $5 premium was already spent, so the position is $4 down."
+            }
+          ],
+          "teaching_note": "Finishing above the strike is not the same as finishing ahead. That gap is the whole reason break-even is a separate number to remember."
+        }
+      ],
       "cards": [
         {
           "type": "title",
@@ -276,6 +435,90 @@
       "estimated_minutes": 8,
       "reviewed_by": null,
       "reviewed_on": null,
+      "questions": [
+        {
+          "type": "numeric",
+          "id": "q1-protective-put-floor",
+          "setup": "You hold shares bought at $100 and a put struck at $95 that cost $4. The underlying collapses to $30 by expiry.",
+          "prompt": "What is your loss per share?",
+          "answer": 9,
+          "tolerance": 0.01,
+          "unit_prefix": "$",
+          "hint": "The shares fall all the way, but the put lets you sell at $95. Do not forget what the put itself cost.",
+          "explanation": "The shares lose $70, and the put is worth $95 - $30 = $65, so the position is $5 down before costs. Subtracting the $4 premium gives a $9 loss per share — the same as it would be at $60, or at $1.",
+          "teaching_note": "That $9 is the floor. Below the strike the loss stops moving, which is exactly what the premium bought."
+        },
+        {
+          "type": "choice",
+          "id": "q2-protective-put-cost",
+          "prompt": "What does that same protective put cost you when the underlying rises instead?",
+          "choices": [
+            {
+              "text": "The premium, so the upside is $4 per share worse than holding shares alone",
+              "correct": true,
+              "explanation": "The premium is paid whatever happens. Every profitable outcome is shifted down by $4 — that is the price of the floor, charged even when it turns out not to be needed."
+            },
+            {
+              "text": "Nothing, because the put expires worthless",
+              "correct": false,
+              "explanation": "The put expiring worthless is precisely the case where the $4 bought nothing. The money was still spent."
+            },
+            {
+              "text": "The difference between the share price and the strike",
+              "correct": false,
+              "explanation": "That is what the put pays out when the underlying falls. On the way up the put is simply worth nothing, and the only cost is the premium."
+            }
+          ],
+          "teaching_note": "Protection is not free and is not a forecast. Most of the time insurance is money spent on an event that did not happen."
+        },
+        {
+          "type": "choice",
+          "id": "q3-uncapped-side",
+          "prompt": "Which position can lose more than it ever stood to gain?",
+          "choices": [
+            {
+              "text": "An uncovered short call",
+              "correct": true,
+              "explanation": "The gain stops at the premium received. The loss grows with the underlying and has no fixed limit, so the worst case is far larger than the best case."
+            },
+            {
+              "text": "A long put",
+              "correct": false,
+              "explanation": "A long put can lose only the premium. Its gain is large but bounded, since the underlying cannot fall below zero — the opposite shape."
+            },
+            {
+              "text": "A long call",
+              "correct": false,
+              "explanation": "A buyer's downside is fixed at the premium on the day it is paid. Total loss is common, but it cannot exceed what was paid."
+            }
+          ],
+          "teaching_note": "Nothing in this app is a suggestion to sell options. Uncovered short positions can also demand more collateral before expiry, forcing a position closed at the worst possible moment."
+        },
+        {
+          "type": "choice",
+          "id": "q4-real-market-frictions",
+          "setup": "A payoff diagram puts break-even for your call at $105.",
+          "prompt": "In a real market, where would break-even actually sit?",
+          "choices": [
+            {
+              "text": "Higher than $105, because trading costs work against you",
+              "correct": true,
+              "explanation": "You buy at the ask and sell at the bid, and commissions, exchange fees and taxes all come out of the result. Every one of them pushes the price you need to reach further away."
+            },
+            {
+              "text": "Exactly $105 — the diagram accounts for costs",
+              "correct": false,
+              "explanation": "The diagram is idealised. It assumes a single price, no spread, no fees and no early assignment, none of which hold in a real market."
+            },
+            {
+              "text": "Lower than $105, because option prices move before expiry",
+              "correct": false,
+              "explanation": "Value before expiry does move with volatility and time, which can let a position be closed early — but it does not lower the break-even at expiry, and costs still push in the other direction."
+            }
+          ],
+          "teaching_note": "Every model in this app is a simplification. Treat the numbers as illustrations of how the pieces interact, not as prices you could actually trade at."
+        }
+      ],
       "cards": [
         {
           "type": "title",

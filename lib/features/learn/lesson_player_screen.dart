@@ -71,7 +71,14 @@ class _LessonPlayerScreenState extends ConsumerState<LessonPlayerScreen> {
         );
     if (!mounted) return;
 
-    // Phase 2 sends the learner into the Q&A from here instead of straight out.
+    // Reading the cards is not the end of a lesson that has questions — the
+    // Q&A is, and it is what opens the next lesson. Replacing the player
+    // rather than stacking on top of it means leaving the Q&A returns to the
+    // path, not to the last card of a deck already finished.
+    if (lesson.hasQuiz) {
+      context.pushReplacement(Routes.quizPath(lesson.id));
+      return;
+    }
     _close();
   }
 
@@ -328,7 +335,13 @@ class _PlayerFooter extends StatelessWidget {
           const SizedBox(height: 10),
           FilledButton(
             onPressed: isLast ? onFinish : onNext,
-            child: Text(isLast ? 'Finish lesson' : 'Next'),
+            child: Text(
+              !isLast
+                  ? 'Next'
+                  : lesson.hasQuiz
+                  ? 'Start the Q&A · ${lesson.quizQuestionCount} questions'
+                  : 'Finish lesson',
+            ),
           ),
           if (isLast) ...<Widget>[
             const SizedBox(height: 10),

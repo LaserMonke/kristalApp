@@ -10,6 +10,7 @@ import '../../features/learn/lesson_player_screen.dart';
 import '../../features/onboarding/disclaimer_screen.dart';
 import '../../features/practice/practice_screen.dart';
 import '../../features/profile/profile_screen.dart';
+import '../../features/quiz/quiz_screen.dart';
 import '../../features/shell/app_shell.dart';
 import '../../providers/auth_controller.dart';
 import '../../providers/onboarding_controller.dart';
@@ -28,7 +29,13 @@ abstract final class Routes {
   /// whole screen.
   static const String lesson = '/lesson/:lessonId';
 
+  /// The graded Q&A that follows a lesson. Also full-screen: answering a
+  /// question should not compete with the tab bar for attention.
+  static const String quiz = '/lesson/:lessonId/quiz';
+
   static String lessonPath(String lessonId) => '/lesson/$lessonId';
+
+  static String quizPath(String lessonId) => '/lesson/$lessonId/quiz';
 }
 
 final GlobalKey<NavigatorState> _rootKey = GlobalKey<NavigatorState>(
@@ -96,6 +103,12 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
             LessonPlayerScreen(
               lessonId: state.pathParameters['lessonId'] ?? '',
             ),
+      ),
+      GoRoute(
+        path: Routes.quiz,
+        parentNavigatorKey: _rootKey,
+        builder: (BuildContext context, GoRouterState state) =>
+            QuizScreen(lessonId: state.pathParameters['lessonId'] ?? ''),
       ),
       StatefulShellRoute.indexedStack(
         builder:

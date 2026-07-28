@@ -1,4 +1,5 @@
 import '../../pricing/payoff.dart';
+import 'quiz.dart';
 
 /// Lesson content as DATA.
 ///
@@ -15,7 +16,7 @@ class Lesson {
     required this.summary,
     required this.cards,
     this.estimatedMinutes = 3,
-    this.quizQuestionCount = 0,
+    this.questions = const <QuizQuestion>[],
     this.reviewedBy,
     this.reviewedOn,
   });
@@ -30,10 +31,9 @@ class Lesson {
   final List<LessonCard> cards;
   final int estimatedMinutes;
 
-  /// How many Q&A questions this lesson has. Zero until Phase 2 authors them;
-  /// the unlock gate reads this so it moves from "finished the cards" to
-  /// "finished the Q&A" the moment questions exist, with no engine change.
-  final int quizQuestionCount;
+  /// The graded Q&A that follows the deck. Empty means this lesson has none,
+  /// and the unlock gate falls back to "read the cards" on its own.
+  final List<QuizQuestion> questions;
 
   /// Expert review trail required by CLAUDE.md ("reviewed by/date per lesson").
   /// Null means NOT yet reviewed by someone with real derivatives knowledge,
@@ -41,7 +41,9 @@ class Lesson {
   final String? reviewedBy;
   final DateTime? reviewedOn;
 
-  bool get hasQuiz => quizQuestionCount > 0;
+  bool get hasQuiz => questions.isNotEmpty;
+
+  int get quizQuestionCount => questions.length;
 
   factory Lesson.fromJson(Map<String, dynamic> json) {
     final List<dynamic> rawCards = json['cards'] as List<dynamic>? ?? <dynamic>[];
@@ -53,11 +55,13 @@ class Lesson {
       title: json['title'] as String,
       summary: json['summary'] as String,
       estimatedMinutes: json['estimated_minutes'] as int? ?? 3,
-      quizQuestionCount:
-          (json['questions'] as List<dynamic>?)?.length ??
-          (json['question_count'] as int? ?? 0),
       reviewedBy: json['reviewed_by'] as String?,
       reviewedOn: reviewedOn == null ? null : DateTime.tryParse(reviewedOn),
+      questions: <QuizQuestion>[
+        for (final dynamic q
+            in json['questions'] as List<dynamic>? ?? <dynamic>[])
+          QuizQuestion.fromJson(q as Map<String, dynamic>),
+      ],
       cards: <LessonCard>[
         for (final dynamic card in rawCards)
           LessonCard.fromJson(card as Map<String, dynamic>),

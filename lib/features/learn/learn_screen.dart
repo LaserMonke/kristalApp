@@ -72,7 +72,7 @@ class LearnScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 20),
           Text(
-            'More lessons — and a short Q&A after each one — are on the way.',
+            'Each lesson ends with a short Q&A. More lessons are on the way.',
             textAlign: TextAlign.center,
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
@@ -101,7 +101,11 @@ class _LessonTile extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           onTap: locked
               ? () => _explainLock(context)
-              : () => context.push(Routes.lessonPath(node.lesson.id)),
+              : () => context.push(
+                  node.needsQuiz
+                      ? Routes.quizPath(node.lesson.id)
+                      : Routes.lessonPath(node.lesson.id),
+                ),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
@@ -135,7 +139,11 @@ class _LessonTile extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 Icon(
-                  locked ? Icons.lock_outline : Icons.chevron_right,
+                  locked
+                      ? Icons.lock_outline
+                      : node.needsQuiz
+                      ? Icons.quiz_outlined
+                      : Icons.chevron_right,
                   size: 18,
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
@@ -150,7 +158,9 @@ class _LessonTile extends StatelessWidget {
   void _explainLock(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Finish the previous lesson to open this one.'),
+        content: Text(
+          'Finish the previous lesson and its Q&A to open this one.',
+        ),
         duration: Duration(seconds: 2),
       ),
     );
@@ -200,10 +210,28 @@ class _StatusLine extends StatelessWidget {
     );
 
     if (node.isFinished) {
-      return Text('Complete', style: style?.copyWith(color: theme.pnl.correct));
+      // Once there is a Q&A score, that is the more informative thing to show.
+      final String label = node.progress.totalQuestions > 0
+          ? 'Complete · Q&A ${node.progress.correctAnswers}'
+                '/${node.progress.totalQuestions}'
+          : 'Complete';
+      return Text(label, style: style?.copyWith(color: theme.pnl.correct));
     }
     if (!node.isUnlocked) {
       return Text('Locked', style: style);
+    }
+    if (node.needsQuiz) {
+      return Row(
+        children: <Widget>[
+          Icon(Icons.quiz_outlined, size: 13, color: theme.colorScheme.primary),
+          const SizedBox(width: 5),
+          Text(
+            'Cards read — Q&A next '
+            '(${node.lesson.quizQuestionCount} questions)',
+            style: style?.copyWith(color: theme.colorScheme.primary),
+          ),
+        ],
+      );
     }
     if (node.isStarted) {
       return Row(

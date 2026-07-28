@@ -6,6 +6,7 @@ import 'package:optionsschool/core/router/app_router.dart';
 import 'package:optionsschool/data/local/asset_lesson_repo.dart';
 import 'package:optionsschool/data/models/lesson.dart';
 import 'package:optionsschool/data/models/lesson_progress.dart';
+import 'package:optionsschool/data/models/quiz.dart';
 import 'package:optionsschool/data/repositories/lesson_repo.dart';
 import 'package:optionsschool/features/learn/lesson_player_screen.dart';
 import 'package:optionsschool/features/learn/widgets/lesson_card_view.dart';
@@ -72,6 +73,8 @@ void main() {
           lesson.title,
           lesson.summary,
           for (final LessonCard card in lesson.cards) card.semanticLabel,
+          // The Q&A is content too, and is held to the same rule.
+          for (final QuizQuestion q in lesson.questions) q.semanticLabel,
         ].join(' ').toLowerCase();
 
         for (final String phrase in banned) {
@@ -249,7 +252,24 @@ void main() {
         order: 1,
         title: 'One',
         summary: 'First',
-        quizQuestionCount: 3,
+        questions: const <QuizQuestion>[
+          MultipleChoiceQuestion(
+            id: 'q1',
+            prompt: 'Who carries the obligation?',
+            choices: <QuizChoice>[
+              QuizChoice(
+                text: 'The seller',
+                isCorrect: true,
+                explanation: 'The premium pays for accepting it.',
+              ),
+              QuizChoice(
+                text: 'The buyer',
+                isCorrect: false,
+                explanation: 'The buyer holds a right, never a duty.',
+              ),
+            ],
+          ),
+        ],
         cards: first.cards,
       );
 
