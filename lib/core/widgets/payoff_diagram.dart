@@ -20,6 +20,9 @@ class PayoffDiagram extends StatelessWidget {
     super.key,
     this.currencySymbol = r'$',
     this.height = 230,
+    this.markerSpot,
+    this.animate = true,
+    this.showLegend = true,
   });
 
   final List<StrategyLeg> legs;
@@ -27,6 +30,17 @@ class PayoffDiagram extends StatelessWidget {
   final double spotMax;
   final String currencySymbol;
   final double height;
+
+  /// Underlying price to mark on the curve, for cards where the learner is
+  /// dragging a price around. Null draws no marker.
+  final double? markerSpot;
+
+  /// Draws the curve on once when the card appears. Turned off where the
+  /// diagram is redrawn continuously (an interactive card), because replaying
+  /// the reveal on every slider tick would be noise, not information.
+  final bool animate;
+
+  final bool showLegend;
 
   @override
   Widget build(BuildContext context) {
@@ -49,45 +63,63 @@ class PayoffDiagram extends StatelessWidget {
     // in profit or wholly in loss, so styling per segment is unambiguous.
     final List<PayoffPoint> drawable = _withCrossings(curve, zeros);
 
+    _PayoffPainter painterAt(double progress) => _PayoffPainter(
+      points: drawable,
+      breakEvenPoints: zeros,
+      strikes: legs
+          .where((StrategyLeg leg) => leg.kind != LegKind.underlying)
+          .map((StrategyLeg leg) => leg.strike)
+          .where((double s) => s > spotMin && s < spotMax)
+          .toSet()
+          .toList(),
+      spotMin: spotMin,
+      spotMax: spotMax,
+      markerSpot: markerSpot,
+      markerProfit: markerSpot == null
+          ? 0
+          : strategyProfit(legs, markerSpot!),
+      progress: progress,
+      gain: pnl.gain,
+      loss: pnl.loss,
+      axis: theme.colorScheme.outline,
+      label: theme.colorScheme.onSurfaceVariant,
+      markerRing: theme.colorScheme.surface,
+      currencySymbol: currencySymbol,
+      labelStyle: theme.textTheme.labelSmall!.copyWith(
+        color: theme.colorScheme.onSurfaceVariant,
+        fontFeatures: const <ui.FontFeature>[ui.FontFeature.tabularFigures()],
+      ),
+      textDirection: Directionality.of(context),
+    );
+
+    final Widget chart = SizedBox(
+      height: height,
+      width: double.infinity,
+      child: animate
+          ? TweenAnimationBuilder<double>(
+              // Draws the curve on from left to right, so the eye follows the
+              // shape being built instead of arriving at a finished picture.
+              tween: Tween<double>(begin: 0, end: 1),
+              duration: const Duration(milliseconds: 750),
+              curve: Curves.easeOutCubic,
+              builder: (BuildContext context, double t, Widget? _) =>
+                  CustomPaint(painter: painterAt(t)),
+            )
+          : CustomPaint(painter: painterAt(1)),
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Semantics(
           label: _describe(curve, zeros, unboundedLoss),
           excludeSemantics: true,
-          child: SizedBox(
-            height: height,
-            width: double.infinity,
-            child: CustomPaint(
-              painter: _PayoffPainter(
-                points: drawable,
-                breakEvenPoints: zeros,
-                strikes: legs
-                    .where((StrategyLeg leg) => leg.kind != LegKind.underlying)
-                    .map((StrategyLeg leg) => leg.strike)
-                    .where((double s) => s > spotMin && s < spotMax)
-                    .toSet()
-                    .toList(),
-                spotMin: spotMin,
-                spotMax: spotMax,
-                gain: pnl.gain,
-                loss: pnl.loss,
-                axis: theme.colorScheme.outline,
-                label: theme.colorScheme.onSurfaceVariant,
-                currencySymbol: currencySymbol,
-                labelStyle: theme.textTheme.labelSmall!.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                  fontFeatures: const <ui.FontFeature>[
-                    ui.FontFeature.tabularFigures(),
-                  ],
-                ),
-                textDirection: Directionality.of(context),
-              ),
-            ),
-          ),
+          child: chart,
         ),
-        const SizedBox(height: 8),
-        _Legend(unboundedLoss: unboundedLoss),
+        if (showLegend) ...<Widget>[
+          const SizedBox(height: 8),
+          _Legend(unboundedLoss: unboundedLoss),
+        ],
       ],
     );
   }
@@ -241,10 +273,14 @@ class _PayoffPainter extends CustomPainter {
     required this.strikes,
     required this.spotMin,
     required this.spotMax,
+    required this.markerSpot,
+    required this.markerProfit,
+    required this.progress,
     required this.gain,
     required this.loss,
     required this.axis,
     required this.label,
+    required this.markerRing,
     required this.labelStyle,
     required this.currencySymbol,
     required this.textDirection,
@@ -255,10 +291,17 @@ class _PayoffPainter extends CustomPainter {
   final List<double> strikes;
   final double spotMin;
   final double spotMax;
+  final double? markerSpot;
+  final double markerProfit;
+
+  /// How much of the curve to reveal, left to right, 0 to 1.
+  final double progress;
+
   final Color gain;
   final Color loss;
   final Color axis;
   final Color label;
+  final Color markerRing;
   final TextStyle labelStyle;
   final String currencySymbol;
   final TextDirection textDirection;
@@ -298,10 +341,56 @@ class _PayoffPainter extends CustomPainter {
     _drawFrame(canvas, plot);
     _drawStrikes(canvas, plot, dx);
     _drawZeroLine(canvas, plot, dy(0));
+
+    // Everything that represents the position itself is revealed left to
+    // right; the frame and axes stay put so the chart never appears to move.
+    canvas
+      ..save()
+      ..clipRect(
+        Rect.fromLTRB(
+          plot.left,
+          plot.top,
+          plot.left + plot.width * progress.clamp(0.0, 1.0),
+          plot.bottom,
+        ),
+      );
     _drawAreas(canvas, plot, dx, dy);
     _drawCurve(canvas, dx, dy);
     _drawBreakEvens(canvas, plot, dx, dy);
+    canvas.restore();
+
+    _drawMarker(canvas, plot, dx, dy);
     _drawAxisLabels(canvas, plot, lo, hi, dy);
+  }
+
+  /// The price the learner has chosen, pinned to the curve.
+  void _drawMarker(
+    Canvas canvas,
+    Rect plot,
+    double Function(double) dx,
+    double Function(double) dy,
+  ) {
+    final double? spot = markerSpot;
+    if (spot == null || spot < spotMin || spot > spotMax) return;
+
+    final double x = dx(spot);
+    final double y = dy(markerProfit).clamp(plot.top, plot.bottom);
+    final Color tone = markerProfit >= 0 ? gain : loss;
+
+    final Paint stem = Paint()
+      ..color = label.withValues(alpha: 0.55)
+      ..strokeWidth = 1.2;
+    for (double at = plot.top; at < plot.bottom; at += 6) {
+      canvas.drawLine(
+        Offset(x, at),
+        Offset(x, math.min(at + 3, plot.bottom)),
+        stem,
+      );
+    }
+
+    canvas
+      ..drawCircle(Offset(x, y), 6.5, Paint()..color = markerRing)
+      ..drawCircle(Offset(x, y), 5, Paint()..color = tone);
   }
 
   void _drawFrame(Canvas canvas, Rect plot) {
@@ -543,6 +632,9 @@ class _PayoffPainter extends CustomPainter {
   @override
   bool shouldRepaint(_PayoffPainter old) =>
       old.points != points ||
+      old.progress != progress ||
+      old.markerSpot != markerSpot ||
+      old.markerProfit != markerProfit ||
       old.gain != gain ||
       old.loss != loss ||
       old.spotMin != spotMin ||

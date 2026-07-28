@@ -80,6 +80,9 @@ sealed class LessonCard {
       'text' => TextCard.fromJson(json),
       'term' => TermCard.fromJson(json),
       'payoff' => PayoffCard.fromJson(json),
+      'explore' => ExploreCard.fromJson(json),
+      'choice' => ChoiceCard.fromJson(json),
+      'compare' => CompareCard.fromJson(json),
       'warning' => WarningCard.fromJson(json),
       'summary' => SummaryCard.fromJson(json),
       _ => throw FormatException('Unknown lesson card type "$type"'),
@@ -92,11 +95,20 @@ sealed class LessonCard {
 
 /// Opening card: sets up what the lesson is about.
 class TitleCard extends LessonCard {
-  const TitleCard({required this.title, required this.subtitle, this.kicker});
+  const TitleCard({
+    required this.title,
+    required this.subtitle,
+    this.kicker,
+    this.icon,
+  });
 
   final String title;
   final String subtitle;
   final String? kicker;
+
+  /// Name from the fixed icon set in `lesson_icons.dart`. Decorative only —
+  /// nothing is ever communicated by the icon alone.
+  final String? icon;
 
   @override
   String get semanticLabel => '$title. $subtitle';
@@ -105,6 +117,7 @@ class TitleCard extends LessonCard {
     title: json['title'] as String,
     subtitle: json['subtitle'] as String,
     kicker: json['kicker'] as String?,
+    icon: json['icon'] as String?,
   );
 }
 
@@ -114,18 +127,32 @@ class TextCard extends LessonCard {
     required this.heading,
     required this.body,
     this.bullets = const <String>[],
+    this.icon,
+    this.highlight,
   });
 
   final String heading;
   final String body;
   final List<String> bullets;
+  final String? icon;
+
+  /// One line worth pulling out of the body and setting in a tinted panel —
+  /// the sentence a learner should leave the card with.
+  final String? highlight;
 
   @override
-  String get semanticLabel => <String>[heading, body, ...bullets].join('. ');
+  String get semanticLabel => <String>[
+    heading,
+    body,
+    ...bullets,
+    ?highlight,
+  ].join('. ');
 
   factory TextCard.fromJson(Map<String, dynamic> json) => TextCard(
     heading: json['heading'] as String,
     body: json['body'] as String,
+    icon: json['icon'] as String?,
+    highlight: json['highlight'] as String?,
     bullets: <String>[
       for (final dynamic b in json['bullets'] as List<dynamic>? ?? <dynamic>[])
         b as String,
@@ -139,11 +166,13 @@ class TermCard extends LessonCard {
     required this.term,
     required this.definition,
     this.example,
+    this.icon,
   });
 
   final String term;
   final String definition;
   final String? example;
+  final String? icon;
 
   @override
   String get semanticLabel =>
@@ -153,6 +182,7 @@ class TermCard extends LessonCard {
     term: json['term'] as String,
     definition: json['definition'] as String,
     example: json['example'] as String?,
+    icon: json['icon'] as String?,
   );
 }
 
@@ -186,6 +216,187 @@ class PayoffCard extends LessonCard {
     legs: <StrategyLeg>[
       for (final dynamic leg in json['legs'] as List<dynamic>)
         _legFromJson(leg as Map<String, dynamic>),
+    ],
+  );
+}
+
+/// A payoff diagram the learner drives.
+///
+/// Same maths as [PayoffCard], but the underlying price — and optionally the
+/// strike and the premium — are on sliders, so the shape of the curve is
+/// something the learner discovers rather than reads. Nothing here is a
+/// forecast: it is the same idealised expiry arithmetic, evaluated live.
+class ExploreCard extends LessonCard {
+  const ExploreCard({
+    required this.heading,
+    required this.prompt,
+    required this.legs,
+    required this.spotMin,
+    required this.spotMax,
+    required this.spotStart,
+    this.adjustStrike = false,
+    this.adjustPremium = false,
+    this.currencySymbol = r'$',
+  });
+
+  final String heading;
+  final String prompt;
+
+  /// The starting position. Slider changes are applied to the first option
+  /// leg, so the learner edits a contract rather than an abstract curve.
+  final List<StrategyLeg> legs;
+
+  final double spotMin;
+  final double spotMax;
+
+  /// Where the price marker sits before the learner touches anything.
+  final double spotStart;
+
+  final bool adjustStrike;
+  final bool adjustPremium;
+  final String currencySymbol;
+
+  @override
+  String get semanticLabel =>
+      'Interactive payoff explorer. $heading. $prompt Use the sliders to '
+      'change the position; the profit or loss at expiry is read out below '
+      'the chart.';
+
+  factory ExploreCard.fromJson(Map<String, dynamic> json) => ExploreCard(
+    heading: json['heading'] as String,
+    prompt: json['prompt'] as String,
+    spotMin: (json['spot_min'] as num).toDouble(),
+    spotMax: (json['spot_max'] as num).toDouble(),
+    spotStart: (json['spot_start'] as num).toDouble(),
+    adjustStrike: json['adjust_strike'] as bool? ?? false,
+    adjustPremium: json['adjust_premium'] as bool? ?? false,
+    currencySymbol: json['currency_symbol'] as String? ?? r'$',
+    legs: <StrategyLeg>[
+      for (final dynamic leg in json['legs'] as List<dynamic>)
+        _legFromJson(leg as Map<String, dynamic>),
+    ],
+  );
+}
+
+/// A tap-to-check question inside the reel.
+///
+/// Deliberately unscored — the graded Q&A is a separate engine. This is a
+/// self-check that makes the learner commit to an answer before the
+/// explanation appears, which is what makes the explanation stick.
+class ChoiceCard extends LessonCard {
+  const ChoiceCard({
+    required this.question,
+    required this.options,
+    this.prompt,
+  });
+
+  final String question;
+
+  /// Optional framing line above the question.
+  final String? prompt;
+  final List<ChoiceOption> options;
+
+  @override
+  String get semanticLabel =>
+      'Quick check. $question. Options: '
+      '${options.map((ChoiceOption o) => o.text).join('; ')}.';
+
+  factory ChoiceCard.fromJson(Map<String, dynamic> json) => ChoiceCard(
+    question: json['question'] as String,
+    prompt: json['prompt'] as String?,
+    options: <ChoiceOption>[
+      for (final dynamic o in json['options'] as List<dynamic>)
+        ChoiceOption.fromJson(o as Map<String, dynamic>),
+    ],
+  );
+}
+
+/// One answer, with the reason it is right or wrong.
+///
+/// Every option carries an explanation, including the wrong ones — a learner
+/// who picks wrongly needs the reasoning more than one who picks correctly.
+class ChoiceOption {
+  const ChoiceOption({
+    required this.text,
+    required this.isCorrect,
+    required this.explanation,
+  });
+
+  final String text;
+  final bool isCorrect;
+  final String explanation;
+
+  factory ChoiceOption.fromJson(Map<String, dynamic> json) => ChoiceOption(
+    text: json['text'] as String,
+    isCorrect: json['correct'] as bool? ?? false,
+    explanation: json['explanation'] as String,
+  );
+}
+
+/// Two positions side by side.
+///
+/// Options are a two-sided contract, and most beginner confusion is really
+/// confusion about which side is being described — so the sides get drawn
+/// next to each other rather than on consecutive cards.
+class CompareCard extends LessonCard {
+  const CompareCard({
+    required this.heading,
+    required this.left,
+    required this.right,
+    this.footnote,
+  });
+
+  final String heading;
+  final ComparePanel left;
+  final ComparePanel right;
+  final String? footnote;
+
+  @override
+  String get semanticLabel =>
+      '$heading. ${left.semanticLabel} ${right.semanticLabel}'
+      '${footnote == null ? '' : ' $footnote'}';
+
+  factory CompareCard.fromJson(Map<String, dynamic> json) => CompareCard(
+    heading: json['heading'] as String,
+    footnote: json['footnote'] as String?,
+    left: ComparePanel.fromJson(json['left'] as Map<String, dynamic>),
+    right: ComparePanel.fromJson(json['right'] as Map<String, dynamic>),
+  );
+}
+
+/// How a compare panel is tinted. Never the only signal — each panel is also
+/// labelled and captioned (CLAUDE.md accessibility rule).
+enum PanelTone { gain, loss, neutral }
+
+class ComparePanel {
+  const ComparePanel({
+    required this.label,
+    required this.tagline,
+    required this.points,
+    this.icon,
+    this.tone = PanelTone.neutral,
+  });
+
+  final String label;
+  final String tagline;
+  final List<String> points;
+  final String? icon;
+  final PanelTone tone;
+
+  String get semanticLabel => '$label: $tagline. ${points.join('. ')}.';
+
+  factory ComparePanel.fromJson(Map<String, dynamic> json) => ComparePanel(
+    label: json['label'] as String,
+    tagline: json['tagline'] as String,
+    icon: json['icon'] as String?,
+    tone: switch (json['tone'] as String? ?? 'neutral') {
+      'gain' => PanelTone.gain,
+      'loss' => PanelTone.loss,
+      _ => PanelTone.neutral,
+    },
+    points: <String>[
+      for (final dynamic p in json['points'] as List<dynamic>? ?? <dynamic>[])
+        p as String,
     ],
   );
 }

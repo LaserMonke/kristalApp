@@ -129,8 +129,11 @@ class _LessonPlayerScreenState extends ConsumerState<LessonPlayerScreen> {
             scrollDirection: Axis.vertical,
             itemCount: lesson.cards.length,
             onPageChanged: (int index) => _onPageChanged(lesson, index),
-            itemBuilder: (BuildContext context, int index) =>
-                LessonCardView(card: lesson.cards[index]),
+            itemBuilder: (BuildContext context, int index) => _DeckCard(
+              controller: _controller!,
+              index: index,
+              child: LessonCardView(card: lesson.cards[index]),
+            ),
           ),
         ),
         _PlayerFooter(
@@ -140,6 +143,65 @@ class _LessonPlayerScreenState extends ConsumerState<LessonPlayerScreen> {
           onFinish: () => _finish(lesson),
         ),
       ],
+    );
+  }
+}
+
+/// The deck effect: as a card is swiped away it shrinks, tilts and fades, and
+/// the incoming card grows into place — so a swipe reads as "the top card
+/// leaves the pile", not "the page scrolled".
+///
+/// Driven directly by the [PageController]'s scroll position, which means the
+/// motion tracks the learner's finger exactly (and reverses cleanly when a
+/// swipe is abandoned) instead of playing a canned clip.
+class _DeckCard extends StatelessWidget {
+  const _DeckCard({
+    required this.controller,
+    required this.index,
+    required this.child,
+  });
+
+  final PageController controller;
+  final int index;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (BuildContext context, Widget? child) {
+        // How far this card is from being front-of-deck, in pages.
+        // 0 = on top; -1 = one swipe above (leaving); 1 = next in the pile.
+        double delta = 0;
+        if (controller.hasClients && controller.position.haveDimensions) {
+          delta = (controller.page ?? controller.initialPage.toDouble()) - index;
+        }
+        final double t = delta.clamp(-1.0, 1.0).abs();
+
+        final double scale;
+        final double opacity;
+        double tilt = 0;
+
+        if (delta > 0) {
+          // Leaving: shrink, tilt off-axis and fade as it slides off the top.
+          scale = 1 - 0.10 * t;
+          opacity = (1 - 0.9 * t).clamp(0.0, 1.0);
+          tilt = -0.05 * t;
+        } else {
+          // Arriving from below: grow from slightly behind the deck.
+          scale = 0.94 + 0.06 * (1 - t);
+          opacity = (1 - 0.35 * t).clamp(0.0, 1.0);
+        }
+
+        return Opacity(
+          opacity: opacity,
+          child: Transform.rotate(
+            angle: tilt,
+            child: Transform.scale(scale: scale, child: child),
+          ),
+        );
+      },
+      child: child,
     );
   }
 }

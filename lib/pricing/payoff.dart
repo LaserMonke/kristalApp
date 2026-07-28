@@ -62,6 +62,22 @@ class StrategyLeg {
 
   bool get isLong => side == LegSide.long;
 
+  /// A leg with one or more terms changed — used by the interactive lesson
+  /// cards, where a learner drags a strike or premium and the curve redraws.
+  StrategyLeg copyWith({
+    LegKind? kind,
+    LegSide? side,
+    double? strike,
+    double? premium,
+    double? quantity,
+  }) => StrategyLeg(
+    kind: kind ?? this.kind,
+    side: side ?? this.side,
+    strike: strike ?? this.strike,
+    premium: premium ?? this.premium,
+    quantity: quantity ?? this.quantity,
+  );
+
   /// What the contract is worth at expiry, before considering what it cost.
   ///
   /// A call is worth the amount the underlying finished above the strike; a

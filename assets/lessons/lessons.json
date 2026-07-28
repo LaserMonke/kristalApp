@@ -7,50 +7,95 @@
       "order": 1,
       "title": "What is an option?",
       "summary": "Calls, puts, and why a right is not the same as an obligation.",
-      "estimated_minutes": 4,
+      "estimated_minutes": 5,
       "reviewed_by": null,
       "reviewed_on": null,
       "cards": [
         {
           "type": "title",
           "kicker": "Lesson 1",
+          "icon": "contract",
           "title": "What is an option?",
           "subtitle": "A contract where one side buys a choice, and the other side takes on an obligation."
         },
         {
           "type": "text",
           "heading": "The core idea",
+          "icon": "handshake",
           "body": "An option is an agreement about a possible future trade. It fixes the price today — the strike — and gives the buyer until a set date to decide whether to go ahead. The seller does not get to decide. If the buyer exercises, the seller must deliver.",
           "bullets": [
             "The buyer pays for the choice. That payment is the premium.",
             "The seller keeps the premium whatever happens, and carries the obligation."
-          ]
+          ],
+          "highlight": "One side buys a choice. The other side is paid to give theirs up."
         },
         {
           "type": "term",
           "term": "Call option",
+          "icon": "call",
           "definition": "The right to buy the underlying at the strike price.",
           "example": "A call struck at $100 lets you buy at $100 even if the shares are trading at $130."
         },
         {
           "type": "term",
           "term": "Put option",
+          "icon": "put",
           "definition": "The right to sell the underlying at the strike price.",
           "example": "A put struck at $100 lets you sell at $100 even if the shares have fallen to $70."
         },
         {
-          "type": "text",
+          "type": "compare",
           "heading": "Right versus obligation",
-          "body": "This asymmetry is the whole product. A buyer can always walk away, and loses no more than the premium. A seller has no such exit — they were paid up front precisely to give up the choice.",
-          "bullets": [
-            "Long means you bought it and hold the right.",
-            "Short means you sold it and hold the obligation.",
-            "Exercising is using the right. Assignment is being on the receiving end of someone else's exercise."
+          "left": {
+            "label": "Buyer (long)",
+            "icon": "buyer",
+            "tone": "gain",
+            "tagline": "Pays the premium, holds the right.",
+            "points": [
+              "Can always walk away.",
+              "Worst case: the premium is lost in full.",
+              "Exercising is choosing to use the right."
+            ]
+          },
+          "right": {
+            "label": "Seller (short)",
+            "icon": "seller",
+            "tone": "loss",
+            "tagline": "Receives the premium, carries the obligation.",
+            "points": [
+              "No exit if the buyer exercises.",
+              "Worst case: losses well beyond the premium.",
+              "Assignment is being on the receiving end."
+            ]
+          },
+          "footnote": "This asymmetry is the whole product. The seller was paid up front precisely because they gave up the choice."
+        },
+        {
+          "type": "choice",
+          "prompt": "Before moving on, commit to an answer.",
+          "question": "You buy a call and the underlying finishes below the strike. What must you do at expiry?",
+          "options": [
+            {
+              "text": "Buy the shares at the strike anyway",
+              "correct": false,
+              "explanation": "That would be an obligation — and the buyer never has one. Buying at the strike when the market is cheaper would just lock in a worse price."
+            },
+            {
+              "text": "Nothing. You walk away and the premium is gone",
+              "correct": true,
+              "explanation": "The option is a right, not a duty. When exercising has no benefit, the rational move is to let it expire — losing exactly the premium, no more."
+            },
+            {
+              "text": "Pay the seller the difference",
+              "correct": false,
+              "explanation": "The buyer never owes anything beyond the premium already paid. Open-ended outcomes belong to the seller's side of the contract."
+            }
           ]
         },
         {
           "type": "text",
           "heading": "Four positions, not two",
+          "icon": "split",
           "body": "Every option can be bought or sold, so there are four basic positions. Which one you hold decides what you want the underlying to do — and how badly it can go.",
           "bullets": [
             "Long call — gains if the underlying rises well above the strike.",
@@ -62,6 +107,7 @@
         {
           "type": "text",
           "heading": "What defines a contract",
+          "icon": "contract",
           "body": "Two options on the same company can behave completely differently. These are the fields that make them different.",
           "bullets": [
             "Underlying — the asset the contract refers to.",
@@ -98,19 +144,21 @@
       "order": 2,
       "title": "Payoff at expiry",
       "summary": "Reading a payoff diagram, and where break-even actually sits.",
-      "estimated_minutes": 5,
+      "estimated_minutes": 7,
       "reviewed_by": null,
       "reviewed_on": null,
       "cards": [
         {
           "type": "title",
           "kicker": "Lesson 2",
+          "icon": "chart",
           "title": "Payoff at expiry",
           "subtitle": "At the deadline there is no time left, so an option is worth exactly what it is worth right then."
         },
         {
           "type": "text",
           "heading": "Intrinsic value is all that remains",
+          "icon": "clock",
           "body": "Before expiry an option carries extra value because the underlying might still move. At expiry that possibility is gone. What is left is intrinsic value: the amount by which exercising beats the market, or nothing at all.",
           "bullets": [
             "Call at expiry: underlying price minus strike, or zero — whichever is larger.",
@@ -131,11 +179,24 @@
         {
           "type": "text",
           "heading": "Reading the diagram",
+          "icon": "compass",
           "body": "The horizontal axis is where the underlying finishes at expiry. The vertical axis is profit or loss on the position — the payoff, net of what you paid.",
           "bullets": [
             "The flat section is the region where you simply don't exercise.",
             "The bend sits exactly at the strike.",
             "Break-even is strike plus premium: $105 here. Finishing at $102 still loses money, even though the call is worth exercising."
+          ]
+        },
+        {
+          "type": "explore",
+          "heading": "Drive the long call yourself",
+          "prompt": "Drag the finishing price and watch where the position ends up. Find the exact price where the loss stops being the full premium — and the different price where the trade finally breaks even.",
+          "spot_min": 60,
+          "spot_max": 140,
+          "spot_start": 95,
+          "adjust_strike": true,
+          "legs": [
+            { "kind": "call", "side": "long", "strike": 100, "premium": 5 }
           ]
         },
         {
@@ -151,7 +212,30 @@
         {
           "type": "text",
           "heading": "Payoff, or profit?",
-          "body": "The two words get used loosely. Payoff usually means the value of the contract at expiry, before the premium. Profit subtracts what you paid, or adds what you received. Every diagram in this app plots profit, because that is the number that decides whether the position worked."
+          "icon": "scale",
+          "body": "The two words get used loosely. Payoff usually means the value of the contract at expiry, before the premium. Profit subtracts what you paid, or adds what you received. Every diagram in this app plots profit, because that is the number that decides whether the position worked.",
+          "highlight": "Every chart in this app plots profit — payoff net of the premium."
+        },
+        {
+          "type": "choice",
+          "question": "A call struck at $100 cost $5. The underlying finishes at $103. How did the trade go?",
+          "options": [
+            {
+              "text": "A $3 profit — it finished above the strike",
+              "correct": false,
+              "explanation": "The $3 is the payoff, not the profit. The contract is worth $3 at expiry, but it cost $5 to own — so the position is still $2 underwater."
+            },
+            {
+              "text": "A $2 loss, even though exercising was worth doing",
+              "correct": true,
+              "explanation": "Exercise recovers $3 of the $5 premium, so the net result is −$2. Worth exercising and profitable are not the same thing — that gap is exactly why break-even sits at $105, not $100."
+            },
+            {
+              "text": "A $5 loss — the premium is always gone",
+              "correct": false,
+              "explanation": "The premium is only lost in full when the option expires worthless. Here exercising claws back $3, cutting the loss to $2."
+            }
+          ]
         },
         {
           "type": "payoff",
@@ -189,19 +273,21 @@
       "order": 3,
       "title": "Why use options — and what can go wrong",
       "summary": "Three real reasons people use options, and the honest downside of each.",
-      "estimated_minutes": 6,
+      "estimated_minutes": 8,
       "reviewed_by": null,
       "reviewed_on": null,
       "cards": [
         {
           "type": "title",
           "kicker": "Lesson 3",
+          "icon": "shield",
           "title": "Why use options",
           "subtitle": "Three honest reasons — each with a cost attached."
         },
         {
           "type": "text",
           "heading": "Reason 1 — moving a risk you don't want",
+          "icon": "umbrella",
           "body": "An investor holding shares can buy a put and set a floor under the position. The loss below the strike stops being theirs and becomes the problem of whoever sold the put.",
           "bullets": [
             "The cost is the premium, paid whether or not the protection is ever needed.",
@@ -220,8 +306,21 @@
           ]
         },
         {
+          "type": "explore",
+          "heading": "Test the insurance yourself",
+          "prompt": "You hold shares bought at $100 and a put struck at $95 that cost $4. Drag the finishing price all the way down — the floor holds no matter how far you go. Then look at what the $4 premium does to the upside.",
+          "spot_min": 60,
+          "spot_max": 140,
+          "spot_start": 100,
+          "legs": [
+            { "kind": "underlying", "side": "long", "premium": 100 },
+            { "kind": "put", "side": "long", "strike": 95, "premium": 4 }
+          ]
+        },
+        {
           "type": "text",
           "heading": "Reason 2 — a known worst case",
+          "icon": "lock",
           "body": "Buying an option costs a fixed amount, and that amount is the entire downside. Some people prefer a small, certain, capped loss to a large, uncertain one — even though the capped loss occurs far more often.",
           "bullets": [
             "The premium buys exposure to a move without borrowing money.",
@@ -231,10 +330,33 @@
         {
           "type": "text",
           "heading": "Reason 3 — being paid to take an obligation",
+          "icon": "coins",
           "body": "Sellers receive the premium immediately. Someone has to be on the other side of every option, and that side is compensated for accepting an outcome they do not control.",
           "bullets": [
             "The income is real and arrives up front.",
             "So does the obligation, and it is open-ended in a way the income is not."
+          ]
+        },
+        {
+          "type": "choice",
+          "prompt": "The honest version of the trade-off.",
+          "question": "Which side of an option can lose more than it ever stood to gain?",
+          "options": [
+            {
+              "text": "The buyer — the premium compounds over time",
+              "correct": false,
+              "explanation": "A premium does not compound; once paid it is the buyer's entire downside. Losing it completely is common, but the amount is fixed on day one."
+            },
+            {
+              "text": "The seller — the gain is capped at the premium, the loss is not",
+              "correct": true,
+              "explanation": "A seller's best case is keeping the premium. Their worst case is larger — for an uncovered short call there is no fixed limit at all. That imbalance is why selling options is not a beginner strategy."
+            },
+            {
+              "text": "Neither — the two sides always net to zero",
+              "correct": false,
+              "explanation": "The two sides do net to zero against each other, but that is exactly the point: the seller's unlimited downside is the buyer's unlimited upside. Symmetry between the parties is not symmetry within one side's own risk."
+            }
           ]
         },
         {
@@ -261,6 +383,7 @@
         {
           "type": "text",
           "heading": "What a payoff diagram leaves out",
+          "icon": "question",
           "body": "Every chart here assumes a frictionless world. Real trading adds costs and complications, and they move break-even against you.",
           "bullets": [
             "The bid/ask spread — you buy at the higher price and sell at the lower one.",

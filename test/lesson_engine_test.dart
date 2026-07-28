@@ -9,6 +9,7 @@ import 'package:optionsschool/data/models/lesson_progress.dart';
 import 'package:optionsschool/data/repositories/lesson_repo.dart';
 import 'package:optionsschool/features/learn/lesson_player_screen.dart';
 import 'package:optionsschool/features/learn/widgets/lesson_card_view.dart';
+import 'package:optionsschool/features/learn/widgets/lesson_icons.dart';
 import 'package:optionsschool/pricing/payoff.dart';
 import 'package:optionsschool/providers/lesson_providers.dart';
 import 'package:optionsschool/providers/progress_controller.dart';
@@ -117,6 +118,65 @@ void main() {
           isTrue,
           reason: card.heading,
         );
+      }
+    });
+
+    test('explore cards start inside their own price range', () {
+      final Iterable<ExploreCard> explores = lessons
+          .expand((Lesson l) => l.cards)
+          .whereType<ExploreCard>();
+      expect(explores, isNotEmpty);
+
+      for (final ExploreCard card in explores) {
+        expect(card.spotMax, greaterThan(card.spotMin), reason: card.heading);
+        expect(card.spotStart, inInclusiveRange(card.spotMin, card.spotMax));
+        expect(
+          strategyProfit(card.legs, card.spotStart).isFinite,
+          isTrue,
+          reason: card.heading,
+        );
+      }
+    });
+
+    test(
+      'choice cards have exactly one right answer and explain every option',
+      () {
+        final Iterable<ChoiceCard> choices = lessons
+            .expand((Lesson l) => l.cards)
+            .whereType<ChoiceCard>();
+        expect(choices, isNotEmpty);
+
+        for (final ChoiceCard card in choices) {
+          expect(
+            card.options.where((ChoiceOption o) => o.isCorrect),
+            hasLength(1),
+            reason: card.question,
+          );
+          for (final ChoiceOption option in card.options) {
+            // Wrong answers teach too — an unexplained option is a content bug.
+            expect(option.explanation, isNotEmpty, reason: option.text);
+          }
+        }
+      },
+    );
+
+    test('every icon named in content exists in the icon set', () {
+      // Icon fonts are tree-shaken, so an unknown name would silently render
+      // the fallback glyph. Catch the typo here instead of on a device.
+      final Set<String> known = knownLessonIconNames.toSet();
+      final List<String?> used = <String?>[
+        for (final Lesson lesson in lessons)
+          for (final LessonCard card in lesson.cards) ...switch (card) {
+            final TitleCard c => <String?>[c.icon],
+            final TextCard c => <String?>[c.icon],
+            final TermCard c => <String?>[c.icon],
+            final CompareCard c => <String?>[c.left.icon, c.right.icon],
+            _ => const <String?>[],
+          },
+      ];
+
+      for (final String? name in used.whereType<String>()) {
+        expect(known, contains(name));
       }
     });
   });
@@ -292,6 +352,84 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.textContaining('no fixed maximum loss'), findsOneWidget);
+  });
+
+  testWidgets('a choice card reveals nothing until the learner answers', (
+    WidgetTester tester,
+  ) async {
+    const ChoiceCard card = ChoiceCard(
+      question: 'What is a buyer\'s worst case?',
+      options: <ChoiceOption>[
+        ChoiceOption(
+          text: 'Losing the whole premium',
+          isCorrect: true,
+          explanation: 'The premium is the entire downside for a buyer.',
+        ),
+        ChoiceOption(
+          text: 'Unlimited losses',
+          isCorrect: false,
+          explanation: 'Open-ended losses belong to the seller.',
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      const MaterialApp(home: Scaffold(body: LessonCardView(card: card))),
+    );
+    await tester.pumpAndSettle();
+
+    // Committing to an answer comes before any explanation.
+    expect(find.textContaining('Pick one'), findsOneWidget);
+    expect(find.textContaining('entire downside'), findsNothing);
+
+    await tester.tap(find.text('Unlimited losses'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Not that one'), findsOneWidget);
+    expect(find.textContaining('belong to the seller'), findsOneWidget);
+
+    await tester.tap(find.text('Losing the whole premium'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('That one is right'), findsOneWidget);
+    expect(find.textContaining('entire downside'), findsOneWidget);
+  });
+
+  testWidgets('the explorer recomputes the readout as the price moves', (
+    WidgetTester tester,
+  ) async {
+    const ExploreCard card = ExploreCard(
+      heading: 'Drive the long call',
+      prompt: 'Find break-even.',
+      spotMin: 60,
+      spotMax: 140,
+      spotStart: 80,
+      legs: <StrategyLeg>[
+        StrategyLeg(
+          kind: LegKind.call,
+          side: LegSide.long,
+          strike: 100,
+          premium: 5,
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      const MaterialApp(home: Scaffold(body: LessonCardView(card: card))),
+    );
+    await tester.pumpAndSettle();
+
+    // At $80 the call expires worthless: the loss is the whole $5 premium.
+    expect(find.text('−\$5  loss'), findsOneWidget);
+
+    // Drag the underlying slider to its maximum, $140: profit 140-100-5 = 35.
+    await tester.drag(find.byType(Slider).first, const Offset(400, 0));
+    await tester.pumpAndSettle();
+
+    expect(find.text('+\$35  profit'), findsOneWidget);
+
+    // The simulation label stays put whatever the sliders say (CLAUDE.md rule 4).
+    expect(find.textContaining('Simulation for learning'), findsOneWidget);
   });
 
   group('the card/reel player', () {
