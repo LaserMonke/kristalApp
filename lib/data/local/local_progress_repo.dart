@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../engagement/streak.dart';
 import '../models/lesson_progress.dart';
 import '../repositories/progress_repo.dart';
 
@@ -61,6 +62,24 @@ class LocalProgressRepo implements ProgressRepo {
     );
   }
 
+  String _streakKey(String userId) => 'streak.$userId';
+
   @override
-  Future<void> clear(String userId) => _prefs.remove(_key(userId));
+  Future<StreakState?> loadStreak(String userId) async {
+    final String? raw = _prefs.getString(_streakKey(userId));
+    if (raw == null) return null;
+    return StreakState.fromJson(jsonDecode(raw) as Map<String, dynamic>);
+  }
+
+  @override
+  Future<void> saveStreak({
+    required String userId,
+    required StreakState streak,
+  }) => _prefs.setString(_streakKey(userId), jsonEncode(streak.toJson()));
+
+  @override
+  Future<void> clear(String userId) async {
+    await _prefs.remove(_key(userId));
+    await _prefs.remove(_streakKey(userId));
+  }
 }

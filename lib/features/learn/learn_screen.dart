@@ -9,6 +9,7 @@ import '../../core/widgets/theme_toggle_button.dart';
 import '../../data/models/app_user.dart';
 import '../../providers/auth_controller.dart';
 import '../../providers/lesson_providers.dart';
+import 'widgets/engagement_strip.dart';
 
 /// The Learn tab — the learning path, driven entirely by lesson data.
 class LearnScreen extends ConsumerWidget {
@@ -41,7 +42,9 @@ class LearnScreen extends ConsumerWidget {
               color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
+          const EngagementStrip(),
+          const SizedBox(height: 16),
           const DisclaimerBanner(
             text: Disclaimers.noAdviceShort,
             icon: Icons.info_outline,

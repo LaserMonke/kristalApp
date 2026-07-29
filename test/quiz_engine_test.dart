@@ -11,6 +11,7 @@ import 'package:optionsschool/data/models/lesson_progress.dart';
 import 'package:optionsschool/data/models/quiz.dart';
 import 'package:optionsschool/data/repositories/lesson_repo.dart';
 import 'package:optionsschool/data/repositories/progress_repo.dart';
+import 'package:optionsschool/engagement/streak.dart';
 import 'package:optionsschool/features/quiz/quiz_screen.dart';
 import 'package:optionsschool/providers/auth_controller.dart';
 import 'package:optionsschool/providers/lesson_providers.dart';
@@ -301,7 +302,9 @@ void main() {
           .value!['one']!;
       expect(result.correctAnswers, 4);
       expect(result.quizAttempts, 2);
-      expect(result.pointsEarned, 40);
+      // Best attempt: 4 × 10 per correct + 15 perfect bonus, no deck points
+      // because the deck was never completed in this test.
+      expect(result.pointsEarned, 55);
     });
 
     test('an improved retake replaces the old score', () async {
@@ -760,6 +763,7 @@ class _MemoryProgressRepo implements ProgressRepo {
   _MemoryProgressRepo(this.store);
 
   final Map<String, LessonProgress> store;
+  StreakState? streak;
 
   @override
   Future<Map<String, LessonProgress>> loadAll(String userId) async =>
@@ -786,5 +790,19 @@ class _MemoryProgressRepo implements ProgressRepo {
   );
 
   @override
-  Future<void> clear(String userId) async => store.clear();
+  Future<StreakState?> loadStreak(String userId) async => streak;
+
+  @override
+  Future<void> saveStreak({
+    required String userId,
+    required StreakState streak,
+  }) async {
+    this.streak = streak;
+  }
+
+  @override
+  Future<void> clear(String userId) async {
+    store.clear();
+    streak = null;
+  }
 }

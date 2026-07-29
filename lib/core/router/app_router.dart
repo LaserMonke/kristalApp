@@ -8,6 +8,7 @@ import '../../features/leaderboard/leaderboard_screen.dart';
 import '../../features/learn/learn_screen.dart';
 import '../../features/learn/lesson_player_screen.dart';
 import '../../features/onboarding/disclaimer_screen.dart';
+import '../../features/profile/certificate_screen.dart';
 import '../../features/profile/profile_screen.dart';
 import '../../features/quiz/quiz_screen.dart';
 import '../../features/sandbox/sandbox_screen.dart';
@@ -32,6 +33,9 @@ abstract final class Routes {
   /// The graded Q&A that follows a lesson. Also full-screen: answering a
   /// question should not compete with the tab bar for attention.
   static const String quiz = '/lesson/:lessonId/quiz';
+
+  /// The completion certificate (or the checklist on the way to it).
+  static const String certificate = '/certificate';
 
   static String lessonPath(String lessonId) => '/lesson/$lessonId';
 
@@ -109,6 +113,11 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
         parentNavigatorKey: _rootKey,
         builder: (BuildContext context, GoRouterState state) =>
             QuizScreen(lessonId: state.pathParameters['lessonId'] ?? ''),
+      ),
+      GoRoute(
+        path: Routes.certificate,
+        parentNavigatorKey: _rootKey,
+        builder: (_, _) => const CertificateScreen(),
       ),
       StatefulShellRoute.indexedStack(
         builder:

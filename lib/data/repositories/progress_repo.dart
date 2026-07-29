@@ -1,3 +1,4 @@
+import '../../engagement/streak.dart';
 import '../models/lesson_progress.dart';
 
 /// Learning progress: which lessons are done, Q&A results, points and streak.
@@ -21,6 +22,14 @@ abstract interface class ProgressRepo {
   /// Lifetime points earned by the user.
   Future<int> totalPoints(String userId);
 
-  /// Wipe local progress (used by "reset progress" in Settings).
+  /// The user's daily streak, or null if none has been recorded yet.
+  Future<StreakState?> loadStreak(String userId);
+
+  Future<void> saveStreak({
+    required String userId,
+    required StreakState streak,
+  });
+
+  /// Wipe local progress, streak included ("reset progress" in Settings).
   Future<void> clear(String userId);
 }

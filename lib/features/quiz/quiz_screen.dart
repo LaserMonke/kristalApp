@@ -5,6 +5,9 @@ import 'package:go_router/go_router.dart';
 import '../../core/router/app_router.dart';
 import '../../data/models/lesson.dart';
 import '../../data/models/quiz.dart';
+import '../../engagement/levels.dart';
+import '../../engagement/streak.dart';
+import '../../providers/engagement_providers.dart';
 import '../../providers/lesson_providers.dart';
 import '../../providers/progress_controller.dart';
 import 'widgets/quiz_question_view.dart';
@@ -30,6 +33,12 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
   int _index = 0;
   bool _finished = false;
   int _attempts = 1;
+
+  /// Engagement outcome of the run just recorded, captured at save time so
+  /// the results screen reports exactly what THIS run changed.
+  int _pointsGained = 0;
+  Level? _reachedLevel;
+  int _streakDays = 0;
 
   /// True while the result is being written. Guards against a double-tap on
   /// "See results" recording the same run twice, which would count two
@@ -86,6 +95,12 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
   Future<void> _complete(Lesson lesson) async {
     _saving = true;
 
+    // Points and level before the write, so the delta credited on the results
+    // screen is what this run actually changed (a weaker retake changes
+    // nothing — the best attempt is what counts).
+    final int pointsBefore = ref.read(totalPointsProvider);
+    final Level levelBefore = levelForPoints(pointsBefore);
+
     final QuizSession session = _session!;
     await ref
         .read(progressControllerProvider.notifier)
@@ -96,11 +111,19 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
         );
     if (!mounted) return;
 
+    final int pointsAfter = ref.read(totalPointsProvider);
+    final Level levelAfter = levelForPoints(pointsAfter);
+    final StreakState streak =
+        ref.read(streakControllerProvider).value ?? StreakState.initial;
+
     setState(() {
       _finished = true;
       _attempts =
           ref.read(progressControllerProvider).value?[lesson.id]?.quizAttempts ??
           1;
+      _pointsGained = pointsAfter - pointsBefore;
+      _reachedLevel = levelAfter.rank > levelBefore.rank ? levelAfter : null;
+      _streakDays = streak.displayCurrent(DateTime.now());
     });
   }
 
@@ -172,6 +195,9 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
             lessonTitle: lesson.title,
             session: _session!,
             attempts: _attempts,
+            pointsGained: _pointsGained,
+            reachedLevel: _reachedLevel,
+            streakDays: _streakDays,
             onRetry: () => _retry(lesson),
             onReviewLesson: _reviewLesson,
             onDone: _close,

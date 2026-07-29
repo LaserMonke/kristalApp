@@ -3,12 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/models/app_user.dart';
 import '../data/models/lesson_progress.dart';
 import '../data/repositories/progress_repo.dart';
+import '../engagement/points.dart';
 import 'auth_controller.dart';
+import 'engagement_providers.dart';
 import 'repository_providers.dart';
-
-/// Placeholder award per correct answer until Phase 5 defines the real
-/// points/streak/level scheme.
-const int _pointsPerCorrectAnswer = 10;
 
 /// Every lesson's progress for the signed-in learner, keyed by lesson id.
 ///
@@ -44,6 +42,9 @@ class ProgressController extends AsyncNotifier<Map<String, LessonProgress>> {
         lastOpenedAt: DateTime.now(),
       ),
     );
+    // A NEW card read is real learning, so it keeps the streak alive; swiping
+    // back through old cards (caught by the guard above) does not.
+    await _touchStreak();
   }
 
   /// Marks the deck finished. The Q&A (Phase 2) sets [quizCompleted]
@@ -59,10 +60,16 @@ class ProgressController extends AsyncNotifier<Map<String, LessonProgress>> {
       current.copyWith(
         cardsViewed: totalCards,
         lessonCompleted: true,
+        pointsEarned: lessonPoints(
+          deckCompleted: true,
+          correctAnswers: current.correctAnswers,
+          totalQuestions: current.totalQuestions,
+        ),
         lastOpenedAt: now,
         completedAt: current.completedAt ?? now,
       ),
     );
+    await _touchStreak();
   }
 
   /// Records a finished run through a lesson's Q&A.
@@ -79,22 +86,26 @@ class ProgressController extends AsyncNotifier<Map<String, LessonProgress>> {
     final LessonProgress current = _existing(lessonId);
     final bool improved = correct > current.correctAnswers ||
         current.totalQuestions != total;
+    final int bestCorrect = improved ? correct : current.correctAnswers;
 
     await _write(
       current.copyWith(
         quizCompleted: true,
-        correctAnswers: improved ? correct : current.correctAnswers,
+        correctAnswers: bestCorrect,
         totalQuestions: total,
         quizAttempts: current.quizAttempts + 1,
-        // Phase 5 owns the real points scheme; this is a placeholder so the
-        // field is populated consistently until then.
-        pointsEarned: improved
-            ? correct * _pointsPerCorrectAnswer
-            : current.pointsEarned,
+        // Recomputed from the best recorded attempt, so a weaker retake can
+        // never lower a lesson's points (see lib/engagement/points.dart).
+        pointsEarned: lessonPoints(
+          deckCompleted: current.lessonCompleted,
+          correctAnswers: bestCorrect,
+          totalQuestions: total,
+        ),
         lastOpenedAt: DateTime.now(),
         completedAt: current.completedAt ?? DateTime.now(),
       ),
     );
+    await _touchStreak();
   }
 
   /// Wipes progress for the current learner (Settings → reset).
@@ -107,6 +118,12 @@ class ProgressController extends AsyncNotifier<Map<String, LessonProgress>> {
       <String, LessonProgress>{},
     );
   }
+
+  /// Registers today as an active day for the streak (no-op if already
+  /// counted). Lives here so every kind of learning activity feeds the same
+  /// streak without each screen having to remember to.
+  Future<void> _touchStreak() =>
+      ref.read(streakControllerProvider.notifier).registerActivity();
 
   Future<void> _write(LessonProgress progress) async {
     final String? userId = _userId;

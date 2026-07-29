@@ -6,7 +6,11 @@ import '../../core/widgets/theme_toggle_button.dart';
 import '../../data/models/app_user.dart';
 import '../../data/models/education_level.dart';
 import '../../providers/auth_controller.dart';
+import '../../providers/engagement_providers.dart';
+import '../../providers/progress_controller.dart';
 import '../../providers/theme_controller.dart';
+import 'widgets/progress_section.dart';
+import 'widgets/reminders_section.dart';
 
 /// Profile and settings: identity, appearance, and the always-reachable
 /// disclaimer required by CLAUDE.md rule 1.
@@ -27,6 +31,14 @@ class ProfileScreen extends ConsumerWidget {
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
         children: <Widget>[
           if (user != null) _IdentityCard(user: user),
+          const SizedBox(height: 24),
+          _SectionLabel('Progress', theme: theme),
+          const SizedBox(height: 8),
+          const ProgressSection(),
+          const SizedBox(height: 24),
+          _SectionLabel('Reminders', theme: theme),
+          const SizedBox(height: 8),
+          const RemindersSection(),
           const SizedBox(height: 24),
           _SectionLabel('Appearance', theme: theme),
           const SizedBox(height: 8),
@@ -62,6 +74,12 @@ class ProfileScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 24),
           OutlinedButton.icon(
+            onPressed: () => _confirmReset(context, ref),
+            icon: const Icon(Icons.restart_alt),
+            label: const Text('Reset learning progress'),
+          ),
+          const SizedBox(height: 10),
+          OutlinedButton.icon(
             onPressed: () => ref.read(authControllerProvider.notifier).signOut(),
             icon: const Icon(Icons.logout),
             label: const Text('Sign out'),
@@ -77,6 +95,37 @@ class ProfileScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  /// Destructive and irreversible, so it asks first and says exactly what
+  /// goes: lesson progress, Q&A scores, points and the streak on this device.
+  Future<void> _confirmReset(BuildContext context, WidgetRef ref) async {
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        title: const Text('Reset learning progress?'),
+        content: const Text(
+          'Lesson progress, Q&A scores, points and your streak on this '
+          'device will be wiped. This cannot be undone.',
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Keep my progress'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Reset'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    await ref.read(progressControllerProvider.notifier).reset();
+    // The streak lives beside the lesson records; reload it from the cleared
+    // store so the UI drops to zero immediately.
+    ref.invalidate(streakControllerProvider);
   }
 
   void _showDisclaimers(BuildContext context) {

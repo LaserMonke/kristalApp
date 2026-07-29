@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/disclaimer_text.dart';
+import '../../../core/widgets/level_badge_icons.dart';
 import '../../../data/models/quiz.dart';
+import '../../../engagement/levels.dart';
 
 /// The end of a Q&A run.
 ///
@@ -15,6 +17,9 @@ class QuizResultsView extends StatelessWidget {
     required this.lessonTitle,
     required this.session,
     required this.attempts,
+    required this.pointsGained,
+    required this.streakDays,
+    this.reachedLevel,
     required this.onRetry,
     required this.onReviewLesson,
     required this.onDone,
@@ -27,6 +32,16 @@ class QuizResultsView extends StatelessWidget {
   /// Including this one. Shown so a hard-won score is not passed off as a
   /// first-time result.
   final int attempts;
+
+  /// Points this run added. Zero on a retake that did not beat the best
+  /// score — reported as exactly that, not dressed up.
+  final int pointsGained;
+
+  /// The streak after this run counted toward today.
+  final int streakDays;
+
+  /// Set only when this run pushed the learner over a level threshold.
+  final Level? reachedLevel;
 
   final VoidCallback onRetry;
   final VoidCallback onReviewLesson;
@@ -91,6 +106,12 @@ class QuizResultsView extends StatelessWidget {
             ),
           ),
         ],
+        const SizedBox(height: 20),
+        _EarnedPanel(
+          pointsGained: pointsGained,
+          streakDays: streakDays,
+          reachedLevel: reachedLevel,
+        ),
         const SizedBox(height: 28),
         Text('Question by question', style: theme.textTheme.titleSmall),
         const SizedBox(height: 12),
@@ -126,6 +147,115 @@ class QuizResultsView extends StatelessWidget {
           icon: Icons.info_outline,
         ),
       ],
+    );
+  }
+}
+
+/// What this run earned: points, the streak, and (rarely) a new level.
+///
+/// Honest by construction — a retake that did not improve the best score says
+/// so instead of re-crediting old points, and a level-up appears only when a
+/// threshold was actually crossed on this run.
+class _EarnedPanel extends StatelessWidget {
+  const _EarnedPanel({
+    required this.pointsGained,
+    required this.streakDays,
+    required this.reachedLevel,
+  });
+
+  final int pointsGained;
+  final int streakDays;
+  final Level? reachedLevel;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final Level? level = reachedLevel;
+
+    final String pointsLine = pointsGained > 0
+        ? '+$pointsGained points'
+        : 'No new points — your best score already counts';
+
+    return Semantics(
+      liveRegion: true,
+      label: <String>[
+        pointsLine,
+        if (streakDays > 0)
+          'Streak: $streakDays ${streakDays == 1 ? 'day' : 'days'}.',
+        if (level != null) 'New level: ${level.name}.',
+      ].join(' '),
+      excludeSemantics: true,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14),
+          color: theme.colorScheme.surfaceContainerHighest,
+          border: Border.all(
+            color: theme.colorScheme.outline.withValues(alpha: 0.6),
+          ),
+        ),
+        child: Column(
+          children: <Widget>[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                Icon(
+                  Icons.stars_outlined,
+                  size: 18,
+                  color: theme.colorScheme.primary,
+                ),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    pointsLine,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: pointsGained > 0 ? FontWeight.w600 : null,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            if (streakDays > 0) ...<Widget>[
+              const SizedBox(height: 6),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Icon(
+                    Icons.local_fire_department_outlined,
+                    size: 18,
+                    color: theme.colorScheme.primary,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '$streakDays-day streak',
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                ],
+              ),
+            ],
+            if (level != null) ...<Widget>[
+              const SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Icon(
+                    levelBadgeIcon(level.iconName),
+                    size: 20,
+                    color: theme.colorScheme.primary,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Level up: ${level.name}',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }
