@@ -39,39 +39,6 @@ class StrategyPricerView extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
       children: <Widget>[
-        const MarketInputsPanel(),
-        const SizedBox(height: 14),
-        _PresetPicker(selected: strategy.preset, onSelected: controller.selectPreset),
-        const SizedBox(height: 10),
-        Text(
-          strategy.preset.blurb,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-            height: 1.5,
-          ),
-        ),
-        const SizedBox(height: 14),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text('Legs', style: theme.textTheme.titleMedium),
-                const SizedBox(height: 8),
-                for (int i = 0; i < strategy.legs.length; i++)
-                  _LegRow(
-                    spec: strategy.legs[i],
-                    premium: legs[i].premium,
-                    onStrikeChanged: (double v) => controller.setLegStrike(i, v),
-                  ),
-                const Divider(height: 24),
-                _CostRow(cost: cost),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 14),
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -106,6 +73,39 @@ class StrategyPricerView extends ConsumerWidget {
                     ],
                   ),
                 ],
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 14),
+        const MarketInputsPanel(),
+        const SizedBox(height: 14),
+        _PresetPicker(selected: strategy.preset, onSelected: controller.selectPreset),
+        const SizedBox(height: 10),
+        Text(
+          strategy.preset.blurb,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+            height: 1.5,
+          ),
+        ),
+        const SizedBox(height: 14),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text('Legs', style: theme.textTheme.titleMedium),
+                const SizedBox(height: 8),
+                for (int i = 0; i < strategy.legs.length; i++)
+                  _LegRow(
+                    spec: strategy.legs[i],
+                    premium: legs[i].premium,
+                    onStrikeChanged: (double v) => controller.setLegStrike(i, v),
+                  ),
+                const Divider(height: 24),
+                _CostRow(cost: cost),
               ],
             ),
           ),

@@ -6,7 +6,7 @@ import '../../providers/lesson_providers.dart';
 import '../../providers/sandbox_tutorial_controller.dart';
 import 'single_option_pricer_view.dart';
 import 'strategy_pricer_view.dart';
-import 'widgets/sandbox_tutorial_sheet.dart';
+import 'widgets/sandbox_tutorial.dart';
 import 'widgets/strategy_locked_panel.dart';
 
 /// The Sandbox tab — the Phase 4 interactive pricer. "Single option" prices
@@ -30,7 +30,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> {
   void _maybeShowTutorial() {
     if (!mounted) return;
     if (ref.read(sandboxTutorialSeenProvider)) return;
-    SandboxTutorialSheet.show(context);
+    SandboxTutorial.show(context);
   }
 
   @override
@@ -49,7 +49,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> {
             IconButton(
               tooltip: 'How the Sandbox works',
               icon: const Icon(Icons.help_outline),
-              onPressed: () => SandboxTutorialSheet.show(context),
+              onPressed: () => SandboxTutorial.show(context),
             ),
             const ThemeToggleButton(),
             const SizedBox(width: 4),

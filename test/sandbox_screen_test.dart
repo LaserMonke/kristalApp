@@ -127,6 +127,42 @@ void main() {
     expect(find.text('MARKET INPUTS'), findsOneWidget);
   });
 
+  testWidgets('the payoff graph sits above the market inputs panel on Single option', (
+    WidgetTester tester,
+  ) async {
+    await pump(tester);
+
+    final double payoffTop = tester.getTopLeft(find.text('Payoff at expiry')).dy;
+    final double marketInputsTop = tester.getTopLeft(find.text('MARKET INPUTS')).dy;
+    expect(payoffTop, lessThan(marketInputsTop));
+  });
+
+  testWidgets('the payoff graph sits above the market inputs panel on Strategy', (
+    WidgetTester tester,
+  ) async {
+    await pump(
+      tester,
+      overrides: <Override>[
+        progressControllerProvider.overrideWith(
+          () => _SeededProgress(<String, LessonProgress>{
+            'options-strategies': const LessonProgress(
+              lessonId: 'options-strategies',
+              lessonCompleted: true,
+              quizCompleted: true,
+            ),
+          }),
+        ),
+      ],
+    );
+
+    await tester.tap(find.text('Strategy'));
+    await tester.pumpAndSettle();
+
+    final double payoffTop = tester.getTopLeft(find.text('Combined payoff at expiry')).dy;
+    final double marketInputsTop = tester.getTopLeft(find.text('MARKET INPUTS')).dy;
+    expect(payoffTop, lessThan(marketInputsTop));
+  });
+
   group('the Strategy tab is gated on the strategies lesson', () {
     testWidgets('shows a locked panel, not the preset picker, by default', (
       WidgetTester tester,
@@ -187,43 +223,130 @@ void main() {
     });
   });
 
-  group('the one-time tutorial', () {
+  group('the one-time tutorial walkthrough', () {
     testWidgets('shows automatically the first time the Sandbox opens', (
       WidgetTester tester,
     ) async {
       await pump(tester, prefsSeed: const <String, Object>{});
 
-      expect(find.text('Welcome to the Sandbox'), findsOneWidget);
+      expect(find.text('Sandbox walkthrough'), findsOneWidget);
+      expect(find.text('Meet the payoff graph'), findsOneWidget);
     });
 
     testWidgets('does not reappear once already seen', (WidgetTester tester) async {
       await pump(tester);
-      expect(find.text('Welcome to the Sandbox'), findsNothing);
+      expect(find.text('Sandbox walkthrough'), findsNothing);
     });
 
-    testWidgets('dismissing it records that it has been seen', (WidgetTester tester) async {
+    testWidgets('the opening step animates spot to its endpoint and labels it', (
+      WidgetTester tester,
+    ) async {
+      await pump(tester, prefsSeed: const <String, Object>{});
+
+      // pumpAndSettle inside pump() already rides out the finite (1.8s)
+      // step animation, so the demo should be resting at the step's "to"
+      // value, not still mid-sweep.
+      expect(find.text('Spot: \$130'), findsOneWidget);
+    });
+
+    testWidgets('Next advances through every step in order, ending on Got it', (
+      WidgetTester tester,
+    ) async {
+      await pump(tester, prefsSeed: const <String, Object>{});
+
+      const List<String> headings = <String>[
+        'Meet the payoff graph',
+        'Volatility',
+        'Time to expiry',
+        'Risk-free rate',
+        'Beyond one leg',
+      ];
+
+      for (int i = 0; i < headings.length; i++) {
+        expect(find.text(headings[i]), findsOneWidget, reason: 'step $i');
+        if (i < headings.length - 1) {
+          expect(find.widgetWithText(FilledButton, 'Next'), findsOneWidget);
+          await tester.tap(find.widgetWithText(FilledButton, 'Next'));
+          await tester.pumpAndSettle();
+        }
+      }
+
+      expect(find.widgetWithText(FilledButton, 'Got it'), findsOneWidget);
+    });
+
+    testWidgets('the closing step previews a straddle rather than animating', (
+      WidgetTester tester,
+    ) async {
+      await pump(tester, prefsSeed: const <String, Object>{});
+
+      for (int i = 0; i < 4; i++) {
+        await tester.tap(find.widgetWithText(FilledButton, 'Next'));
+        await tester.pumpAndSettle();
+      }
+
+      expect(find.text('Beyond one leg'), findsOneWidget);
+      // No field is animating on this step, so no value readout shows.
+      expect(find.textContaining('Spot:'), findsNothing);
+      expect(find.textContaining('Volatility:'), findsNothing);
+    });
+
+    testWidgets('Back returns to the previous step', (WidgetTester tester) async {
+      await pump(tester, prefsSeed: const <String, Object>{});
+
+      await tester.tap(find.widgetWithText(FilledButton, 'Next'));
+      await tester.pumpAndSettle();
+      expect(find.text('Volatility'), findsOneWidget);
+
+      await tester.tap(find.widgetWithText(OutlinedButton, 'Back'));
+      await tester.pumpAndSettle();
+      expect(find.text('Meet the payoff graph'), findsOneWidget);
+    });
+
+    testWidgets('finishing on the last step records that it has been seen', (
+      WidgetTester tester,
+    ) async {
       final ProviderContainer container = await pump(
         tester,
         prefsSeed: const <String, Object>{},
       );
 
-      await tester.tap(find.text('Got it'));
+      for (int i = 0; i < 4; i++) {
+        await tester.tap(find.widgetWithText(FilledButton, 'Next'));
+        await tester.pumpAndSettle();
+      }
+      await tester.tap(find.widgetWithText(FilledButton, 'Got it'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Welcome to the Sandbox'), findsNothing);
+      expect(find.text('Sandbox walkthrough'), findsNothing);
       expect(container.read(sandboxTutorialSeenProvider), isTrue);
     });
 
-    testWidgets('the help icon reopens it even after it has been seen', (
+    testWidgets('closing early also records that it has been seen', (
+      WidgetTester tester,
+    ) async {
+      final ProviderContainer container = await pump(
+        tester,
+        prefsSeed: const <String, Object>{},
+      );
+
+      await tester.tap(find.byTooltip('Close'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Sandbox walkthrough'), findsNothing);
+      expect(container.read(sandboxTutorialSeenProvider), isTrue);
+    });
+
+    testWidgets('the help icon reopens it, back at the first step', (
       WidgetTester tester,
     ) async {
       await pump(tester);
-      expect(find.text('Welcome to the Sandbox'), findsNothing);
+      expect(find.text('Sandbox walkthrough'), findsNothing);
 
       await tester.tap(find.byTooltip('How the Sandbox works'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Welcome to the Sandbox'), findsOneWidget);
+      expect(find.text('Sandbox walkthrough'), findsOneWidget);
+      expect(find.text('Meet the payoff graph'), findsOneWidget);
     });
   });
 

@@ -35,6 +35,36 @@ class SingleOptionPricerView extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
       children: <Widget>[
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text('Payoff at expiry', style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 4),
+                Text(
+                  'If bought today at the price below and held to expiry.',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Consumer(
+                  builder: (BuildContext context, WidgetRef ref, _) =>
+                      PayoffDiagram(
+                        legs: ref.watch(singleOptionLegsProvider),
+                        spotMin: spotMin,
+                        spotMax: spotMax,
+                        markerSpot: env.spot,
+                        animate: false,
+                      ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 14),
         const MarketInputsPanel(),
         const SizedBox(height: 14),
         Card(
@@ -72,36 +102,6 @@ class SingleOptionPricerView extends ConsumerWidget {
                 _PriceReadout(quote: quote),
                 const SizedBox(height: 14),
                 _GreeksGrid(quote: quote),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 14),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text('Payoff at expiry', style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 4),
-                Text(
-                  'If bought today at the price above and held to expiry.',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Consumer(
-                  builder: (BuildContext context, WidgetRef ref, _) =>
-                      PayoffDiagram(
-                        legs: ref.watch(singleOptionLegsProvider),
-                        spotMin: spotMin,
-                        spotMax: spotMax,
-                        markerSpot: env.spot,
-                        animate: false,
-                      ),
-                ),
               ],
             ),
           ),
