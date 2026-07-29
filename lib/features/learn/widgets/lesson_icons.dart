@@ -34,6 +34,10 @@ const Map<String, IconData> _lessonIcons = <String, IconData>{
   'lock': Icons.lock_outline,
   'flag': Icons.flag_outlined,
   'school': Icons.school_outlined,
+  'formula': Icons.calculate_outlined,
+  'insights': Icons.insights_outlined,
+  'waves': Icons.waves_outlined,
+  'strategy': Icons.alt_route_outlined,
 };
 
 const IconData _fallback = Icons.circle_outlined;

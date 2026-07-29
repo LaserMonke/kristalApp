@@ -11,6 +11,7 @@ import 'package:optionsschool/data/repositories/lesson_repo.dart';
 import 'package:optionsschool/features/learn/lesson_player_screen.dart';
 import 'package:optionsschool/features/learn/widgets/lesson_card_view.dart';
 import 'package:optionsschool/features/learn/widgets/lesson_icons.dart';
+import 'package:optionsschool/pricing/black_scholes.dart';
 import 'package:optionsschool/pricing/payoff.dart';
 import 'package:optionsschool/providers/lesson_providers.dart';
 import 'package:optionsschool/providers/progress_controller.dart';
@@ -27,11 +28,15 @@ void main() {
     });
 
     test('parses and comes back in path order', () {
-      expect(lessons, hasLength(3));
-      expect(
-        lessons.map((Lesson l) => l.id),
-        <String>['what-is-an-option', 'payoff-at-expiry', 'why-use-options'],
-      );
+      expect(lessons, hasLength(6));
+      expect(lessons.map((Lesson l) => l.id), <String>[
+        'what-is-an-option',
+        'payoff-at-expiry',
+        'why-use-options',
+        'black-scholes-price',
+        'the-greeks',
+        'options-strategies',
+      ]);
       for (int i = 1; i < lessons.length; i++) {
         expect(lessons[i].order, greaterThan(lessons[i - 1].order));
       }
@@ -140,6 +145,54 @@ void main() {
         );
       }
     });
+
+    test('pricer explore cards start inside their own price range', () {
+      final Iterable<PricerExploreCard> explores = lessons
+          .expand((Lesson l) => l.cards)
+          .whereType<PricerExploreCard>();
+      expect(explores, isNotEmpty);
+
+      for (final PricerExploreCard card in explores) {
+        expect(card.spotMax, greaterThan(card.spotMin), reason: card.heading);
+        expect(card.spotStart, inInclusiveRange(card.spotMin, card.spotMax), reason: card.heading);
+        expect(card.strike, greaterThan(0), reason: card.heading);
+        expect(card.volatility, greaterThan(0), reason: card.heading);
+        expect(card.timeToExpiry, greaterThan(0), reason: card.heading);
+
+        final BsmQuote quote = bsmQuote(
+          card.optionType,
+          BsmInputs(
+            spot: card.spotStart,
+            strike: card.strike,
+            rate: card.rate,
+            volatility: card.volatility,
+            timeToExpiry: card.timeToExpiry,
+          ),
+        );
+        expect(quote.price.isFinite, isTrue, reason: card.heading);
+      }
+    });
+
+    test(
+      'graded multiple-choice answers are not all in the same position',
+      () {
+        // Regression guard: every quiz used to put the correct choice first,
+        // which let a learner clear the Q&A without reading a single option.
+        final List<int> correctIndices = <int>[
+          for (final Lesson lesson in lessons)
+            for (final QuizQuestion q in lesson.questions)
+              if (q is MultipleChoiceQuestion)
+                q.choices.indexWhere((QuizChoice c) => c.isCorrect),
+        ];
+
+        expect(correctIndices, isNotEmpty);
+        expect(
+          correctIndices.toSet().length,
+          greaterThan(1),
+          reason: 'every correct answer sits at position $correctIndices',
+        );
+      },
+    );
 
     test(
       'choice cards have exactly one right answer and explain every option',

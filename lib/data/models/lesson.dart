@@ -1,3 +1,4 @@
+import '../../pricing/black_scholes.dart' show OptionType;
 import '../../pricing/payoff.dart';
 import 'quiz.dart';
 
@@ -85,6 +86,7 @@ sealed class LessonCard {
       'term' => TermCard.fromJson(json),
       'payoff' => PayoffCard.fromJson(json),
       'explore' => ExploreCard.fromJson(json),
+      'pricer_explore' => PricerExploreCard.fromJson(json),
       'choice' => ChoiceCard.fromJson(json),
       'compare' => CompareCard.fromJson(json),
       'warning' => WarningCard.fromJson(json),
@@ -280,6 +282,104 @@ class ExploreCard extends LessonCard {
         _legFromJson(leg as Map<String, dynamic>),
     ],
   );
+}
+
+/// Which figure a [PricerExploreCard] puts in the spotlight.
+///
+/// The card always shows the full price and every Greek — this only decides
+/// which tile is visually emphasised, so the lesson text and the number the
+/// learner is watching agree with each other.
+enum PricerGreek { price, delta, gamma, vega, theta, rho }
+
+/// A live Black-Scholes-Merton quote the learner drives with sliders.
+///
+/// Unlike [ExploreCard] — which replays the *at-expiry* payoff arithmetic
+/// from `lib/pricing/payoff.dart` — this card calls the pricing model itself
+/// (`lib/pricing/black_scholes.dart`) with whatever inputs the learner has
+/// set, live. It is how the Black-Scholes and Greeks lessons make an
+/// otherwise abstract formula something a learner drags around and watches
+/// react, rather than a wall of symbols to take on faith.
+class PricerExploreCard extends LessonCard {
+  const PricerExploreCard({
+    required this.heading,
+    required this.prompt,
+    required this.optionType,
+    required this.strike,
+    required this.volatility,
+    required this.timeToExpiry,
+    required this.rate,
+    required this.spotMin,
+    required this.spotMax,
+    required this.spotStart,
+    this.focus = PricerGreek.price,
+    this.adjustVolatility = false,
+    this.adjustTimeToExpiry = false,
+    this.currencySymbol = r'$',
+  }) : assert(spotMax > spotMin, 'spotMax must exceed spotMin'),
+       assert(strike > 0, 'strike must be positive'),
+       assert(volatility > 0, 'volatility must be positive'),
+       assert(timeToExpiry > 0, 'timeToExpiry must be positive');
+
+  final String heading;
+  final String prompt;
+  final OptionType optionType;
+
+  /// Fixed for this card — only the market inputs below move.
+  final double strike;
+
+  /// Starting volatility; itself draggable when [adjustVolatility] is true.
+  final double volatility;
+
+  /// Starting time to expiry, in years; draggable when [adjustTimeToExpiry].
+  final double timeToExpiry;
+
+  /// Risk-free rate. Fixed — Rho is covered, but with a slider on every
+  /// card the learner would be juggling five at once.
+  final double rate;
+
+  final double spotMin;
+  final double spotMax;
+  final double spotStart;
+
+  final PricerGreek focus;
+  final bool adjustVolatility;
+  final bool adjustTimeToExpiry;
+  final String currencySymbol;
+
+  @override
+  String get semanticLabel =>
+      'Interactive pricer. $heading. $prompt Drag the sliders to change the '
+      'market inputs; the theoretical price and the Greeks are read out live.';
+
+  factory PricerExploreCard.fromJson(Map<String, dynamic> json) =>
+      PricerExploreCard(
+        heading: json['heading'] as String,
+        prompt: json['prompt'] as String,
+        optionType: switch (json['option_type'] as String) {
+          'call' => OptionType.call,
+          'put' => OptionType.put,
+          final String other =>
+            throw FormatException('Unknown option type "$other"'),
+        },
+        strike: (json['strike'] as num).toDouble(),
+        volatility: (json['volatility'] as num).toDouble(),
+        timeToExpiry: (json['time_to_expiry'] as num).toDouble(),
+        rate: (json['rate'] as num).toDouble(),
+        spotMin: (json['spot_min'] as num).toDouble(),
+        spotMax: (json['spot_max'] as num).toDouble(),
+        spotStart: (json['spot_start'] as num).toDouble(),
+        focus: switch (json['focus'] as String? ?? 'price') {
+          'delta' => PricerGreek.delta,
+          'gamma' => PricerGreek.gamma,
+          'vega' => PricerGreek.vega,
+          'theta' => PricerGreek.theta,
+          'rho' => PricerGreek.rho,
+          _ => PricerGreek.price,
+        },
+        adjustVolatility: json['adjust_volatility'] as bool? ?? false,
+        adjustTimeToExpiry: json['adjust_time'] as bool? ?? false,
+        currencySymbol: json['currency_symbol'] as String? ?? r'$',
+      );
 }
 
 /// A tap-to-check question inside the reel.

@@ -7,6 +7,7 @@ import '../../../pricing/payoff.dart';
 import 'choice_card_view.dart';
 import 'explore_card_view.dart';
 import 'lesson_icons.dart';
+import 'pricer_explore_card_view.dart';
 
 /// Renders one lesson card.
 ///
@@ -26,6 +27,7 @@ class LessonCardView extends StatelessWidget {
       final TermCard c => _TermCardView(card: c),
       final PayoffCard c => _PayoffCardView(card: c),
       final ExploreCard c => ExploreCardView(card: c),
+      final PricerExploreCard c => PricerExploreCardView(card: c),
       final ChoiceCard c => ChoiceCardView(card: c),
       final CompareCard c => _CompareCardView(card: c),
       final WarningCard c => _WarningCardView(card: c),

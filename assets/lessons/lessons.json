@@ -17,14 +17,14 @@
           "prompt": "What does a put option give its holder?",
           "choices": [
             {
-              "text": "The right to sell the underlying at the strike price",
-              "correct": true,
-              "explanation": "A put is the right to sell. It becomes worth exercising when the underlying is below the strike, because selling at the strike then beats selling at the market price."
-            },
-            {
               "text": "The right to buy the underlying at the strike price",
               "correct": false,
               "explanation": "That is a call. Calls and puts point in opposite directions: a call is a right to buy, a put is a right to sell."
+            },
+            {
+              "text": "The right to sell the underlying at the strike price",
+              "correct": true,
+              "explanation": "A put is the right to sell. It becomes worth exercising when the underlying is below the strike, because selling at the strike then beats selling at the market price."
             },
             {
               "text": "An obligation to sell the underlying at the strike price",
@@ -41,11 +41,6 @@
           "prompt": "What can the seller do?",
           "choices": [
             {
-              "text": "Nothing — they must deliver at the strike price",
-              "correct": true,
-              "explanation": "The seller gave up the choice when they took the premium. Once the buyer exercises, the seller has to deliver at the strike regardless of what the market price is."
-            },
-            {
               "text": "Decline, and keep the premium instead",
               "correct": false,
               "explanation": "The premium is payment for accepting the obligation, not a fee that can be forfeited to escape it. There is no opt-out on the seller side."
@@ -54,6 +49,11 @@
               "text": "Exercise their own side of the contract first",
               "correct": false,
               "explanation": "There is no second right to exercise. An option contract has exactly one right, and it belongs to the buyer."
+            },
+            {
+              "text": "Nothing — they must deliver at the strike price",
+              "correct": true,
+              "explanation": "The seller gave up the choice when they took the premium. Once the buyer exercises, the seller has to deliver at the strike regardless of what the market price is."
             }
           ],
           "teaching_note": "This asymmetry is what the premium pays for. It is also why a seller's downside is not capped the way a buyer's is."
@@ -77,14 +77,14 @@
           "prompt": "What outcome suits your position best?",
           "choices": [
             {
-              "text": "The underlying stays above $50 through expiry",
-              "correct": true,
-              "explanation": "Above the strike the put is not worth exercising, so it expires worthless and you keep the premium. That is the whole of your upside."
-            },
-            {
               "text": "The underlying falls well below $50",
               "correct": false,
               "explanation": "That is the outcome that hurts a short put. You would be obliged to buy at $50 something now worth far less, and the loss can be many times the premium received."
+            },
+            {
+              "text": "The underlying stays above $50 through expiry",
+              "correct": true,
+              "explanation": "Above the strike the put is not worth exercising, so it expires worthless and you keep the premium. That is the whole of your upside."
             },
             {
               "text": "The underlying rises as far as possible",
@@ -264,11 +264,6 @@
           "prompt": "What is the most this position can make, and the most it can lose?",
           "choices": [
             {
-              "text": "Make $5 at most; the loss has no fixed limit",
-              "correct": true,
-              "explanation": "The premium is the entire upside. On the downside the loss grows with the underlying, and since there is no ceiling on how far a price can rise, an uncovered short call has no fixed maximum loss."
-            },
-            {
               "text": "Make $5 at most; lose $100 at most",
               "correct": false,
               "explanation": "The $100 strike is not a floor under the loss. If the underlying finishes at $250 the loss is $145 per share, and nothing in the contract stops it going further."
@@ -277,6 +272,11 @@
               "text": "Make and lose the same amount either way",
               "correct": false,
               "explanation": "The position is deliberately lopsided. A capped gain paired with an uncapped loss is exactly the shape the seller is being paid to accept."
+            },
+            {
+              "text": "Make $5 at most; the loss has no fixed limit",
+              "correct": true,
+              "explanation": "The premium is the entire upside. On the downside the loss grows with the underlying, and since there is no ceiling on how far a price can rise, an uncovered short call has no fixed maximum loss."
             }
           ],
           "teaching_note": "A payoff chart is cropped at the edge of the page. For a short call the line keeps falling past that edge — the chart ending is not the risk ending."
@@ -288,14 +288,14 @@
           "prompt": "Should the holder exercise, and did the position work out?",
           "choices": [
             {
-              "text": "Exercise, but the position still lost $4",
-              "correct": true,
-              "explanation": "Exercising is worth $1, so it beats letting the option expire. But $1 recovered against $5 paid is a net loss of $4 — worth exercising and profitable are separate questions."
-            },
-            {
               "text": "Do not exercise — the position lost money",
               "correct": false,
               "explanation": "Refusing to exercise throws away the $1 the contract is worth and turns a $4 loss into a $5 loss. Take the recovery even when the trade overall was a loser."
+            },
+            {
+              "text": "Exercise, but the position still lost $4",
+              "correct": true,
+              "explanation": "Exercising is worth $1, so it beats letting the option expire. But $1 recovered against $5 paid is a net loss of $4 — worth exercising and profitable are separate questions."
             },
             {
               "text": "Exercise, for a $1 profit",
@@ -385,14 +385,14 @@
               "explanation": "The $3 is the payoff, not the profit. The contract is worth $3 at expiry, but it cost $5 to own — so the position is still $2 underwater."
             },
             {
-              "text": "A $2 loss, even though exercising was worth doing",
-              "correct": true,
-              "explanation": "Exercise recovers $3 of the $5 premium, so the net result is −$2. Worth exercising and profitable are not the same thing — that gap is exactly why break-even sits at $105, not $100."
-            },
-            {
               "text": "A $5 loss — the premium is always gone",
               "correct": false,
               "explanation": "The premium is only lost in full when the option expires worthless. Here exercising claws back $3, cutting the loss to $2."
+            },
+            {
+              "text": "A $2 loss, even though exercising was worth doing",
+              "correct": true,
+              "explanation": "Exercise recovers $3 of the $5 premium, so the net result is −$2. Worth exercising and profitable are not the same thing — that gap is exactly why break-even sits at $105, not $100."
             }
           ]
         },
@@ -477,11 +477,6 @@
           "prompt": "Which position can lose more than it ever stood to gain?",
           "choices": [
             {
-              "text": "An uncovered short call",
-              "correct": true,
-              "explanation": "The gain stops at the premium received. The loss grows with the underlying and has no fixed limit, so the worst case is far larger than the best case."
-            },
-            {
               "text": "A long put",
               "correct": false,
               "explanation": "A long put can lose only the premium. Its gain is large but bounded, since the underlying cannot fall below zero — the opposite shape."
@@ -490,6 +485,11 @@
               "text": "A long call",
               "correct": false,
               "explanation": "A buyer's downside is fixed at the premium on the day it is paid. Total loss is common, but it cannot exceed what was paid."
+            },
+            {
+              "text": "An uncovered short call",
+              "correct": true,
+              "explanation": "The gain stops at the premium received. The loss grows with the underlying and has no fixed limit, so the worst case is far larger than the best case."
             }
           ],
           "teaching_note": "Nothing in this app is a suggestion to sell options. Uncovered short positions can also demand more collateral before expiry, forcing a position closed at the worst possible moment."
@@ -501,14 +501,14 @@
           "prompt": "In a real market, where would break-even actually sit?",
           "choices": [
             {
-              "text": "Higher than $105, because trading costs work against you",
-              "correct": true,
-              "explanation": "You buy at the ask and sell at the bid, and commissions, exchange fees and taxes all come out of the result. Every one of them pushes the price you need to reach further away."
-            },
-            {
               "text": "Exactly $105 — the diagram accounts for costs",
               "correct": false,
               "explanation": "The diagram is idealised. It assumes a single price, no spread, no fees and no early assignment, none of which hold in a real market."
+            },
+            {
+              "text": "Higher than $105, because trading costs work against you",
+              "correct": true,
+              "explanation": "You buy at the ask and sell at the bid, and commissions, exchange fees and taxes all come out of the result. Every one of them pushes the price you need to reach further away."
             },
             {
               "text": "Lower than $105, because option prices move before expiry",
@@ -586,14 +586,14 @@
           "question": "Which side of an option can lose more than it ever stood to gain?",
           "options": [
             {
-              "text": "The buyer — the premium compounds over time",
-              "correct": false,
-              "explanation": "A premium does not compound; once paid it is the buyer's entire downside. Losing it completely is common, but the amount is fixed on day one."
-            },
-            {
               "text": "The seller — the gain is capped at the premium, the loss is not",
               "correct": true,
               "explanation": "A seller's best case is keeping the premium. Their worst case is larger — for an uncovered short call there is no fixed limit at all. That imbalance is why selling options is not a beginner strategy."
+            },
+            {
+              "text": "The buyer — the premium compounds over time",
+              "correct": false,
+              "explanation": "A premium does not compound; once paid it is the buyer's entire downside. Losing it completely is common, but the amount is fixed on day one."
             },
             {
               "text": "Neither — the two sides always net to zero",
@@ -644,6 +644,773 @@
             "A buyer's worst case is a total loss of the premium, and it happens often.",
             "A seller's worst case is larger than their best case, sometimes without a fixed limit.",
             "Diagrams are idealised. Real markets add costs the chart does not show."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "black-scholes-price",
+      "order": 4,
+      "title": "The Black-Scholes-Merton price",
+      "summary": "A formula for what an option should be worth today, before it expires.",
+      "estimated_minutes": 7,
+      "reviewed_by": null,
+      "reviewed_on": null,
+      "questions": [
+        {
+          "type": "numeric",
+          "id": "q1-time-value-split",
+          "setup": "A call's Black-Scholes-Merton price is $8.50. Its intrinsic value right now is $5.00.",
+          "prompt": "How much of the price is time value?",
+          "answer": 3.5,
+          "tolerance": 0.01,
+          "unit_prefix": "$",
+          "hint": "Price splits cleanly into two pieces.",
+          "explanation": "Price = intrinsic value + time value, so time value = $8.50 - $5.00 = $3.50.",
+          "teaching_note": "Intrinsic value is what expiry arithmetic from lesson 2 already gives you. Time value is everything the model adds on top for the time still left on the clock."
+        },
+        {
+          "type": "choice",
+          "id": "q2-five-inputs",
+          "prompt": "Which of these is one of the five direct inputs to the Black-Scholes-Merton price?",
+          "choices": [
+            {
+              "text": "The option's trading volume today",
+              "correct": false,
+              "explanation": "Volume can affect how easily a position is traded, but it is not one of the five numbers the formula itself takes in."
+            },
+            {
+              "text": "Volatility of the underlying",
+              "correct": true,
+              "explanation": "One of the five: spot, strike, time to expiry, volatility, and the rate on a safe asset. Volatility is usually the hardest of the five to know in advance."
+            },
+            {
+              "text": "The company's most recent quarterly earnings",
+              "correct": false,
+              "explanation": "Earnings can move the spot price and the market's view of volatility, but the earnings number itself is not a direct input — only its effects are, through spot and volatility."
+            }
+          ],
+          "teaching_note": "Only five numbers go in: spot, strike, time to expiry, volatility, and the rate on a safe asset. Everything else is either irrelevant to the model or already reflected in one of those five."
+        },
+        {
+          "type": "choice",
+          "id": "q3-volatility-direction",
+          "setup": "Two otherwise identical calls differ only in the volatility assumed for the underlying.",
+          "prompt": "Which is worth more — the one priced with higher volatility, or lower?",
+          "choices": [
+            {
+              "text": "Lower volatility, because the price is more predictable",
+              "correct": false,
+              "explanation": "Predictability does not raise value in this model. It is the size of the possible swings that raises it, not how confidently they can be forecast."
+            },
+            {
+              "text": "They are worth the same — volatility only changes the Greeks",
+              "correct": false,
+              "explanation": "Volatility is one of the five direct price inputs. It moves the price itself, not only its sensitivities."
+            },
+            {
+              "text": "Higher volatility, because bigger swings raise the chance of a large payoff",
+              "correct": true,
+              "explanation": "A buyer's loss is capped at the premium no matter how bad the swing, but the gain is not capped. Bigger swings raise the value of that lopsided shape, which is exactly what higher volatility means here."
+            }
+          ],
+          "teaching_note": "This is the single most important intuition in this lesson: volatility is not a risk being priced in, in the everyday sense. It is a source of value to a buyer, because a buyer's downside is fixed and the upside is not."
+        },
+        {
+          "type": "choice",
+          "id": "q4-model-assumption",
+          "setup": "A call is priced with Black-Scholes-Merton using today's volatility, rate and time to expiry.",
+          "prompt": "Which assumption is baked into that price?",
+          "choices": [
+            {
+              "text": "Volatility stays constant for the rest of the option's life",
+              "correct": true,
+              "explanation": "One of the model's core simplifications. Real volatility moves around, but the formula treats it as fixed and known for the whole remaining life of the option."
+            },
+            {
+              "text": "The underlying will pay a large dividend right before expiry",
+              "correct": false,
+              "explanation": "The plain formula in this lesson assumes no dividends at all. A real dividend would need an adjustment this version does not include."
+            },
+            {
+              "text": "The option can be exercised at any time before expiry",
+              "correct": false,
+              "explanation": "That describes an American option. Black-Scholes-Merton prices the European kind, exercisable only at expiry itself."
+            }
+          ],
+          "teaching_note": "Every model number in this app rests on assumptions like these. Treat the price as an illustration of how the five inputs interact, not as a number you could actually trade at."
+        }
+      ],
+      "cards": [
+        {
+          "type": "title",
+          "kicker": "Lesson 4",
+          "icon": "formula",
+          "title": "The Black-Scholes-Merton price",
+          "subtitle": "A formula for what an option should be worth today, before it ever gets to expiry."
+        },
+        {
+          "type": "text",
+          "heading": "Why intrinsic value isn't enough",
+          "icon": "clock",
+          "body": "Lesson 2 priced an option at expiry, where there is no time left and the value is whatever exercising is worth right then. Before expiry, the underlying might still move, and that possibility is worth something. Pricing it needs a model.",
+          "bullets": [
+            "At expiry, value is just intrinsic value — lesson 2.",
+            "Before expiry, there is still time for the underlying to move, and that chance has to count for something.",
+            "Black-Scholes-Merton (1973) was the first widely used formula for pricing that chance."
+          ],
+          "highlight": "Before expiry, an option is worth its intrinsic value plus time value — the price of the time still left on the clock."
+        },
+        {
+          "type": "text",
+          "heading": "The five inputs",
+          "icon": "chart",
+          "body": "The formula takes exactly five numbers and turns them into a price.",
+          "bullets": [
+            "Spot — the underlying's price right now.",
+            "Strike — fixed by the contract.",
+            "Time to expiry — how long the option has left, in years.",
+            "Volatility — how much the underlying's price tends to swing, annualised.",
+            "The rate on a safe asset — the return available from a safe, short-term investment over that time."
+          ],
+          "highlight": "The same five inputs feed both the price and the Greeks — lesson 5."
+        },
+        {
+          "type": "term",
+          "term": "The formula",
+          "icon": "formula",
+          "definition": "For a call: C = S x N(d1) - K x e^(-rT) x N(d2). For a put: P = K x e^(-rT) x N(-d2) - S x N(-d1). N(x) is the probability a standard normal variable falls below x; d1 and d2 are built from the five inputs above.",
+          "example": "You do not need to compute this by hand — the pricer built into this app does it. What matters is what happens to the price when one input changes, which the next card lets you feel directly."
+        },
+        {
+          "type": "pricer_explore",
+          "heading": "Watch the price form",
+          "prompt": "Drag the underlying price. Notice the call is worth something even before it is in the money — that is time value, priced in because the underlying could still get there.",
+          "option_type": "call",
+          "strike": 100,
+          "volatility": 0.25,
+          "time_to_expiry": 0.5,
+          "rate": 0.04,
+          "spot_min": 60,
+          "spot_max": 140,
+          "spot_start": 90,
+          "focus": "price"
+        },
+        {
+          "type": "text",
+          "heading": "Time value peaks at the money",
+          "icon": "target",
+          "body": "Time value is largest when the outcome is least certain — when the underlying sits right at the strike, nobody yet knows whether the option will finish in the money. Deep in or deep out of the money, the outcome is close to settled, and time value shrinks toward zero.",
+          "bullets": [
+            "Deep in the money: price is close to intrinsic value plus a small cushion.",
+            "Deep out of the money: price is close to zero — a long shot, priced as one.",
+            "At the money: time value is at its largest."
+          ]
+        },
+        {
+          "type": "compare",
+          "heading": "Intrinsic value versus time value",
+          "left": {
+            "label": "Intrinsic value",
+            "icon": "target",
+            "tone": "neutral",
+            "tagline": "What exercising is worth right now.",
+            "points": [
+              "Zero for an out-of-the-money option.",
+              "Grows one-for-one once in the money.",
+              "The only thing left once expiry actually arrives."
+            ]
+          },
+          "right": {
+            "label": "Time value",
+            "icon": "clock",
+            "tone": "neutral",
+            "tagline": "What the remaining chance is worth.",
+            "points": [
+              "Largest when the outcome is least certain.",
+              "Shrinks as expiry approaches.",
+              "Reaches exactly zero at expiry."
+            ]
+          },
+          "footnote": "Price = intrinsic value + time value, always. Lesson 5's Theta is the rate at which the second piece bleeds away."
+        },
+        {
+          "type": "warning",
+          "heading": "A model, not a market",
+          "body": "Black-Scholes-Merton is an idealisation, not a forecast and not a live quote.",
+          "points": [
+            "It assumes a constant, known volatility and a constant, known rate — neither holds in a real market.",
+            "It assumes European exercise, no dividends, and frictionless trading with no fees or bid/ask spread.",
+            "A real quoted price can, and routinely does, differ from the model price."
+          ]
+        },
+        {
+          "type": "choice",
+          "prompt": "Before moving on, commit to an answer.",
+          "question": "A deep out-of-the-money call is very unlikely to pay off. What does the Black-Scholes-Merton price say it should be worth?",
+          "options": [
+            {
+              "text": "Exactly zero, since it is very unlikely to be exercised",
+              "correct": false,
+              "explanation": "Very unlikely is not the same as impossible. As long as there is any chance at all of finishing in the money, the price stays above zero — just barely."
+            },
+            {
+              "text": "Small but positive — there is still some chance it finishes in the money",
+              "correct": true,
+              "explanation": "The whole point of a probability-based model: a low-probability payoff still has a price, just a small one. Zero is reserved for the moment of expiry, once the chance is actually gone."
+            },
+            {
+              "text": "The same as an at-the-money call, since both could still move",
+              "correct": false,
+              "explanation": "At the money the outcome is closer to a coin flip; deep out of the money it needs a much larger move. The price reflects that gap in likelihood directly."
+            }
+          ]
+        },
+        {
+          "type": "summary",
+          "heading": "What to remember",
+          "takeaways": [
+            "At expiry, value is intrinsic value. Before expiry, it is intrinsic value plus time value.",
+            "Black-Scholes-Merton turns five inputs — spot, strike, time, volatility, the safe-asset rate — into a price.",
+            "It is a model built on simplifying assumptions, not a live market quote."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "the-greeks",
+      "order": 5,
+      "title": "The Greeks",
+      "summary": "Five numbers that say how an option's price reacts when one input moves.",
+      "estimated_minutes": 9,
+      "reviewed_by": null,
+      "reviewed_on": null,
+      "questions": [
+        {
+          "type": "numeric",
+          "id": "q1-delta-step",
+          "setup": "An option has a gamma of 0.02 and a delta of 0.58 when the underlying is at $100.",
+          "prompt": "If the underlying rises by $1, what is the option's new delta, approximately?",
+          "answer": 0.6,
+          "tolerance": 0.01,
+          "hint": "Gamma is delta's own rate of change per $1 move.",
+          "explanation": "New delta is approximately old delta plus gamma times the move: 0.58 + 0.02 x 1 = 0.60.",
+          "teaching_note": "This is the local, one-step version of what gamma measures — a reasonable approximation for a $1 move, much less reliable for a $20 one. That breakdown at larger moves is exactly why it is an approximation, not a guarantee."
+        },
+        {
+          "type": "choice",
+          "id": "q2-gamma-definition",
+          "prompt": "Which Greek directly measures how fast delta itself is changing?",
+          "choices": [
+            {
+              "text": "Theta",
+              "correct": false,
+              "explanation": "Theta measures the effect of time passing on the price, not how fast delta is changing."
+            },
+            {
+              "text": "Vega",
+              "correct": false,
+              "explanation": "Vega measures the effect of volatility on the price. Delta's own rate of change has its own name."
+            },
+            {
+              "text": "Gamma",
+              "correct": true,
+              "explanation": "Gamma is defined exactly this way: delta's own delta, or how much delta shifts for a $1 move in the underlying."
+            }
+          ],
+          "teaching_note": "Gamma is largest when the underlying sits right at the strike — exactly where the outcome is least settled and delta has the most room to swing."
+        },
+        {
+          "type": "choice",
+          "id": "q3-theta-meaning",
+          "prompt": "A trader holds a long call. As one day passes with nothing else changing, what does a negative theta mean for the position?",
+          "choices": [
+            {
+              "text": "The position gains value purely from time passing",
+              "correct": false,
+              "explanation": "That would describe a positive theta. A negative theta means value is lost as each day passes, all else equal — the definition of time decay."
+            },
+            {
+              "text": "The position loses a little value purely from time passing",
+              "correct": true,
+              "explanation": "Exactly what a negative theta says: with the underlying, volatility and rate all held still, one day passing costs the position a small amount of value."
+            },
+            {
+              "text": "Theta has no effect unless the underlying also moves",
+              "correct": false,
+              "explanation": "Theta is defined as the effect of time passing alone, holding everything else fixed — including the underlying. It does not need the underlying to move to matter."
+            }
+          ],
+          "teaching_note": "Every long option position is, in this sense, in a race against its own theta — it needs to be right before time value finishes decaying away."
+        },
+        {
+          "type": "choice",
+          "id": "q4-delta-sign-flip",
+          "setup": "A long call and a long put share the same strike, expiry and underlying.",
+          "prompt": "Which of these Greeks has the OPPOSITE sign for the put compared with the call?",
+          "choices": [
+            {
+              "text": "Gamma",
+              "correct": false,
+              "explanation": "Gamma is positive for both a long call and a long put — being long either one means becoming more exposed to the underlying as it moves toward the strike, in the same sense."
+            },
+            {
+              "text": "Delta",
+              "correct": true,
+              "explanation": "Delta captures direction: positive for a long call, which gains as the underlying rises, and negative for a long put, which gains as it falls. It is the one Greek that flips sign between the two."
+            },
+            {
+              "text": "Vega",
+              "correct": false,
+              "explanation": "Vega is positive for both — more uncertainty raises the value of either right, regardless of which direction it pays off in."
+            }
+          ],
+          "teaching_note": "Delta is the direction-taking Greek. Everything else on this page (gamma, vega) cares about the SIZE of an uncertain outcome, not which way it breaks — which is why they agree in sign between a call and a put."
+        }
+      ],
+      "cards": [
+        {
+          "type": "title",
+          "kicker": "Lesson 5",
+          "icon": "insights",
+          "title": "The Greeks",
+          "subtitle": "Five numbers that say how an option's price reacts when one input moves."
+        },
+        {
+          "type": "text",
+          "heading": "Why the price alone isn't enough",
+          "icon": "compass",
+          "body": "A price is a single snapshot. The Greeks say what happens to that price next — if the underlying ticks up, if a day passes, if volatility jumps. They come straight out of the same Black-Scholes-Merton formula from the last lesson.",
+          "highlight": "Each Greek answers one 'what if' about the price."
+        },
+        {
+          "type": "term",
+          "term": "Delta",
+          "icon": "target",
+          "definition": "How much the option's price moves for a $1 move in the underlying. A call's delta runs from 0 to 1; a put's runs from -1 to 0.",
+          "example": "At $100 spot and a $100 strike, a 6-month call here has a delta around 0.58 — its price moves about $0.58 for the next $1 the underlying moves, for a moment, before delta itself moves too."
+        },
+        {
+          "type": "pricer_explore",
+          "heading": "Watch delta move",
+          "prompt": "Drag the underlying from deep out of the money to deep in the money. Delta starts near 0, and finishes near 1 for a call.",
+          "option_type": "call",
+          "strike": 100,
+          "volatility": 0.25,
+          "time_to_expiry": 0.5,
+          "rate": 0.04,
+          "spot_min": 60,
+          "spot_max": 140,
+          "spot_start": 100,
+          "focus": "delta"
+        },
+        {
+          "type": "term",
+          "term": "Gamma",
+          "icon": "scale",
+          "definition": "How fast delta itself changes as the underlying moves — delta's own delta. It is largest when the underlying sits right at the strike.",
+          "example": "High gamma means delta can shift quickly, so a position's exposure to the underlying changes fast even without a large price move."
+        },
+        {
+          "type": "pricer_explore",
+          "heading": "Where gamma peaks",
+          "prompt": "Drag the underlying toward the $100 strike and watch gamma rise, then fall away again on the far side.",
+          "option_type": "call",
+          "strike": 100,
+          "volatility": 0.25,
+          "time_to_expiry": 0.5,
+          "rate": 0.04,
+          "spot_min": 60,
+          "spot_max": 140,
+          "spot_start": 70,
+          "focus": "gamma"
+        },
+        {
+          "type": "term",
+          "term": "Vega",
+          "icon": "waves",
+          "definition": "How much the price moves for a one-percentage-point rise in volatility. Vega is positive for both long calls and long puts — more uncertainty raises the price of the choice either way.",
+          "example": "At $100 spot and 25% volatility, this call has a vega around 0.28 — a jump to 26% volatility should add roughly $0.28 to the price, on its own."
+        },
+        {
+          "type": "pricer_explore",
+          "heading": "Volatility, priced",
+          "prompt": "Drag volatility up and down and watch the price move even though the underlying has not.",
+          "option_type": "call",
+          "strike": 100,
+          "volatility": 0.25,
+          "time_to_expiry": 0.5,
+          "rate": 0.04,
+          "spot_min": 60,
+          "spot_max": 140,
+          "spot_start": 100,
+          "adjust_volatility": true,
+          "focus": "vega"
+        },
+        {
+          "type": "term",
+          "term": "Theta",
+          "icon": "clock",
+          "definition": "How much the price falls as one day passes, with nothing else changing. Usually negative for a long option — this is time decay, the cost of the clock running down.",
+          "example": "At $100 spot with 6 months left, this call's theta is around -$0.02 per day: a small, steady bleed while everything else sits still."
+        },
+        {
+          "type": "pricer_explore",
+          "heading": "Time decay in motion",
+          "prompt": "Drag time to expiry down toward zero. Watch the price fall toward the intrinsic value from lesson 2, even with the underlying held still.",
+          "option_type": "call",
+          "strike": 100,
+          "volatility": 0.25,
+          "time_to_expiry": 0.5,
+          "rate": 0.04,
+          "spot_min": 60,
+          "spot_max": 140,
+          "spot_start": 100,
+          "adjust_time": true,
+          "focus": "theta"
+        },
+        {
+          "type": "text",
+          "heading": "Rho — the quiet one",
+          "icon": "coins",
+          "body": "Rho measures the price's sensitivity to the rate on a safe asset. It matters most for long-dated options, and tends to be the smallest of the five effects for the shorter-dated contracts most learners start with.",
+          "bullets": [
+            "Positive for calls, negative for puts.",
+            "Usually the last of the five Greeks anyone checks."
+          ]
+        },
+        {
+          "type": "warning",
+          "heading": "The Greeks describe a moment, not a guarantee",
+          "body": "Every Greek is a snapshot from the current model, not a promise about what happens next.",
+          "points": [
+            "They assume a small move. A large jump can behave very differently from what delta alone predicts — that gap is what gamma is for, and even gamma is only an approximation.",
+            "All five recalculate constantly as the underlying, volatility and time all change together.",
+            "None of this changes the basic shape from lessons 1 and 2: a long option can still expire worthless, in full."
+          ]
+        },
+        {
+          "type": "choice",
+          "prompt": "Before moving on, commit to an answer.",
+          "question": "A long call and a long put share the same strike and expiry. One Greek has the SAME sign for both. Which one?",
+          "options": [
+            {
+              "text": "Gamma",
+              "correct": true,
+              "explanation": "Gamma (and vega) do not care about direction — both a call and a put get more sensitive near the strike, and both get more valuable as volatility rises. Delta and rho are the ones that split by direction."
+            },
+            {
+              "text": "Delta",
+              "correct": false,
+              "explanation": "Delta is exactly where they differ — positive for the call, negative for the put. That is the whole point of delta: it captures direction."
+            },
+            {
+              "text": "Rho",
+              "correct": false,
+              "explanation": "Rho splits by direction too — positive for a call, negative for a put, mirroring how a higher rate helps a deferred purchase and hurts a deferred sale."
+            }
+          ]
+        },
+        {
+          "type": "summary",
+          "heading": "What to remember",
+          "takeaways": [
+            "Delta: exposure to the underlying. Gamma: how fast that exposure changes.",
+            "Vega: exposure to volatility. Theta: the daily cost of time passing.",
+            "All five come from the same model as the price, and describe a moment — not a forecast."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "options-strategies",
+      "order": 6,
+      "title": "Options strategies — and when to use them",
+      "summary": "Combining legs to fit a view of the market, and what each combination costs you.",
+      "estimated_minutes": 9,
+      "reviewed_by": null,
+      "reviewed_on": null,
+      "questions": [
+        {
+          "type": "numeric",
+          "id": "q1-spread-net-cost",
+          "setup": "A bull call spread costs $8 for the long $100 call and returns $4 from selling the $110 call.",
+          "prompt": "What is the net cost to open this spread, per share?",
+          "answer": 4,
+          "tolerance": 0.01,
+          "unit_prefix": "$",
+          "hint": "One leg costs money, the other brings money in.",
+          "explanation": "$8 paid minus $4 received = $4 net cost per share.",
+          "teaching_note": "A spread's whole appeal is right here: a smaller cash outlay than a lone call, in exchange for giving up the gains above the second strike."
+        },
+        {
+          "type": "choice",
+          "id": "q2-straddle-at-strike",
+          "setup": "A trader opens a straddle: long a $100 call for $8 and long a $100 put for $6.",
+          "prompt": "The underlying finishes at exactly $100. What happens to the position?",
+          "choices": [
+            {
+              "text": "Both legs expire worthless; the $14 in premium is a total loss",
+              "correct": true,
+              "explanation": "At exactly the strike, neither the call nor the put is worth exercising, so both expire worthless. The full $14 paid for the two premiums is gone — the worst outcome for a straddle held to expiry."
+            },
+            {
+              "text": "The call and put cancel out, so the position breaks even",
+              "correct": false,
+              "explanation": "Breaking even needs the underlying to move away from $100 by the size of the combined premium, not sit still at the strike. Sitting still is the straddle's worst outcome, not a neutral one."
+            },
+            {
+              "text": "One leg is exercised automatically to offset the loss on the other",
+              "correct": false,
+              "explanation": "Nothing is exercised automatically just because it would help. An option is exercised only when doing so is worth something, and at the strike neither one is."
+            }
+          ],
+          "teaching_note": "A straddle is a bet on the SIZE of a move, not its direction — and the underlying sitting still is exactly the scenario it loses to."
+        },
+        {
+          "type": "choice",
+          "id": "q3-spread-vs-naked",
+          "prompt": "What makes a bull call spread's short leg different from the naked short call in lesson 3?",
+          "choices": [
+            {
+              "text": "It isn't different — the risk is identical",
+              "correct": false,
+              "explanation": "It is different. This short call sits above a long call already owned, which caps the combined position. A naked short call in lesson 3 has no such cap."
+            },
+            {
+              "text": "The short leg is covered by the long call underneath it, capping the combined loss",
+              "correct": true,
+              "explanation": "The long call bought first means that if the underlying keeps rising, the gain on the long leg offsets the loss on the short leg above the second strike — the combination caps out instead of running open-ended."
+            },
+            {
+              "text": "Spreads are never assigned early, unlike a naked short",
+              "correct": false,
+              "explanation": "Assignment risk on the short leg of a spread is the same as any other short American-style option. What actually differs here is that the position's overall loss is bounded, not that assignment cannot happen."
+            }
+          ],
+          "teaching_note": "This is the general pattern behind every covered short in this lesson: a short leg is only as safe as whatever sits next to it."
+        },
+        {
+          "type": "choice",
+          "id": "q4-match-strategy-to-goal",
+          "setup": "An investor already owns shares and wants some income now, while accepting a cap on the upside if the shares rally hard.",
+          "prompt": "Which strategy fits that description?",
+          "choices": [
+            {
+              "text": "Protective put",
+              "correct": false,
+              "explanation": "A protective put costs money and caps the DOWNSIDE, not the upside. It is insurance, not income, and does not fit 'wants income now'."
+            },
+            {
+              "text": "Straddle",
+              "correct": false,
+              "explanation": "A straddle needs no existing share position and is a bet on a big move, not a way to generate income from shares already held."
+            },
+            {
+              "text": "Covered call",
+              "correct": true,
+              "explanation": "Selling a call against shares already owned brings in premium immediately and caps the upside above the strike — exactly the trade-off described."
+            }
+          ],
+          "teaching_note": "Matching a strategy to a goal comes down to two questions: what view of the market does it need, and what is it willing to give up? Income now, in exchange for capped upside, is the covered call's whole trade."
+        }
+      ],
+      "cards": [
+        {
+          "type": "title",
+          "kicker": "Lesson 6",
+          "icon": "strategy",
+          "title": "Options strategies",
+          "subtitle": "Combining legs to fit a view of the market — and what each combination costs you."
+        },
+        {
+          "type": "text",
+          "heading": "A strategy is just several legs added together",
+          "icon": "split",
+          "body": "Every diagram so far has shown one leg. A strategy opens more than one at the same time, and the combined position is simply the sum of what each leg is worth — the same arithmetic from lesson 2, run once per leg and added up.",
+          "bullets": [
+            "The shape of the combined line is new; the maths behind it is not.",
+            "Every strategy below trades away some upside, some downside, or both, in exchange for a different cost or a different risk shape."
+          ],
+          "highlight": "Nothing here is a suggestion to use any particular strategy. Which one fits, if any, depends on a view of the market and a tolerance for risk that only the trader can judge."
+        },
+        {
+          "type": "payoff",
+          "heading": "Bull call spread — long $100 call for $8, short $110 call for $4",
+          "caption": "Net cost $4. The gain caps out at $6 once the underlying clears $110; the loss caps out at the $4 paid. A cheaper, lower-conviction version of a lone long call.",
+          "spot_min": 70,
+          "spot_max": 140,
+          "legs": [
+            { "kind": "call", "side": "long", "strike": 100, "premium": 8 },
+            { "kind": "call", "side": "short", "strike": 110, "premium": 4 }
+          ]
+        },
+        {
+          "type": "text",
+          "heading": "When to reach for a bull call spread",
+          "icon": "compass",
+          "body": "Fits a view that the underlying rises, but not without limit, alongside a preference for a known, smaller cost over a lone call's larger premium.",
+          "bullets": [
+            "Modestly bullish — not aiming to catch an unlimited move.",
+            "Willing to give up gains above $110 in exchange for paying less up front.",
+            "Both the best and worst case are fixed before the trade opens."
+          ]
+        },
+        {
+          "type": "payoff",
+          "heading": "Bear put spread — long $100 put for $6, short $90 put for $2",
+          "caption": "Net cost $4. The mirror image of the call spread: profits as the underlying falls, capped at $6 once it clears $90 on the way down, with the loss capped at the $4 paid.",
+          "spot_min": 60,
+          "spot_max": 130,
+          "legs": [
+            { "kind": "put", "side": "long", "strike": 100, "premium": 6 },
+            { "kind": "put", "side": "short", "strike": 90, "premium": 2 }
+          ]
+        },
+        {
+          "type": "text",
+          "heading": "When to reach for a bear put spread",
+          "icon": "compass",
+          "body": "The bearish counterpart to the call spread, with the same trade-off in the opposite direction.",
+          "bullets": [
+            "Modestly bearish — not aiming to catch an unlimited fall.",
+            "Cheaper than a lone put, at the cost of a capped payout below $90.",
+            "Defined risk in both directions before the trade opens."
+          ]
+        },
+        {
+          "type": "payoff",
+          "heading": "Straddle — long $100 call for $8, long $100 put for $6",
+          "caption": "Net cost $14. Profits on a big move either way; loses if the underlying sits near $100 through expiry, since both premiums decay together.",
+          "spot_min": 60,
+          "spot_max": 140,
+          "legs": [
+            { "kind": "call", "side": "long", "strike": 100, "premium": 8 },
+            { "kind": "put", "side": "long", "strike": 100, "premium": 6 }
+          ]
+        },
+        {
+          "type": "explore",
+          "heading": "Feel the straddle's shape",
+          "prompt": "Drag the finishing price away from $100 in either direction and watch the position turn around. Then bring it back to $100 and see both legs lose at once.",
+          "spot_min": 60,
+          "spot_max": 140,
+          "spot_start": 100,
+          "legs": [
+            { "kind": "call", "side": "long", "strike": 100, "premium": 8 },
+            { "kind": "put", "side": "long", "strike": 100, "premium": 6 }
+          ]
+        },
+        {
+          "type": "warning",
+          "heading": "A straddle needs a big move, not just any move",
+          "body": "Two premiums are paid up front, and both decay if the underlying does not move enough.",
+          "points": [
+            "Break-even sits exactly two premiums away from the strike on either side — here, $86 and $114.",
+            "The most common outcome for a straddle held to expiry is a loss, because on most days the underlying does not move that far.",
+            "This is a bet on the SIZE of a move, not its direction — the opposite of the spreads above."
+          ]
+        },
+        {
+          "type": "payoff",
+          "heading": "Covered call — own shares at $100, short a $110 call for $4",
+          "caption": "The $4 premium arrives immediately. Upside is capped at $14 per share (the $10 gain to $110, plus the $4 premium); the downside is the same shape as owning the shares outright, just cushioned by the $4 already collected.",
+          "spot_min": 60,
+          "spot_max": 140,
+          "legs": [
+            { "kind": "underlying", "side": "long", "premium": 100 },
+            { "kind": "call", "side": "short", "strike": 110, "premium": 4 }
+          ]
+        },
+        {
+          "type": "text",
+          "heading": "When to reach for a covered call",
+          "icon": "coins",
+          "body": "For someone who already owns the shares and has a neutral-to-mildly-bullish view — willing to trade away upside beyond $110 for income collected today.",
+          "bullets": [
+            "Only makes sense if you are comfortable owning the shares anyway.",
+            "Reduces, but does not remove, the loss if the shares fall.",
+            "The most upside given away happens exactly when the shares rally hard — the scenario the call caps."
+          ]
+        },
+        {
+          "type": "payoff",
+          "heading": "Protective put — own shares at $100, long a $90 put for $2",
+          "caption": "A cheaper, lower floor than lesson 3's example: the loss stops at $12 per share no matter how far the shares fall, for a $2 premium.",
+          "spot_min": 60,
+          "spot_max": 140,
+          "legs": [
+            { "kind": "underlying", "side": "long", "premium": 100 },
+            { "kind": "put", "side": "long", "strike": 90, "premium": 2 }
+          ]
+        },
+        {
+          "type": "compare",
+          "heading": "Selling income versus buying protection",
+          "left": {
+            "label": "Covered call",
+            "icon": "coins",
+            "tone": "neutral",
+            "tagline": "Own the shares, sell a call, collect the premium now.",
+            "points": [
+              "Upside capped at the strike plus the premium.",
+              "Premium is income, received immediately.",
+              "Downside unchanged in shape, just cushioned by the premium."
+            ]
+          },
+          "right": {
+            "label": "Protective put",
+            "icon": "umbrella",
+            "tone": "neutral",
+            "tagline": "Own the shares, buy a put, pay the premium now.",
+            "points": [
+              "Downside capped at the strike, minus the premium.",
+              "Premium is a cost, paid immediately.",
+              "Upside unchanged in shape, just reduced by the premium."
+            ]
+          },
+          "footnote": "One collects income and caps the upside; the other pays for a floor and caps nothing on the way up. Neither is free, and neither suits every position."
+        },
+        {
+          "type": "warning",
+          "heading": "Adding legs changes the shape, not the honesty required",
+          "body": "Every strategy above still needs the same plain statement of risk as a single option.",
+          "points": [
+            "A spread's short leg is only safe because the long leg beside it covers it — remove that cover and the short leg is naked again, with the risk from lesson 3.",
+            "All of these diagrams are at expiry, in an idealised market. Real trading adds the bid/ask spread, commissions, and the cost of trading more than one contract at once.",
+            "None of this is a recommendation to use any particular strategy. Which one, if any, fits depends on a market view and a tolerance for risk that belong to the trader, not to a diagram."
+          ]
+        },
+        {
+          "type": "choice",
+          "prompt": "Before moving on, commit to an answer.",
+          "question": "An investor expects a company's earnings announcement to move the stock a lot, but has no view on which direction. Which strategy fits that view best?",
+          "options": [
+            {
+              "text": "Bull call spread",
+              "correct": false,
+              "explanation": "A bull call spread needs the underlying to rise — it has a direction built in. An investor with no directional view is not expressing the view this strategy needs."
+            },
+            {
+              "text": "Covered call",
+              "correct": false,
+              "explanation": "A covered call needs shares already owned and a neutral-to-bullish view with capped upside — it is built for calm markets, the opposite of an expected big move."
+            },
+            {
+              "text": "Straddle",
+              "correct": true,
+              "explanation": "A straddle profits from a big move in EITHER direction and does not need to guess which way — exactly the shape for an expected big move with no directional view. It still loses if the move does not happen."
+            }
+          ]
+        },
+        {
+          "type": "summary",
+          "heading": "What to remember",
+          "takeaways": [
+            "A strategy's combined payoff is just its legs added together.",
+            "Spreads trade a smaller cost for a capped payout in both directions.",
+            "A straddle is a bet on the size of a move, not its direction.",
+            "Covered calls and protective puts start from an existing share position and cap one side of it."
           ]
         }
       ]
