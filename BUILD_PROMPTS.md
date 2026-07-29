@@ -26,7 +26,7 @@ PHASE 3 — Pricer core: BSM + Greeks (pure Dart) "Create a pure Dart pricing li
 
 PHASE 4 — Interactive pricer inside lessons "Build an interactive pricer screen: sliders/inputs for spot, strike, volatility, time, and rate that update price, Greeks, and payoff diagram live. Add a strategy view composing legs (spreads, straddle, covered call, protective put) with combined payoff. Label output as an idealized simulation per CLAUDE.md. Test on the iOS simulator."
 
-PHASE 5 — Points, streaks, levels, certificate (local) "Add the engagement system, persisted LOCALLY via repositories for now: points for lessons/ Q&A, daily streaks (Duolingo/Snapchat style) with a streak-freeze grace, and a level-up scheme culminating in a certificate with a nicer badge icon per stage. Add opt-in local notifications (flutter_local_notifications) for streak/new-content reminders — reasonable, easy to disable, no profit-promise wording. Test on the iOS simulator."
+PHASE 5 — Points, streaks, levels, certificate (local) "Add the engagement system, persisted LOCALLY via repositories for now: points for lessons/ Q&A, daily streaks (Duolingo/Snapchat style) with a streak-freeze grace, and a level-up scheme culminating in a certificate with a nicer badge icon per stage. Add opt-in local notifications (flutter_local_notifications) for streak/new-content reminders — reasonable, easy to disable, no profit-promise wording and custom to the user and their needs. Test on the iOS simulator."
 
 ════════════════════════════════════════════════════════════════════════════════ PART B — SERVER (swap local repos for Supabase; needs the backend from DEPLOY.md) ════════════════════════════════════════════════════════════════════════════════
 
