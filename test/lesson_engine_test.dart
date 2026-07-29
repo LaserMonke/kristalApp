@@ -194,6 +194,27 @@ void main() {
       },
     );
 
+    test('equation cards have at least one term and no blank text', () {
+      final Iterable<EquationCard> equations = lessons
+          .expand((Lesson l) => l.cards)
+          .whereType<EquationCard>();
+      expect(equations, isNotEmpty);
+
+      for (final EquationCard card in equations) {
+        expect(card.terms, isNotEmpty, reason: card.heading);
+        for (final EquationTerm term in card.terms) {
+          expect(term.text, isNotEmpty, reason: card.heading);
+        }
+        // At least one term should actually be captioned — otherwise this
+        // is just a hard-to-read line of symbols with no reformatting.
+        expect(
+          card.terms.any((EquationTerm t) => t.caption != null),
+          isTrue,
+          reason: card.heading,
+        );
+      }
+    });
+
     test(
       'choice cards have exactly one right answer and explain every option',
       () {
@@ -397,6 +418,39 @@ void main() {
     expect(find.textContaining('Idealised'), findsOneWidget);
     expect(find.text('Profit'), findsOneWidget);
     expect(find.text('Loss'), findsOneWidget);
+  });
+
+  testWidgets('an equation card renders its captioned terms and its connectors', (
+    WidgetTester tester,
+  ) async {
+    const EquationCard card = EquationCard(
+      heading: 'The call price, piece by piece',
+      terms: <EquationTerm>[
+        EquationTerm(text: 'C', caption: 'Call price'),
+        EquationTerm(text: '='),
+        EquationTerm(text: 'S', caption: 'Spot price', tone: PanelTone.gain),
+        EquationTerm(text: 'x'),
+        EquationTerm(text: 'N(d1)', caption: 'Weight', tone: PanelTone.gain),
+      ],
+      footnote: 'What you would receive, weighted.',
+    );
+
+    await tester.pumpWidget(
+      const MaterialApp(home: Scaffold(body: LessonCardView(card: card))),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('The call price, piece by piece'), findsOneWidget);
+    // Captioned terms render as their own tile, symbol and caption both.
+    expect(find.text('C'), findsOneWidget);
+    expect(find.text('Call price'), findsOneWidget);
+    expect(find.text('S'), findsOneWidget);
+    expect(find.text('Spot price'), findsOneWidget);
+    expect(find.text('N(d1)'), findsOneWidget);
+    // Bare connectors render too, just without a caption of their own.
+    expect(find.text('='), findsOneWidget);
+    expect(find.text('x'), findsOneWidget);
+    expect(find.text('What you would receive, weighted.'), findsOneWidget);
   });
 
   testWidgets('a short call warns that the loss has no fixed limit', (

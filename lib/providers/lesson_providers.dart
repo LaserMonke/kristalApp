@@ -81,3 +81,18 @@ final FutureProvider<List<LessonNode>> lessonPathProvider =
 
       return path;
     });
+
+/// Whether the "options-strategies" lesson is done — the gate the Sandbox's
+/// Strategy tab checks before it lets a learner past the preset picker.
+///
+/// Reuses [lessonPathProvider] rather than re-deriving finished-ness from
+/// [Lesson.hasQuiz]/[LessonProgress] here, so there is exactly one place
+/// that decides what "finished" means for a lesson.
+final FutureProvider<bool> strategiesLessonCompletedProvider =
+    FutureProvider<bool>((Ref ref) async {
+      final List<LessonNode> path = await ref.watch(lessonPathProvider.future);
+      for (final LessonNode node in path) {
+        if (node.lesson.id == 'options-strategies') return node.isFinished;
+      }
+      return false;
+    });

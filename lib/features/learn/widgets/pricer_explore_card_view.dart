@@ -8,7 +8,7 @@ import 'lesson_icons.dart';
 /// A live Black-Scholes-Merton quote the learner drags around.
 ///
 /// Every number comes from `lib/pricing/black_scholes.dart` (Phase 3), the
-/// same pure, unit-tested pricer behind the Practice tab — this widget only
+/// same pure, unit-tested pricer behind the Sandbox tab — this widget only
 /// reads it live off local slider state and draws it.
 class PricerExploreCardView extends StatefulWidget {
   const PricerExploreCardView({required this.card, super.key});

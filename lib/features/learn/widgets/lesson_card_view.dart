@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/payoff_diagram.dart';
 import '../../../data/models/lesson.dart';
 import '../../../pricing/payoff.dart';
@@ -30,6 +31,7 @@ class LessonCardView extends StatelessWidget {
       final PricerExploreCard c => PricerExploreCardView(card: c),
       final ChoiceCard c => ChoiceCardView(card: c),
       final CompareCard c => _CompareCardView(card: c),
+      final EquationCard c => _EquationCardView(card: c),
       final WarningCard c => _WarningCardView(card: c),
       final SummaryCard c => _SummaryCardView(card: c),
     };
@@ -560,6 +562,102 @@ class _ComparePanelView extends StatelessWidget {
                 ],
               ),
             ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A formula rendered as a row of labelled pieces rather than one dense line.
+///
+/// Terms with a caption become a boxed, coloured tile; terms without one
+/// (`=`, `x`, `-`) render as a plain connector, so the eye lands on the
+/// pieces that carry meaning and reads past the ones that don't.
+class _EquationCardView extends StatelessWidget {
+  const _EquationCardView({required this.card});
+
+  final EquationCard card;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(card.heading, style: theme.textTheme.titleLarge),
+        const SizedBox(height: 18),
+        Wrap(
+          spacing: 4,
+          runSpacing: 10,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: <Widget>[
+            for (final EquationTerm term in card.terms) _EquationTermView(term: term),
+          ],
+        ),
+        if (card.footnote != null) ...<Widget>[
+          const SizedBox(height: 20),
+          _HighlightPanel(text: card.footnote!),
+        ],
+      ],
+    );
+  }
+}
+
+class _EquationTermView extends StatelessWidget {
+  const _EquationTermView({required this.term});
+
+  final EquationTerm term;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+
+    if (term.caption == null) {
+      // A bare connector — '=', 'x', '-' — kept visually quiet so the boxed
+      // terms either side of it are what the reader actually reads.
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 2),
+        child: Text(
+          term.text,
+          style: theme.textTheme.headlineSmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+            fontWeight: FontWeight.w400,
+          ),
+        ),
+      );
+    }
+
+    final Color tone = switch (term.tone) {
+      PanelTone.gain => theme.pnl.gain,
+      PanelTone.loss => theme.pnl.loss,
+      PanelTone.neutral => theme.colorScheme.primary,
+    };
+
+    return Container(
+      constraints: const BoxConstraints(maxWidth: 160),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: tone.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: tone.withValues(alpha: 0.45)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Text(
+            term.text,
+            style: theme.textTheme.numeric.copyWith(fontSize: 17, color: tone),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            term.caption!,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+              height: 1.3,
+            ),
+          ),
         ],
       ),
     );

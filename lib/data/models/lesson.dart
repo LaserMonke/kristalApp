@@ -89,6 +89,7 @@ sealed class LessonCard {
       'pricer_explore' => PricerExploreCard.fromJson(json),
       'choice' => ChoiceCard.fromJson(json),
       'compare' => CompareCard.fromJson(json),
+      'equation' => EquationCard.fromJson(json),
       'warning' => WarningCard.fromJson(json),
       'summary' => SummaryCard.fromJson(json),
       _ => throw FormatException('Unknown lesson card type "$type"'),
@@ -502,6 +503,66 @@ class ComparePanel {
       for (final dynamic p in json['points'] as List<dynamic>? ?? <dynamic>[])
         p as String,
     ],
+  );
+}
+
+/// A formula, broken into labelled pieces instead of one dense line.
+///
+/// Reads a raw equation like `C = S x N(d1) - K x e^(-rT) x N(d2)` and gives
+/// each meaningful piece its own caption, so the shape of the formula and
+/// what each part stands for land at the same time rather than the reader
+/// having to hold the whole thing in their head first and decode it after.
+class EquationCard extends LessonCard {
+  const EquationCard({
+    required this.heading,
+    required this.terms,
+    this.footnote,
+  });
+
+  final String heading;
+  final List<EquationTerm> terms;
+
+  /// The plain-English restatement of what the whole equation says.
+  final String? footnote;
+
+  @override
+  String get semanticLabel =>
+      '$heading. ${terms.map((EquationTerm t) => t.spoken).join(' ')}'
+      '${footnote == null ? '' : ' $footnote'}';
+
+  factory EquationCard.fromJson(Map<String, dynamic> json) => EquationCard(
+    heading: json['heading'] as String,
+    footnote: json['footnote'] as String?,
+    terms: <EquationTerm>[
+      for (final dynamic t in json['terms'] as List<dynamic>)
+        EquationTerm.fromJson(t as Map<String, dynamic>),
+    ],
+  );
+}
+
+/// One piece of an [EquationCard].
+///
+/// A term with no [caption] renders as a plain connector (`=`, `x`, `-`) at
+/// a smaller size; a term WITH a caption renders as a labelled tile, so the
+/// reader's eye lands on the pieces that carry meaning.
+class EquationTerm {
+  const EquationTerm({required this.text, this.caption, this.tone = PanelTone.neutral});
+
+  final String text;
+  final String? caption;
+  final PanelTone tone;
+
+  /// Screen-reader phrasing: the symbol, and what it means if it has one.
+  String get spoken => caption == null ? text : '$text — $caption.';
+
+  factory EquationTerm.fromJson(Map<String, dynamic> json) => EquationTerm(
+    text: json['text'] as String,
+    caption: json['caption'] as String?,
+    tone: switch (json['tone'] as String? ?? 'neutral') {
+      'gain' => PanelTone.gain,
+      'loss' => PanelTone.loss,
+      _ => PanelTone.neutral,
+    },
   );
 }
 

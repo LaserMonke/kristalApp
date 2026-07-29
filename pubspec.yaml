@@ -50,6 +50,11 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
 
+  # Already pulled in transitively by flutter_riverpod; declared directly so
+  # tests can import package:riverpod/misc.dart for the ProviderScope
+  # `Override` type when building parameterised provider overrides.
+  riverpod: ^3.4.1
+
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 

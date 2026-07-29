@@ -190,6 +190,26 @@
           ]
         },
         {
+          "type": "payoff",
+          "heading": "A first look — long call, strike $100, premium $5",
+          "caption": "A preview: profit at expiry against where the underlying finishes. Lesson 2 teaches this diagram properly — for now, just notice the shape.",
+          "spot_min": 60,
+          "spot_max": 140,
+          "legs": [
+            { "kind": "call", "side": "long", "strike": 100, "premium": 5 }
+          ]
+        },
+        {
+          "type": "payoff",
+          "heading": "The mirror image — long put, strike $100, premium $6",
+          "caption": "Same idea, flipped: this position wants the underlying to fall, not rise.",
+          "spot_min": 60,
+          "spot_max": 140,
+          "legs": [
+            { "kind": "put", "side": "long", "strike": 100, "premium": 6 }
+          ]
+        },
+        {
           "type": "text",
           "heading": "What defines a contract",
           "icon": "contract",
@@ -777,10 +797,65 @@
         },
         {
           "type": "term",
-          "term": "The formula",
+          "term": "N(x)",
           "icon": "formula",
-          "definition": "For a call: C = S x N(d1) - K x e^(-rT) x N(d2). For a put: P = K x e^(-rT) x N(-d2) - S x N(-d1). N(x) is the probability a standard normal variable falls below x; d1 and d2 are built from the five inputs above.",
-          "example": "You do not need to compute this by hand — the pricer built into this app does it. What matters is what happens to the price when one input changes, which the next card lets you feel directly."
+          "definition": "The cumulative normal distribution. It turns a distance, measured in standard deviations, into a probability between 0 and 1 — the same bell-curve function from any introductory statistics course.",
+          "example": "N(0) = 0.50 — zero standard deviations from average is a coin flip. N(1) is about 0.84, and N(-1) is about 0.16 — its mirror image."
+        },
+        {
+          "type": "text",
+          "heading": "d1 and d2 — moneyness, measured in standard deviations",
+          "icon": "target",
+          "body": "d1 and d2 both answer the same question: how far is the spot price from the strike, not in dollars, but in standard deviations of the underlying's expected movement? The bigger the number, the further in the money the option is expected to finish.",
+          "bullets": [
+            "ln(S/K) compares spot to strike on a percentage basis — zero exactly at the money.",
+            "Dividing by volatility times the square root of time rescales that gap by how much movement is expected over what is left.",
+            "d2 uses this distance directly — N(d2) is the plain probability of finishing in the money.",
+            "d1 adds a small correction (+ volatility squared over 2) from the mathematics of compounding growth, and turns out to equal the option's delta from lesson 5."
+          ]
+        },
+        {
+          "type": "equation",
+          "heading": "The call price, piece by piece",
+          "terms": [
+            { "text": "C", "caption": "Call price" },
+            { "text": "=" },
+            { "text": "S", "caption": "Spot price", "tone": "gain" },
+            { "text": "x" },
+            { "text": "N(d1)", "caption": "Weight: how likely, and how much, you would receive", "tone": "gain" },
+            { "text": "-" },
+            { "text": "K.e^(-rT)", "caption": "Strike, discounted to today", "tone": "loss" },
+            { "text": "x" },
+            { "text": "N(d2)", "caption": "Probability of finishing in the money", "tone": "loss" }
+          ],
+          "footnote": "The value of what you would receive, weighted by likelihood and size — minus the discounted cost of what you would pay, weighted by how likely you will actually pay it."
+        },
+        {
+          "type": "text",
+          "heading": "Reading it piece by piece",
+          "icon": "compass",
+          "body": "In words: the price is the value of receiving the stock, if you end up exercising, minus the discounted cost of paying the strike, if you end up exercising. Both pieces are weighted by how likely that outcome is.",
+          "bullets": [
+            "K.e^(-rT).N(d2) is the expected, discounted cost of paying the strike.",
+            "S.N(d1) is the expected, discounted value of receiving the stock — no extra discounting needed, because a stock's own expected growth already accounts for it.",
+            "N(d1) is not just a probability-like weight — it also equals the call's delta from lesson 5. That is not a coincidence: the formula was originally derived from a hedging argument, not a probability one."
+          ]
+        },
+        {
+          "type": "equation",
+          "heading": "The put price mirrors the call",
+          "terms": [
+            { "text": "P", "caption": "Put price" },
+            { "text": "=" },
+            { "text": "K.e^(-rT)", "caption": "Strike, discounted to today", "tone": "gain" },
+            { "text": "x" },
+            { "text": "N(-d2)", "caption": "Probability of finishing in the money", "tone": "gain" },
+            { "text": "-" },
+            { "text": "S", "caption": "Spot price", "tone": "loss" },
+            { "text": "x" },
+            { "text": "N(-d1)", "caption": "Weight: how likely, and how much, you would give up", "tone": "loss" }
+          ],
+          "footnote": "Same shape, flipped: the value of receiving the strike, if you end up exercising, minus the discounted value of giving up the stock."
         },
         {
           "type": "pricer_explore",

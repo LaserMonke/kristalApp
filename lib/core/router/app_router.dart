@@ -8,9 +8,9 @@ import '../../features/leaderboard/leaderboard_screen.dart';
 import '../../features/learn/learn_screen.dart';
 import '../../features/learn/lesson_player_screen.dart';
 import '../../features/onboarding/disclaimer_screen.dart';
-import '../../features/practice/practice_screen.dart';
 import '../../features/profile/profile_screen.dart';
 import '../../features/quiz/quiz_screen.dart';
+import '../../features/sandbox/sandbox_screen.dart';
 import '../../features/shell/app_shell.dart';
 import '../../providers/auth_controller.dart';
 import '../../providers/onboarding_controller.dart';
@@ -21,7 +21,7 @@ abstract final class Routes {
   static const String disclaimer = '/welcome';
   static const String signIn = '/sign-in';
   static const String learn = '/learn';
-  static const String practice = '/practice';
+  static const String sandbox = '/sandbox';
   static const String leaderboard = '/ranks';
   static const String profile = '/profile';
 
@@ -119,7 +119,7 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
             ) => AppShell(navigationShell: shell),
         branches: <StatefulShellBranch>[
           _branch(Routes.learn, const LearnScreen()),
-          _branch(Routes.practice, const PracticeScreen()),
+          _branch(Routes.sandbox, const SandboxScreen()),
           _branch(Routes.leaderboard, const LeaderboardScreen()),
           _branch(Routes.profile, const ProfileScreen()),
         ],
