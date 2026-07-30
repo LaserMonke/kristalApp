@@ -30,6 +30,18 @@ abstract interface class ProgressRepo {
     required StreakState streak,
   });
 
-  /// Wipe local progress, streak included ("reset progress" in Settings).
+  /// Wipe the learner's progress, streak included ("reset progress" in
+  /// Settings). Throws [ProgressException] if it could not be completed
+  /// everywhere the progress is stored — a half-done reset that quietly comes
+  /// back on the next sync would be worse than a visible failure.
   Future<void> clear(String userId);
+}
+
+/// Progress failure with a message safe to show a learner verbatim.
+class ProgressException implements Exception {
+  const ProgressException(this.message);
+  final String message;
+
+  @override
+  String toString() => message;
 }

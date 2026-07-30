@@ -41,6 +41,9 @@ dependencies:
   flutter_local_notifications: ^22.2.0
   timezone: ^0.11.1
   flutter_timezone: ^5.1.0
+  supabase_flutter: ^2.16.0
+  flutter_dotenv: ^6.0.1
+  http: ^1.6.0
 
 dev_dependencies:
   flutter_test:
@@ -73,6 +76,10 @@ flutter:
   # editing the JSON below, not the engine.
   assets:
     - assets/lessons/
+    # Supabase URL + publishable key (flutter_dotenv reads it as an asset).
+    # Gitignored; see .env.example. Safe to bundle ONLY because RLS is on —
+    # the service_role key never goes in here.
+    - .env
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

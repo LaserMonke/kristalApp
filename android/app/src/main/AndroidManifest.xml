@@ -4,6 +4,11 @@
          so no exact-alarm permission is requested. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <!-- Talking to Supabase (auth + progress sync, Phase 6). The Flutter
+         template only grants this in the debug/profile manifests, so without
+         it here a RELEASE build would have no network at all and every sync
+         would fail silently. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:label="optionsschool"
         android:name="${applicationName}"

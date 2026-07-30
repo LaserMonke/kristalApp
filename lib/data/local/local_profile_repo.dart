@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/app_user.dart';
 import '../models/education_level.dart';
 import '../repositories/profile_repo.dart';
+import 'disclaimer_store.dart';
 import 'local_auth_repo.dart';
 
 /// Profile storage backed by the same on-device account records the local auth
@@ -12,8 +13,6 @@ class LocalProfileRepo implements ProfileRepo {
 
   final SharedPreferences _prefs;
   final LocalAuthRepo _auth;
-
-  static const String _disclaimerKey = 'onboarding.disclaimer_accepted';
 
   @override
   Future<AppUser?> loadProfile(String userId) async => _auth.findById(userId);
@@ -39,9 +38,9 @@ class LocalProfileRepo implements ProfileRepo {
 
   @override
   Future<bool> hasAcceptedDisclaimer() async =>
-      _prefs.getBool(_disclaimerKey) ?? false;
+      DisclaimerStore(_prefs).accepted;
 
   @override
   Future<void> setDisclaimerAccepted({required bool accepted}) =>
-      _prefs.setBool(_disclaimerKey, accepted);
+      DisclaimerStore(_prefs).setAccepted(accepted);
 }

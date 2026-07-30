@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/widgets/data_location_text.dart';
 import '../../data/models/education_level.dart';
 import '../../data/repositories/auth_repo.dart';
 import '../../providers/auth_controller.dart';
+import '../../providers/repository_providers.dart';
 
-/// Local sign-in / sign-up.
+/// Sign-in / sign-up.
 ///
-/// Phase 0 authenticates against on-device records only (see LocalAuthRepo);
-/// the same screen will drive Supabase Auth in Phase 6 without UI changes.
+/// Drives whichever AuthRepo is active: Supabase Auth when a backend is
+/// configured, the device-only stub otherwise. The screen itself is unchanged
+/// by that swap — only the footer, which must say honestly where the account
+/// lives (CLAUDE.md rule 8).
 class SignInScreen extends ConsumerStatefulWidget {
   const SignInScreen({super.key});
 
@@ -193,8 +197,9 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'Accounts are stored on this device for now. Cloud sync '
-                      'arrives with the server build.',
+                      DataLocation.accounts(
+                        cloudBacked: ref.watch(isCloudBackedProvider),
+                      ),
                       textAlign: TextAlign.center,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,

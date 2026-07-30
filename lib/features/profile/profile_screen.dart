@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/widgets/data_location_text.dart';
 import '../../core/widgets/disclaimer_text.dart';
 import '../../core/widgets/theme_toggle_button.dart';
 import '../../data/models/app_user.dart';
 import '../../data/models/education_level.dart';
+import '../../data/repositories/progress_repo.dart';
 import '../../providers/auth_controller.dart';
 import '../../providers/engagement_providers.dart';
 import '../../providers/progress_controller.dart';
+import '../../providers/repository_providers.dart';
 import '../../providers/theme_controller.dart';
 import 'widgets/progress_section.dart';
 import 'widgets/reminders_section.dart';
@@ -21,6 +24,10 @@ class ProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final ThemeData theme = Theme.of(context);
     final AppUser? user = ref.watch(currentUserProvider);
+
+    // Whether progress leaves the device. Every claim about storage below is
+    // keyed on this rather than hardcoded (CLAUDE.md rule 8).
+    final bool synced = ref.watch(isCloudBackedProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -64,10 +71,8 @@ class ProfileScreen extends ConsumerWidget {
                 ListTile(
                   leading: const Icon(Icons.privacy_tip_outlined),
                   title: const Text('Data we collect'),
-                  subtitle: const Text(
-                    'Username and education level. Stored on this device.',
-                  ),
-                  onTap: () => _showPrivacy(context),
+                  subtitle: Text(DataLocation.collected(cloudBacked: synced)),
+                  onTap: () => _showPrivacy(context, cloudBacked: synced),
                 ),
               ],
             ),
@@ -97,17 +102,16 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  /// Destructive and irreversible, so it asks first and says exactly what
-  /// goes: lesson progress, Q&A scores, points and the streak on this device.
+  /// Destructive and irreversible, so it asks first and says exactly what goes
+  /// — including whether the server copy goes with it.
   Future<void> _confirmReset(BuildContext context, WidgetRef ref) async {
+    final bool cloudBacked = ref.read(isCloudBackedProvider);
+
     final bool? confirmed = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) => AlertDialog(
         title: const Text('Reset learning progress?'),
-        content: const Text(
-          'Lesson progress, Q&A scores, points and your streak on this '
-          'device will be wiped. This cannot be undone.',
-        ),
+        content: Text(DataLocation.reset(cloudBacked: cloudBacked)),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -122,7 +126,19 @@ class ProfileScreen extends ConsumerWidget {
     );
     if (confirmed != true) return;
 
-    await ref.read(progressControllerProvider.notifier).reset();
+    try {
+      await ref.read(progressControllerProvider.notifier).reset();
+    } on ProgressException catch (error) {
+      // Nothing was wiped — say so rather than showing a zeroed screen that
+      // repopulates on the next sync.
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.message)));
+      }
+      return;
+    }
+
     // The streak lives beside the lesson records; reload it from the cleared
     // store so the UI drops to zero immediately.
     ref.invalidate(streakControllerProvider);
@@ -137,30 +153,25 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  void _showPrivacy(BuildContext context) {
+  void _showPrivacy(BuildContext context, {required bool cloudBacked}) {
     showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
       builder: (BuildContext context) => Padding(
         padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text(
-              'Data we collect',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              'A username, a password you choose, and a coarse education '
-              'level. Nothing else — no email, no date of birth, no contacts, '
-              'no advertising identifiers.\n\n'
-              'Right now all of it stays on this device. When cloud sync '
-              'arrives, a full privacy policy will be linked here before any '
-              'data leaves your phone.',
-            ),
-          ],
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                'Data we collect',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 12),
+              Text(DataLocation.privacy(cloudBacked: cloudBacked)),
+            ],
+          ),
         ),
       ),
     );

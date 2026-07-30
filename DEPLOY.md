@@ -24,17 +24,60 @@ Supabase gives you, as managed services, everything this app needs:
 1. Create a project at the Supabase dashboard. Pick a region close to your users.
 2. Copy the Project URL and the publishable/anon key (Project Settings → API). These go in
    the client .env as SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY (safe to ship WITH RLS on).
+   Copy `.env.example` → `.env` and fill both in. `.env` is gitignored; it is bundled as a
+   Flutter asset (see pubspec.yaml) and read by `lib/core/config/supabase_config.dart`, which
+   REFUSES to start if the value looks like a service_role key.
 3. Keep the service_role key SECRET — server-side only, never in the app.
+4. Auth settings that this client depends on (Authentication → Providers → Email):
+   - **Turn "Confirm email" OFF.** The app collects no email address (CLAUDE.md rule 6 — the
+     audience may include minors). Each account gets an unroutable synthetic address derived
+     from the username (`<username>@users.optionsschool.invalid`, RFC 2606). There is no
+     mailbox, so a confirmation mail can never be answered and sign-up would hang forever.
+     `SupabaseAuthRepo.signUp` detects this misconfiguration and says so explicitly.
+   - Leave email/password sign-in ENABLED; no other provider is used.
+   - Minimum password length: 6, matching `minPasswordLength` in
+     `lib/data/supabase/account_identity.dart` and the sign-in form's own validator. Change
+     all three together or the form will accept a password the server rejects.
+   - Enable "leaked password protection" (HaveIBeenPwned check) if your plan offers it.
+   - CONSEQUENCE OF NO EMAIL: there is no password reset. The sign-in screen says so plainly
+     rather than implying recovery exists. If you later decide recovery matters more than
+     collecting no contact details, that is a product decision with privacy obligations
+     attached — don't add an email field without revisiting rule 6 and the privacy policy.
 
-### 1b. Database schema (run as SQL in the Supabase SQL editor)
-Core tables (let Claude Code generate exact SQL, but the shape is):
-- profiles(id uuid pk → auth.users, username, education_level, created_at)
-- progress(id, user_id fk, lesson_id, score, attempts, completed_at)
-- points(user_id fk, total_points, level, updated_at)
-- streaks(user_id fk, current_streak, longest_streak, last_active, freezes_left)
-- leaderboard is a VIEW over points (+ a separate bots table clearly flagged is_bot=true)
-Enable Row Level Security on every user table and add policies so
-`auth.uid() = user_id` for select/insert/update. Never leave a user table without RLS.
+### 1b. Database schema
+The Phase 6 schema is written and lives in git:
+
+    supabase/migrations/20260730120000_phase6_init.sql
+
+Apply it either way — it is idempotent, so re-running is safe:
+- CLI (preferred, keeps environments in step):
+  `supabase link --project-ref <ref>` then `supabase db push`
+- Dashboard: paste the file into the SQL editor and run it.
+
+What it creates:
+- `profiles(id → auth.users, username, education_level, created_at, updated_at)`, with a
+  case-insensitive unique index on the username so "Alice" and "alice" are one person.
+- `lesson_progress(user_id, lesson_id, …)`, primary key `(user_id, lesson_id)`.
+- `streaks(user_id, current_streak, longest_streak, last_active_day, …)`.
+- `handle_new_user()` trigger on `auth.users` — writes the profile row from the sign-up
+  metadata, so a profile always exists even if the app dies mid-sign-up.
+- `username_available(candidate)` — lets sign-up fail with "that username is taken" instead
+  of a raw unique-index error from inside the trigger.
+
+Two decisions worth knowing about:
+- **RLS is on for all three tables**, every policy is `auth.uid() = <owner>`, and `profiles`
+  deliberately has NO delete policy (rows go only when the auth user is deleted, which
+  cascades). Never add a user table without RLS.
+- **`lesson_progress.points_earned` is a GENERATED column**, computed by Postgres from the
+  same formula as `lib/engagement/points.dart` (20 per finished deck + 10 per correct answer
+  + 15 for a perfect Q&A). The client never sends it, so a modified client cannot report its
+  own score — that is what will make the Phase 7 leaderboard honest (CLAUDE.md rule 7). If
+  the Dart constants change, change the SQL in the same commit.
+  Not yet solved: the server does not know a lesson's true question count, so
+  `correct_answers` is still client-asserted (bounded by `correct_answers <= total_questions`).
+  Moving Q&A grading server-side belongs with Phase 7.
+
+Phase 7 adds the leaderboard view over these tables plus a bots table flagged `is_bot = true`.
 
 ### 1c. Migrations & environments
 - Use the Supabase CLI (`supabase init`, `supabase db diff`, `supabase db push`) so schema
@@ -114,11 +157,33 @@ turn these on until traffic or compute genuinely requires them.
 ════════════════════════════════════════════════════════════════════════════════
 4. CONNECTING THE CLIENT (Phase 6 of BUILD_PROMPTS)
 ════════════════════════════════════════════════════════════════════════════════
-1. Create dev Supabase project + run the schema SQL + enable RLS.
-2. Put SUPABASE_URL / SUPABASE_PUBLISHABLE_KEY in the client dev .env.
-3. Implement the Supabase versions of AuthRepo/ProfileRepo/ProgressRepo (interfaces already
-   exist from Part A), keeping local repos as offline fallback.
-4. Deploy the market-data-proxy Edge Function with its secret before building Phase 9.
+DONE in Phase 6 — this section is now a description of what is wired, not a to-do list.
+
+1. Create dev Supabase project, apply `supabase/migrations/` (§1b), confirm RLS is on, and
+   turn "Confirm email" OFF (§1a).
+2. Put SUPABASE_URL / SUPABASE_PUBLISHABLE_KEY in the client dev `.env`.
+3. `main()` calls `Supabase.initialize` only if `.env` supplies a project, then overrides
+   `supabaseClientProvider`. A null client (blank .env, failed init, any widget test) leaves
+   the app on the Part A on-device repositories — degraded, never broken.
+4. The swap itself is `lib/providers/repository_providers.dart` and nowhere else:
+   | interface     | no backend          | backend configured      |
+   |---------------|---------------------|-------------------------|
+   | `AuthRepo`    | `LocalAuthRepo`     | `SupabaseAuthRepo`      |
+   | `ProfileRepo` | `LocalProfileRepo`  | `SupabaseProfileRepo`   |
+   | `ProgressRepo`| `LocalProgressRepo` | `SupabaseProgressRepo`  |
+   No screen, controller or test above that file knows which it got.
+5. Offline behaviour (`SupabaseProgressRepo`): every write hits the local cache FIRST, then
+   the server; a write that fails for NETWORK reasons is queued and retried on the next
+   successful round trip, and the queue is flushed before any read so a stale server row can
+   never overwrite fresher local work. A non-network rejection (RLS, constraint) is thrown,
+   not queued — hiding it would bury a bug. Conflicts are last-write-wins; progress is close
+   to monotonic so nothing valuable is destroyed, but this is not a general sync engine.
+6. Android: `INTERNET` is declared in `android/app/src/main/AndroidManifest.xml`. The Flutter
+   template only grants it for debug/profile, so without that line a RELEASE build silently
+   has no network. iOS needs nothing (no deep links; `detectSessionInUri: false`).
+7. Still to do: deploy the market-data-proxy Edge Function with its secret before Phase 9,
+   and publish the privacy policy (Phase 10) — data now leaves the device, so the policy is a
+   release requirement, and Settings → "Data we collect" says so.
 
 ════════════════════════════════════════════════════════════════════════════════
 5. SHIPPING TEST & RELEASE BUILDS

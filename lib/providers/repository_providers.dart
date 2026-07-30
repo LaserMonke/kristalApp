@@ -1,7 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 
 import '../data/local/asset_lesson_repo.dart';
+import '../data/local/disclaimer_store.dart';
 import '../data/local/local_auth_repo.dart';
 import '../data/local/local_profile_repo.dart';
 import '../data/local/local_progress_repo.dart';
@@ -9,6 +11,9 @@ import '../data/repositories/auth_repo.dart';
 import '../data/repositories/lesson_repo.dart';
 import '../data/repositories/profile_repo.dart';
 import '../data/repositories/progress_repo.dart';
+import '../data/supabase/supabase_auth_repo.dart';
+import '../data/supabase/supabase_profile_repo.dart';
+import '../data/supabase/supabase_progress_repo.dart';
 
 /// Overridden in `main()` once shared_preferences has loaded.
 final Provider<SharedPreferences> sharedPreferencesProvider =
@@ -18,11 +23,29 @@ final Provider<SharedPreferences> sharedPreferencesProvider =
       ),
     );
 
-/// The single seam between the app and its data layer.
+/// The live Supabase client, or null when no backend is configured.
 ///
-/// Everything above these providers depends only on the abstract interfaces,
-/// so Phase 6 swaps in Supabase implementations by changing these three lines
-/// (or overriding them in `ProviderScope`) and nothing else.
+/// Overridden in `main()` after `Supabase.initialize`. Null is a supported,
+/// tested state — a missing/blank `.env`, a backend that failed to initialise,
+/// or a widget test — and puts the app on the on-device repositories below.
+final Provider<sb.SupabaseClient?> supabaseClientProvider =
+    Provider<sb.SupabaseClient?>((Ref ref) => null);
+
+/// True when progress and profiles are syncing to the server. Drives the copy
+/// that tells the learner where their data actually lives (CLAUDE.md rule 8:
+/// data honesty) — never claim cloud sync we are not doing.
+final Provider<bool> isCloudBackedProvider = Provider<bool>(
+  (Ref ref) => ref.watch(supabaseClientProvider) != null,
+);
+
+// ---------------------------------------------------------------------------
+// The single seam between the app and its data layer.
+//
+// Everything above these providers depends only on the abstract interfaces, so
+// swapping local for Supabase happens here and nowhere else — no screen, no
+// controller and no test above this line knows which implementation it got.
+// ---------------------------------------------------------------------------
+
 final Provider<LocalAuthRepo> localAuthRepoProvider = Provider<LocalAuthRepo>((
   Ref ref,
 ) {
@@ -33,20 +56,53 @@ final Provider<LocalAuthRepo> localAuthRepoProvider = Provider<LocalAuthRepo>((
   return repo;
 });
 
-final Provider<AuthRepo> authRepoProvider = Provider<AuthRepo>(
-  (Ref ref) => ref.watch(localAuthRepoProvider),
-);
+final Provider<SupabaseAuthRepo?> supabaseAuthRepoProvider =
+    Provider<SupabaseAuthRepo?>((Ref ref) {
+      final sb.SupabaseClient? client = ref.watch(supabaseClientProvider);
+      if (client == null) return null;
 
-final Provider<ProfileRepo> profileRepoProvider = Provider<ProfileRepo>(
-  (Ref ref) => LocalProfileRepo(
-    ref.watch(sharedPreferencesProvider),
-    ref.watch(localAuthRepoProvider),
-  ),
-);
+      final SupabaseAuthRepo repo = SupabaseAuthRepo(client);
+      ref.onDispose(repo.dispose);
+      return repo;
+    });
 
-final Provider<ProgressRepo> progressRepoProvider = Provider<ProgressRepo>(
-  (Ref ref) => LocalProgressRepo(ref.watch(sharedPreferencesProvider)),
-);
+final Provider<AuthRepo> authRepoProvider = Provider<AuthRepo>((Ref ref) {
+  final SupabaseAuthRepo? remote = ref.watch(supabaseAuthRepoProvider);
+  // Only build the device-only stub when there is no backend, so its account
+  // records are never touched in a server build.
+  return remote ?? ref.watch(localAuthRepoProvider);
+});
+
+final Provider<ProfileRepo> profileRepoProvider = Provider<ProfileRepo>((
+  Ref ref,
+) {
+  final SharedPreferences prefs = ref.watch(sharedPreferencesProvider);
+  final sb.SupabaseClient? client = ref.watch(supabaseClientProvider);
+
+  if (client == null) {
+    return LocalProfileRepo(prefs, ref.watch(localAuthRepoProvider));
+  }
+  return SupabaseProfileRepo(
+    client: client,
+    // Device-scoped either way — see DisclaimerStore.
+    disclaimers: DisclaimerStore(prefs),
+    auth: ref.watch(supabaseAuthRepoProvider),
+  );
+});
+
+final Provider<ProgressRepo> progressRepoProvider = Provider<ProgressRepo>((
+  Ref ref,
+) {
+  final SharedPreferences prefs = ref.watch(sharedPreferencesProvider);
+  final LocalProgressRepo local = LocalProgressRepo(prefs);
+
+  final sb.SupabaseClient? client = ref.watch(supabaseClientProvider);
+  if (client == null) return local;
+
+  // The local store stays in play as the offline cache, so a lesson finished
+  // without signal is never lost.
+  return SupabaseProgressRepo(client: client, cache: local, prefs: prefs);
+});
 
 /// Lesson content. Bundled as an asset for now; a Supabase-backed
 /// implementation would let content ship without an app-store release.
