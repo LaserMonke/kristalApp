@@ -91,6 +91,17 @@ class LocalReminderService implements ReminderService {
   Future<bool> scheduleDaily({required int hour, required int minute}) async {
     if (!isSupported) return false;
 
+    // Any platform failure — plugin missing, channel error, OS refusal — is
+    // reported as "not scheduled" rather than crashing: a reminder is never
+    // worth taking the app down for.
+    try {
+      return await _schedule(hour: hour, minute: minute);
+    } on Object {
+      return false;
+    }
+  }
+
+  Future<bool> _schedule({required int hour, required int minute}) async {
     await _ensureInitialized();
     if (!await _requestPermission()) return false;
 
@@ -122,7 +133,12 @@ class LocalReminderService implements ReminderService {
   @override
   Future<void> cancel() async {
     if (!isSupported) return;
-    await _ensureInitialized();
-    await _plugin.cancel(id: _dailyReminderId);
+    try {
+      await _ensureInitialized();
+      await _plugin.cancel(id: _dailyReminderId);
+    } on Object {
+      // Nothing scheduled or no plugin — either way there is nothing to
+      // cancel, which is the state the caller wanted.
+    }
   }
 }

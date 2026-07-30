@@ -1,17 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
+import '../../providers/reminder_controller.dart';
 
 /// Bottom-tab scaffold wrapping the four top-level destinations.
 ///
 /// Uses `StatefulShellRoute.indexedStack`, so each tab keeps its own
 /// navigation stack and scroll position when the learner switches away.
-class AppShell extends StatelessWidget {
+class AppShell extends ConsumerWidget {
   const AppShell({required this.navigationShell, super.key});
 
   final StatefulNavigationShell navigationShell;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // The shell only exists once the disclaimer is acknowledged and someone
+    // is signed in — the right moment for the reminder controller's one-time
+    // first-run setup (default schedule + OS permission prompt), rather than
+    // interrupting the disclaimer or sign-in screens.
+    ref.watch(reminderControllerProvider);
+
     return Scaffold(
       body: navigationShell,
       bottomNavigationBar: NavigationBar(

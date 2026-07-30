@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -7,8 +9,9 @@ import 'package:optionsschool/providers/reminder_controller.dart';
 import 'package:optionsschool/providers/repository_providers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// The reminder rules that CLAUDE.md rule 9 hangs on: strictly opt-in, honest
-/// about platform limits, and a declined OS permission leaves everything off.
+/// The reminder contract under CLAUDE.md rule 9, now that the default is ON:
+/// the OS permission prompt is the real consent gate, a decline sticks, an
+/// explicit "off" is never overridden, and unsupported platforms say so.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -16,8 +19,11 @@ void main() {
     WidgetTester tester, {
     bool supported = true,
     bool permissionGranted = true,
+    ReminderSettings? stored,
   }) async {
-    SharedPreferences.setMockInitialValues(<String, Object>{});
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      if (stored != null) 'reminders.settings': jsonEncode(stored.toJson()),
+    });
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     final _FakeReminderService service = _FakeReminderService(
       supported: supported,
@@ -39,27 +45,17 @@ void main() {
     return service;
   }
 
-  testWidgets('the reminder is off by default', (WidgetTester tester) async {
-    final _FakeReminderService service = await pump(tester);
+  SwitchListTile toggleOf(WidgetTester tester) =>
+      tester.widget<SwitchListTile>(find.byType(SwitchListTile));
 
-    final SwitchListTile toggle = tester.widget<SwitchListTile>(
-      find.byType(SwitchListTile),
-    );
-    expect(toggle.value, isFalse);
-    expect(service.scheduled, isFalse);
-    expect(find.text('Reminder time'), findsNothing);
-  });
-
-  testWidgets('opting in schedules one daily reminder', (
+  testWidgets('first run turns the reminder on once permission is granted', (
     WidgetTester tester,
   ) async {
     final _FakeReminderService service = await pump(tester);
 
-    await tester.tap(find.byType(SwitchListTile));
-    await tester.pumpAndSettle();
-
     expect(service.scheduled, isTrue);
     expect(service.hour, 18, reason: 'default early-evening slot');
+    expect(toggleOf(tester).value, isTrue);
     expect(find.text('Reminder time'), findsOneWidget);
   });
 
@@ -71,14 +67,14 @@ void main() {
       permissionGranted: false,
     );
 
+    expect(service.scheduled, isFalse);
+    expect(toggleOf(tester).value, isFalse);
+
+    // Trying the switch by hand explains why nothing happens.
     await tester.tap(find.byType(SwitchListTile));
     await tester.pumpAndSettle();
-
     expect(service.scheduled, isFalse);
-    final SwitchListTile toggle = tester.widget<SwitchListTile>(
-      find.byType(SwitchListTile),
-    );
-    expect(toggle.value, isFalse);
+    expect(toggleOf(tester).value, isFalse);
     expect(
       find.textContaining('Notifications are blocked'),
       findsOneWidget,
@@ -86,12 +82,38 @@ void main() {
     );
   });
 
+  testWidgets('an explicit off is remembered — never re-enabled at launch', (
+    WidgetTester tester,
+  ) async {
+    final _FakeReminderService service = await pump(
+      tester,
+      stored: const ReminderSettings(enabled: false, hour: 7, minute: 30),
+    );
+
+    expect(service.attempts, 0, reason: 'a stored "off" is final');
+    expect(toggleOf(tester).value, isFalse);
+  });
+
+  testWidgets('turning the reminder off cancels the schedule', (
+    WidgetTester tester,
+  ) async {
+    final _FakeReminderService service = await pump(tester);
+    expect(service.scheduled, isTrue);
+
+    await tester.tap(find.byType(SwitchListTile));
+    await tester.pumpAndSettle();
+
+    expect(service.scheduled, isFalse);
+    expect(toggleOf(tester).value, isFalse);
+  });
+
   testWidgets('an unsupported platform says so instead of pretending', (
     WidgetTester tester,
   ) async {
-    await pump(tester, supported: false);
+    final _FakeReminderService service = await pump(tester, supported: false);
 
     expect(find.byType(SwitchListTile), findsNothing);
+    expect(service.attempts, 0);
     expect(
       find.textContaining('Available in the iOS and Android apps'),
       findsOneWidget,
@@ -109,6 +131,7 @@ class _FakeReminderService implements ReminderService {
   final bool permissionGranted;
 
   bool scheduled = false;
+  int attempts = 0;
   int? hour;
   int? minute;
 
@@ -117,6 +140,7 @@ class _FakeReminderService implements ReminderService {
 
   @override
   Future<bool> scheduleDaily({required int hour, required int minute}) async {
+    attempts++;
     if (!permissionGranted) return false;
     scheduled = true;
     this.hour = hour;

@@ -4,8 +4,11 @@
 /// builds can report "not supported here" without touching plugin code.
 library;
 
-/// What the learner chose. Off by default — reminders are strictly opt-in
-/// (CLAUDE.md rule 9), and enabling asks the OS for permission at that moment.
+/// What the learner chose. The first run on a phone defaults the reminder ON
+/// (see ReminderController) — but the OS permission dialog is the real gate,
+/// a decline sticks, and the in-app switch turns it off in one tap
+/// (CLAUDE.md rule 9). The model's own default stays `false` so a missing or
+/// corrupt stored value can never resurrect a reminder the learner ended.
 class ReminderSettings {
   const ReminderSettings({
     this.enabled = false,

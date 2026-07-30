@@ -4,9 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../notifications/reminder_service.dart';
 import '../../../providers/reminder_controller.dart';
 
-/// The opt-in daily reminder (CLAUDE.md rule 9: encourage learning, never
-/// guilt). Off by default, one notification a day at a chosen time, and the
-/// off switch is exactly as prominent as the on switch.
+/// The daily reminder (CLAUDE.md rule 9: encourage learning, never guilt).
+/// On by default behind the OS permission prompt, one notification a day at
+/// a chosen time, and the off switch is one tap — an explicit "off" is never
+/// overridden.
 class RemindersSection extends ConsumerWidget {
   const RemindersSection({super.key});
 
@@ -41,7 +42,7 @@ class RemindersSection extends ConsumerWidget {
             secondary: const Icon(Icons.notifications_outlined),
             title: const Text('Daily reminder'),
             subtitle: const Text(
-              'One notification a day, at a time you choose. Off by default.',
+              'One notification a day, at a time you choose.',
             ),
             value: settings.enabled,
             onChanged: (bool on) => _toggle(context, ref, on: on),
