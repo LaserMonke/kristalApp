@@ -5,13 +5,16 @@ import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 import '../data/local/asset_lesson_repo.dart';
 import '../data/local/disclaimer_store.dart';
 import '../data/local/local_auth_repo.dart';
+import '../data/local/local_leaderboard_repo.dart';
 import '../data/local/local_profile_repo.dart';
 import '../data/local/local_progress_repo.dart';
 import '../data/repositories/auth_repo.dart';
+import '../data/repositories/leaderboard_repo.dart';
 import '../data/repositories/lesson_repo.dart';
 import '../data/repositories/profile_repo.dart';
 import '../data/repositories/progress_repo.dart';
 import '../data/supabase/supabase_auth_repo.dart';
+import '../data/supabase/supabase_leaderboard_repo.dart';
 import '../data/supabase/supabase_profile_repo.dart';
 import '../data/supabase/supabase_progress_repo.dart';
 
@@ -103,6 +106,19 @@ final Provider<ProgressRepo> progressRepoProvider = Provider<ProgressRepo>((
   // without signal is never lost.
   return SupabaseProgressRepo(client: client, cache: local, prefs: prefs);
 });
+
+final Provider<LeaderboardRepo> leaderboardRepoProvider =
+    Provider<LeaderboardRepo>((Ref ref) {
+      final sb.SupabaseClient? client = ref.watch(supabaseClientProvider);
+      if (client != null) return SupabaseLeaderboardRepo(client);
+
+      // No server means no other learners to rank against. The local repo says
+      // so honestly rather than inventing rivals (CLAUDE.md rule 7).
+      return LocalLeaderboardRepo(
+        auth: ref.watch(authRepoProvider),
+        progress: ref.watch(progressRepoProvider),
+      );
+    });
 
 /// Lesson content. Bundled as an asset for now; a Supabase-backed
 /// implementation would let content ship without an app-store release.

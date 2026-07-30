@@ -9,4 +9,11 @@ abstract final class Db {
 
   /// `public.username_available(candidate text) returns boolean`
   static const String usernameAvailableFn = 'username_available';
+
+  /// `public.leaderboard_page(period text, limit_count int)` — SECURITY
+  /// DEFINER, the only cross-user read in the app.
+  static const String leaderboardPageFn = 'leaderboard_page';
+
+  /// `public.leaderboard_standing(period text)` — the caller's own rank.
+  static const String leaderboardStandingFn = 'leaderboard_standing';
 }

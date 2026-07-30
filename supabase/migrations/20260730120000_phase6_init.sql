@@ -234,9 +234,19 @@ create policy "streaks: delete own"
 -- ---------------------------------------------------------------------------
 -- Sign-up: create the profile from auth metadata
 -- ---------------------------------------------------------------------------
--- Done in a trigger rather than a client insert so a profile always exists,
--- even if the app is killed the moment after sign-up. SECURITY DEFINER because
+-- A trigger on auth.users is the nicest place for this: the profile then exists
+-- even if the app is killed the instant after sign-up. SECURITY DEFINER because
 -- the row is written before the new user has a session to satisfy RLS with.
+--
+-- BUT it is only an optimisation, and attaching a trigger to auth.users needs
+-- privileges that the SQL-editor role does not always have. On projects where
+-- it is refused, an unguarded CREATE TRIGGER aborts the whole migration and
+-- NOTHING above this point gets created — so the attempt is wrapped and the
+-- failure downgraded to a notice.
+--
+-- The client covers the same ground either way: SupabaseAuthRepo._resolveUser
+-- upserts the profile from the session's own metadata when no row is found, and
+-- RLS allows that because the learner is inserting their own id.
 
 create or replace function public.handle_new_user()
 returns trigger
@@ -259,10 +269,21 @@ begin
 end;
 $$;
 
-drop trigger if exists on_auth_user_created on auth.users;
-create trigger on_auth_user_created
-  after insert on auth.users
-  for each row execute function public.handle_new_user();
+do $$
+begin
+  execute 'drop trigger if exists on_auth_user_created on auth.users';
+  execute '
+    create trigger on_auth_user_created
+      after insert on auth.users
+      for each row execute function public.handle_new_user()';
+  raise notice 'Profile trigger installed on auth.users.';
+exception
+  when insufficient_privilege or undefined_table then
+    raise notice
+      'Could not attach the profile trigger to auth.users (%). This is fine: '
+      'the app creates the profile row itself on first sign-in.', sqlerrm;
+end;
+$$;
 
 
 -- ---------------------------------------------------------------------------

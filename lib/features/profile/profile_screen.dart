@@ -6,6 +6,7 @@ import '../../core/widgets/disclaimer_text.dart';
 import '../../core/widgets/theme_toggle_button.dart';
 import '../../data/models/app_user.dart';
 import '../../data/models/education_level.dart';
+import '../../data/repositories/auth_repo.dart';
 import '../../data/repositories/progress_repo.dart';
 import '../../providers/auth_controller.dart';
 import '../../providers/engagement_providers.dart';
@@ -366,10 +367,21 @@ class _EducationLevelTile extends ConsumerWidget {
             ),
           );
 
-          if (picked != null) {
+          if (picked == null || picked == user.educationLevel) return;
+
+          try {
             await ref
                 .read(authControllerProvider.notifier)
                 .updateProfile(educationLevel: picked);
+          } on AuthException catch (error) {
+            // The write goes to the server when one is configured, so it can
+            // fail. Saying nothing would leave the old level on screen with no
+            // explanation.
+            if (context.mounted) {
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text(error.message)));
+            }
           }
         },
       ),

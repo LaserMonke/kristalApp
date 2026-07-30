@@ -45,16 +45,21 @@ Supabase gives you, as managed services, everything this app needs:
      attached — don't add an email field without revisiting rule 6 and the privacy policy.
 
 ### 1b. Database schema
-The Phase 6 schema is written and lives in git:
+The schema lives in git, one file per phase, applied in order:
 
-    supabase/migrations/20260730120000_phase6_init.sql
+    supabase/migrations/20260730120000_phase6_init.sql       <- accounts + progress
+    supabase/migrations/20260730130000_phase7_leaderboard.sql <- rankings
 
-Apply it either way — it is idempotent, so re-running is safe:
+**`supabase/README.md` has the step-by-step, plus how to verify it landed and the one
+harmless notice to expect.** Both files are idempotent, so re-running is safe.
+
 - CLI (preferred, keeps environments in step):
   `supabase link --project-ref <ref>` then `supabase db push`
-- Dashboard: paste the file into the SQL editor and run it.
+- Dashboard: paste each file into the SQL editor and run it. Note that the editor runs a
+  file as ONE transaction — a single failing statement rolls back the whole thing and leaves
+  you with nothing, so read the result rather than assuming success.
 
-What it creates:
+Phase 6 creates:
 - `profiles(id → auth.users, username, education_level, created_at, updated_at)`, with a
   case-insensitive unique index on the username so "Alice" and "alice" are one person.
 - `lesson_progress(user_id, lesson_id, …)`, primary key `(user_id, lesson_id)`.
@@ -77,7 +82,21 @@ Two decisions worth knowing about:
   `correct_answers` is still client-asserted (bounded by `correct_answers <= total_questions`).
   Moving Q&A grading server-side belongs with Phase 7.
 
-Phase 7 adds the leaderboard view over these tables plus a bots table flagged `is_bot = true`.
+Phase 7 adds, in its own file:
+- `leaderboard_bots` — seeded EMPTY on purpose. RLS on with NO policies, so nothing in the
+  client can read or write it directly; rows reach the app only through the functions below,
+  which stamp `is_bot = true` on every one of them. Labelling is therefore structural rather
+  than something the UI has to remember (CLAUDE.md rule 7).
+- `leaderboard_page(period, limit_count)` and `leaderboard_standing(period)` — the only
+  cross-user reads in the app. Both are SECURITY DEFINER, so they see past RLS by design, but
+  they return only a display name, a point total and the bot flag. The alternative — relaxing
+  the RLS policies so learners can read each other's rows — would have exposed whole profile
+  and progress rows for the sake of two numbers.
+- Weekly is defined as points from lessons FIRST finished since `date_trunc('week', now())`,
+  i.e. Monday 00:00 UTC. `completed_at` is written once and never moved, so re-reading old
+  cards cannot recycle points into a new week. The UI states the UTC rule rather than
+  implying it follows the learner's own clock.
+- Ties share a rank (`rank()`, not `row_number()`).
 
 ### 1c. Migrations & environments
 - Use the Supabase CLI (`supabase init`, `supabase db diff`, `supabase db push`) so schema
@@ -181,9 +200,19 @@ DONE in Phase 6 — this section is now a description of what is wired, not a to
 6. Android: `INTERNET` is declared in `android/app/src/main/AndroidManifest.xml`. The Flutter
    template only grants it for debug/profile, so without that line a RELEASE build silently
    has no network. iOS needs nothing (no deep links; `detectSessionInUri: false`).
-7. Still to do: deploy the market-data-proxy Edge Function with its secret before Phase 9,
-   and publish the privacy policy (Phase 10) — data now leaves the device, so the policy is a
-   release requirement, and Settings → "Data we collect" says so.
+7. Phase 7 adds `LeaderboardRepo` to the same table: `SupabaseLeaderboardRepo` when a backend
+   is configured, `LocalLeaderboardRepo` otherwise. The local one returns a board of exactly
+   one — the learner — and the screen explains that standings need a server rather than
+   implying nobody else is learning. Rankings are deliberately NOT cached offline: a stale
+   ranking shown as current would be a false claim about other people's scores.
+8. Still to do: deploy the market-data-proxy Edge Function with its secret before Phase 9,
+   and publish the privacy policy (Phase 10) — data now leaves the device and usernames plus
+   point totals are visible to other learners on the leaderboard, so the policy is a release
+   requirement. Settings → "Data we collect" discloses both.
+   Worth deciding before release: whether learners can opt out of appearing on the
+   leaderboard. Not built, because it was not asked for — but the audience may include
+   under-18 users (CLAUDE.md rule 6), and "my username is visible to strangers" is the kind
+   of default that deserves a deliberate decision rather than an inherited one.
 
 ════════════════════════════════════════════════════════════════════════════════
 5. SHIPPING TEST & RELEASE BUILDS

@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 
 import '../../engagement/streak.dart';
+import '../local/local_progress_repo.dart';
 import '../models/lesson_progress.dart';
 import '../repositories/progress_repo.dart';
 import 'supabase_error_messages.dart';
@@ -35,7 +36,7 @@ class SupabaseProgressRepo implements ProgressRepo {
   // for a private named parameter, so the lint's fix does not apply.
   SupabaseProgressRepo({
     required sb.SupabaseClient client,
-    required ProgressRepo cache,
+    required LocalProgressRepo cache,
     required SharedPreferences prefs,
     // ignore: prefer_initializing_formals
   }) : _client = client,
@@ -47,7 +48,8 @@ class SupabaseProgressRepo implements ProgressRepo {
   final sb.SupabaseClient _client;
 
   /// The device-only repository from Part A, reused verbatim as the cache.
-  final ProgressRepo _cache;
+  /// Typed concretely because mirroring the server needs its [replaceAll].
+  final LocalProgressRepo _cache;
 
   final SharedPreferences _prefs;
 
@@ -71,10 +73,10 @@ class SupabaseProgressRepo implements ProgressRepo {
               row['lesson_id'] as String: _progressFromRow(row),
           };
 
-      // Keep the cache warm so the next cold start works offline.
-      for (final LessonProgress progress in remote.values) {
-        await _cache.saveLesson(userId: userId, progress: progress);
-      }
+      // Mirror the server exactly rather than merging row-by-row. Merging would
+      // leave behind lessons the server no longer has — progress reset on
+      // another device — and they would reappear on the next offline read.
+      await _cache.replaceAll(userId: userId, progress: remote);
       return remote;
     } catch (error) {
       if (!isOfflineError(error)) rethrow;

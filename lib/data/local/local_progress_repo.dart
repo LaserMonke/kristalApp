@@ -53,6 +53,25 @@ class LocalProgressRepo implements ProgressRepo {
     await _prefs.setString(_key(userId), jsonEncode(encoded));
   }
 
+  /// Overwrites every lesson record for [userId] with [progress], dropping any
+  /// lesson not present.
+  ///
+  /// Not part of [ProgressRepo]: it exists for the Supabase repository to mirror
+  /// the server exactly. Warming the cache row-by-row would leave behind
+  /// lessons the server no longer has (reset on another device), and those
+  /// would reappear the next time the app read the cache offline. The streak is
+  /// stored under its own key and is untouched.
+  Future<void> replaceAll({
+    required String userId,
+    required Map<String, LessonProgress> progress,
+  }) {
+    final Map<String, dynamic> encoded = progress.map(
+      (String lessonId, LessonProgress value) =>
+          MapEntry<String, dynamic>(lessonId, value.toJson()),
+    );
+    return _prefs.setString(_key(userId), jsonEncode(encoded));
+  }
+
   @override
   Future<int> totalPoints(String userId) async {
     final Map<String, LessonProgress> all = await loadAll(userId);

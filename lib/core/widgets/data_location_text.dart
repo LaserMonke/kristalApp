@@ -49,6 +49,9 @@ abstract final class DataLocation {
       'readable form. Only you can read your own rows.\n\n'
       'Your progress is also kept on this device, so the app works offline and '
       'syncs when you are back online.\n\n'
+      'Visible to other learners: your username and your point total, on the '
+      'Ranks leaderboard. Nothing else about you is shared — not your study '
+      'level, not which lessons you got wrong.\n\n'
       'A full privacy policy will be published and linked here before release '
       '— data now leaves the device, so that is a requirement, not a plan.';
 

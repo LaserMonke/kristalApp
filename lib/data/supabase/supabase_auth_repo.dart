@@ -148,17 +148,27 @@ class SupabaseAuthRepo implements AuthRepo {
     return user;
   }
 
+  /// Signing out NEVER fails.
+  ///
+  /// A learner who taps "Sign out" on a shared phone must end up signed out
+  /// whatever the network is doing; throwing here would leave them logged in
+  /// while looking like it worked. So the server call is best-effort and the
+  /// local session is cleared unconditionally.
   @override
   Future<void> signOut() async {
     try {
-      // Global by default: revokes the refresh token server-side, so a stolen
-      // token dies with the sign-out.
+      // Global first: revokes the refresh token server-side, so a stolen token
+      // dies with the sign-out.
       await _client.auth.signOut();
     } catch (error) {
-      if (!isOfflineError(error)) rethrow;
-      // Offline: at minimum clear the session on this device so "sign out"
-      // means what it says here, and let the token expire on its own.
-      await _client.auth.signOut(scope: sb.SignOutScope.local);
+      debugPrint('Global sign-out failed (${error.runtimeType}); local only.');
+      try {
+        // Clears this device's stored session; the refresh token is left to
+        // expire on its own.
+        await _client.auth.signOut(scope: sb.SignOutScope.local);
+      } catch (_) {
+        // Nothing left to try — the emit below still ends the session in-app.
+      }
     } finally {
       _emit(null);
     }
