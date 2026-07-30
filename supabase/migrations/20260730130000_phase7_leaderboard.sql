@@ -36,6 +36,11 @@ create table if not exists public.leaderboard_bots (
   username      text not null,
   total_points  integer not null default 0,
   weekly_points integer not null default 0,
+
+  -- Off switch. A bot you add is on the board by default; setting this false
+  -- hides it without deleting it, so a roster can be parked and brought back.
+  active        boolean not null default true,
+
   created_at    timestamptz not null default now()
 );
 
@@ -56,6 +61,37 @@ alter table public.leaderboard_bots
   add column if not exists total_points  integer not null default 0;
 alter table public.leaderboard_bots
   add column if not exists weekly_points integer not null default 0;
+
+-- Bots that predate the `active` column were seeded before there was any way to
+-- switch them off, so they arrive switched OFF: a real board with real learners
+-- on it is the point, and seven padded scores in front of every new sign-up is
+-- a discouraging first impression.
+--
+-- Guarded on the column not existing yet, so re-running this file never
+-- overrides a bot you deliberately switched back on.
+do $$
+declare
+  parked integer;
+begin
+  if not exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'leaderboard_bots'
+      and column_name = 'active'
+  ) then
+    alter table public.leaderboard_bots
+      add column active boolean not null default true;
+
+    update public.leaderboard_bots set active = false;
+    get diagnostics parked = row_count;
+
+    raise notice
+      'Added leaderboard_bots.active and parked % pre-existing bot(s). '
+      'Re-enable with: update public.leaderboard_bots set active = true;',
+      parked;
+  end if;
+end;
+$$;
 
 -- If the table arrived with a plain `points` column, carry it across once so an
 -- existing roster keeps its scores instead of silently dropping to zero.
@@ -184,7 +220,10 @@ as $$
     b.username,
     case when params.weekly then b.weekly_points else b.total_points end,
     true
-  from public.leaderboard_bots b cross join params;
+  from public.leaderboard_bots b cross join params
+  -- Parked bots are invisible to the whole leaderboard, standings and player
+  -- count included, so "of N on the board" stays truthful.
+  where b.active;
 $$;
 
 -- Internal helper: only the two functions below (which run as the owner) may
@@ -299,6 +338,6 @@ begin
 
   raise notice
     'Leaderboard functions OK. % entries on the all-time board right now '
-    '(bots included).', entries;
+    '(active bots included; parked ones are hidden).', entries;
 end;
 $$;

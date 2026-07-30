@@ -48,12 +48,26 @@ signing in).
 It ends by calling both functions for real, so a bad apply fails in the editor where you can
 see it — look for `Leaderboard functions OK. N entries …` in the notices.
 
-**Pre-seeded bots keep their scores.** If your `leaderboard_bots` already has rows, they will
-show up on the board, labelled `BOT`. That is allowed by CLAUDE.md rule 7 and the app renders
-the label from the flag — but a new learner will start out ranked below every one of them.
-To clear them:
+**Pre-seeded bots arrive switched OFF.** Any `leaderboard_bots` rows that predate the `active`
+column are parked by the migration: they keep their scores, but they are invisible to the
+board, to standings, and to the "of N on the board" count, so real learners are what you see.
 
+    -- bring them all back
+    update public.leaderboard_bots set active = true;
+
+    -- park them again
+    update public.leaderboard_bots set active = false;
+
+    -- who is on the roster, and are they live?
+    select username, total_points, weekly_points, active from public.leaderboard_bots
+    order by total_points desc;
+
+    -- gone for good
     delete from public.leaderboard_bots;
+
+Re-running the migration never overrides a bot you deliberately switched back on — the
+parking step is guarded on the `active` column not existing yet. A bot you INSERT later is
+active by default, and shows up labelled `BOT` (CLAUDE.md rule 7).
 
 ## The one notice you might see
 
