@@ -49,3 +49,6 @@ app.*.map.json
 .env
 .env.*
 !.env.example
+
+# Supabase CLI local scratch state (project link, temp files)
+supabase/.temp/
