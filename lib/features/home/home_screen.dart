@@ -29,7 +29,11 @@ class HomeScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Home'),
+        leading: IconButton(
+          icon: const Icon(Icons.settings_outlined),
+          tooltip: 'Settings',
+          onPressed: () => context.push(Routes.profile),
+        ),
         actions: const <Widget>[ThemeToggleButton(), SizedBox(width: 4)],
       ),
       body: ListView(

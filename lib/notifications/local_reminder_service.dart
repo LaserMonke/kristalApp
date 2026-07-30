@@ -110,7 +110,7 @@ class LocalReminderService implements ReminderService {
       title: 'A few minutes of options study?',
       body:
           'One lesson card at a time. Your pace — this reminder is off '
-          'anytime in Profile.',
+          'anytime in Settings.',
       scheduledDate: _nextInstanceOf(hour, minute),
       notificationDetails: const NotificationDetails(
         android: AndroidNotificationDetails(

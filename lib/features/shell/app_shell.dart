@@ -50,7 +50,6 @@ const List<_Destination> _destinations = <_Destination>[
   _Destination('Learn', Icons.school_outlined, Icons.school),
   _Destination('Sandbox', Icons.tune_outlined, Icons.tune),
   _Destination('Ranks', Icons.leaderboard_outlined, Icons.leaderboard),
-  _Destination('Profile', Icons.person_outline, Icons.person),
 ];
 
 class _Destination {

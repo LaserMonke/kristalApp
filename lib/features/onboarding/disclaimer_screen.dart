@@ -102,7 +102,8 @@ class _DisclaimerScreenState extends ConsumerState<DisclaimerScreen> {
                       ),
                       const SizedBox(height: 10),
                       Text(
-                        'You can reread this any time in Profile → Settings.',
+                        'You can reread this any time via Settings (the '
+                        'gear icon on Home).',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                         ),

@@ -8,7 +8,7 @@ import '../../../engagement/levels.dart';
 import '../../../engagement/streak.dart';
 import '../../../providers/engagement_providers.dart';
 
-/// Points, level, streak and the road to the certificate, on the Profile tab.
+/// Points, level, streak and the road to the certificate, on the Settings screen.
 class ProgressSection extends ConsumerWidget {
   const ProgressSection({super.key});
 

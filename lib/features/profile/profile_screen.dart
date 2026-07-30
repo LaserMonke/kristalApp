@@ -24,7 +24,7 @@ class ProfileScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Profile'),
+        title: const Text('Settings'),
         actions: const <Widget>[ThemeToggleButton(), SizedBox(width: 4)],
       ),
       body: ListView(

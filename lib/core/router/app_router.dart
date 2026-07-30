@@ -121,6 +121,11 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
         parentNavigatorKey: _rootKey,
         builder: (_, _) => const CertificateScreen(),
       ),
+      GoRoute(
+        path: Routes.profile,
+        parentNavigatorKey: _rootKey,
+        builder: (_, _) => const ProfileScreen(),
+      ),
       StatefulShellRoute.indexedStack(
         builder:
             (
@@ -133,7 +138,6 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
           _branch(Routes.learn, const LearnScreen()),
           _branch(Routes.sandbox, const SandboxScreen()),
           _branch(Routes.leaderboard, const LeaderboardScreen()),
-          _branch(Routes.profile, const ProfileScreen()),
         ],
       ),
     ],
