@@ -6,7 +6,7 @@ import '../../../engagement/levels.dart';
 import '../../../engagement/streak.dart';
 import '../../../providers/engagement_providers.dart';
 
-/// Streak, points and level at a glance, at the top of the Learn tab.
+/// Streak, points and level at a glance, at the top of the Home tab.
 ///
 /// Each stat is words + a number + an icon — never colour alone — and the
 /// only "nudge" allowed is a plain statement of fact when a live streak has

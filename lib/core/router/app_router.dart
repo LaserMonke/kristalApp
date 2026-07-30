@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../data/models/app_user.dart';
 import '../../features/auth/sign_in_screen.dart';
+import '../../features/home/home_screen.dart';
 import '../../features/leaderboard/leaderboard_screen.dart';
 import '../../features/learn/learn_screen.dart';
 import '../../features/learn/lesson_player_screen.dart';
@@ -21,6 +22,7 @@ abstract final class Routes {
   static const String splash = '/';
   static const String disclaimer = '/welcome';
   static const String signIn = '/sign-in';
+  static const String home = '/home';
   static const String learn = '/learn';
   static const String sandbox = '/sandbox';
   static const String leaderboard = '/ranks';
@@ -56,7 +58,7 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
 
   return GoRouter(
     navigatorKey: _rootKey,
-    initialLocation: Routes.learn,
+    initialLocation: Routes.home,
     refreshListenable: refresh,
     redirect: (BuildContext context, GoRouterState state) {
       final AsyncValue<bool> accepted = ref.read(onboardingControllerProvider);
@@ -85,7 +87,7 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
         Routes.disclaimer,
         Routes.signIn,
       };
-      return gates.contains(here) ? Routes.learn : null;
+      return gates.contains(here) ? Routes.home : null;
     },
     routes: <RouteBase>[
       GoRoute(
@@ -127,6 +129,7 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
               StatefulNavigationShell shell,
             ) => AppShell(navigationShell: shell),
         branches: <StatefulShellBranch>[
+          _branch(Routes.home, const HomeScreen()),
           _branch(Routes.learn, const LearnScreen()),
           _branch(Routes.sandbox, const SandboxScreen()),
           _branch(Routes.leaderboard, const LeaderboardScreen()),
