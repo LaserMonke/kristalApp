@@ -36,6 +36,25 @@ Ask PostgREST what it can see — no tooling beyond curl, and the anon key is en
 - `200` → applied, and RLS correctly returns an empty list to an unauthenticated caller.
 - `404` → not applied (or applied to a different project).
 
+## If a leaderboard already existed in your project
+
+File 2 reconciles rather than assumes. `create table if not exists` does nothing when
+`leaderboard_bots` is already there, so it also runs `add column if not exists` for the
+columns the functions need, carries a plain `points` column across to `total_points` if it
+finds one, and drops any legacy `public.leaderboard()` function (one seen in the wild was
+granted to `anon`, which serves the whole board to anyone holding the publishable key without
+signing in).
+
+It ends by calling both functions for real, so a bad apply fails in the editor where you can
+see it — look for `Leaderboard functions OK. N entries …` in the notices.
+
+**Pre-seeded bots keep their scores.** If your `leaderboard_bots` already has rows, they will
+show up on the board, labelled `BOT`. That is allowed by CLAUDE.md rule 7 and the app renders
+the label from the flag — but a new learner will start out ranked below every one of them.
+To clear them:
+
+    delete from public.leaderboard_bots;
+
 ## The one notice you might see
 
 `Could not attach the profile trigger to auth.users (...)`

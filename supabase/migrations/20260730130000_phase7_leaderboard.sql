@@ -36,17 +36,94 @@ create table if not exists public.leaderboard_bots (
   username      text not null,
   total_points  integer not null default 0,
   weekly_points integer not null default 0,
-  created_at    timestamptz not null default now(),
-
-  constraint leaderboard_bots_points_sane check (
-    total_points >= 0
-    and weekly_points >= 0
-    -- A bot cannot have earned more this week than in its whole existence.
-    and weekly_points <= total_points
-  )
+  created_at    timestamptz not null default now()
 );
 
+-- RECONCILE AN EXISTING TABLE.
+-- `create table if not exists` above does nothing when a table of that name is
+-- already present — which is exactly the trap that made an earlier version of
+-- this file fail. A pre-existing `leaderboard_bots` (from a hand-rolled
+-- leaderboard, say) is skipped silently, and then the functions below refuse to
+-- compile because a column they reference does not exist. Since PostgreSQL
+-- validates `language sql` bodies at CREATE time, that error aborted the whole
+-- migration and left nothing behind.
+--
+-- So: add what we need rather than assume it. Each is a no-op on a table this
+-- file created.
+alter table public.leaderboard_bots
+  add column if not exists username      text;
+alter table public.leaderboard_bots
+  add column if not exists total_points  integer not null default 0;
+alter table public.leaderboard_bots
+  add column if not exists weekly_points integer not null default 0;
+
+-- If the table arrived with a plain `points` column, carry it across once so an
+-- existing roster keeps its scores instead of silently dropping to zero.
+do $$
+begin
+  if exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'leaderboard_bots'
+      and column_name = 'points'
+  ) then
+    execute '
+      update public.leaderboard_bots
+      set total_points = greatest(coalesce(points, 0), total_points)
+      where coalesce(points, 0) > total_points';
+    raise notice 'Carried an existing points column across to total_points.';
+  end if;
+end;
+$$;
+
+-- Added separately, and only once: bundling it into CREATE TABLE would skip it
+-- on a pre-existing table, and re-running would otherwise fail on a duplicate
+-- constraint name.
+do $$
+begin
+  alter table public.leaderboard_bots
+    add constraint leaderboard_bots_points_sane check (
+      total_points >= 0
+      and weekly_points >= 0
+      -- A bot cannot have earned more this week than in its whole existence.
+      and weekly_points <= total_points
+    );
+exception
+  when duplicate_object then null;
+  when check_violation then
+    raise notice
+      'Existing leaderboard_bots rows break the points check, so it was not '
+      'added. Fix weekly_points > total_points by hand if you care.';
+end;
+$$;
+
 alter table public.leaderboard_bots enable row level security;
+
+-- Drop any earlier hand-rolled leaderboard entry point, including overloads.
+-- One found in the wild was granted to `anon`, which serves the whole board to
+-- anyone holding the publishable key without signing in. The functions below
+-- require `authenticated`.
+do $$
+declare
+  legacy record;
+begin
+  for legacy in
+    select p.oid::regprocedure as signature
+    from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and p.proname = 'leaderboard'
+  loop
+    execute format('drop function if exists %s', legacy.signature);
+    raise notice 'Dropped legacy function %.', legacy.signature;
+  end loop;
+exception
+  when insufficient_privilege then
+    raise notice
+      'Could not drop the legacy public.leaderboard function. It is not used '
+      'by the app, but it may be readable without signing in — remove it by '
+      'hand.';
+end;
+$$;
 
 -- Deliberately NO policies: with RLS on and no policy, neither `anon` nor
 -- `authenticated` can read or write this table directly. The only way these
@@ -194,3 +271,34 @@ $$;
 
 revoke all on function public.leaderboard_standing(text) from public;
 grant execute on function public.leaderboard_standing(text) to authenticated;
+
+
+-- ---------------------------------------------------------------------------
+-- Self-test
+-- ---------------------------------------------------------------------------
+-- Both functions above are `language sql`, so PostgreSQL already validated
+-- their bodies at CREATE time. What it did NOT check is that they actually run
+-- against the data now in the tables. Exercising them here means a bad apply
+-- fails in the SQL editor, where you can see it, instead of turning into a
+-- "Standings aren't set up" message in the app days later.
+--
+-- leaderboard_standing returns no rows outside a request (auth.uid() is null);
+-- that is expected and fine — we only care that it executes.
+
+do $$
+declare
+  sample record;
+  entries integer := 0;
+begin
+  for sample in select * from public.leaderboard_page('all_time', 5) loop
+    entries := entries + 1;
+  end loop;
+  perform * from public.leaderboard_page('week', 5);
+  perform * from public.leaderboard_standing('all_time');
+  perform * from public.leaderboard_standing('week');
+
+  raise notice
+    'Leaderboard functions OK. % entries on the all-time board right now '
+    '(bots included).', entries;
+end;
+$$;
