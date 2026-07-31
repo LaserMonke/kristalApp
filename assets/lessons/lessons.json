@@ -93,6 +93,35 @@
             }
           ],
           "teaching_note": "A short option position has a capped gain and an uncapped, or barely capped, loss. Sellers are paid up front precisely because that shape is unattractive."
+        },
+        {
+          "type": "choice",
+          "id": "adv-1",
+          "min_depth": 3,
+          "prompt": "For a share that pays no dividends, when is it optimal to exercise an American call before expiry?",
+          "teaching_note": "Exercising early throws away the remaining time value and pays the strike sooner than necessary. Selling the option instead always realises at least as much.",
+          "choices": [
+            {
+              "text": "Never — selling it is always at least as good",
+              "correct": true,
+              "explanation": "Right. With no dividend there is no compensating cash flow, so early exercise only surrenders time value."
+            },
+            {
+              "text": "As soon as it is in the money",
+              "correct": false,
+              "explanation": "Being in the money says nothing about time value, which early exercise discards."
+            },
+            {
+              "text": "Whenever volatility falls",
+              "correct": false,
+              "explanation": "Lower volatility reduces the option's value but does not make exercising early preferable to selling."
+            },
+            {
+              "text": "On the last day before expiry",
+              "correct": false,
+              "explanation": "At expiry exercise is simply settlement — the question is about exercising strictly earlier."
+            }
+          ]
         }
       ],
       "cards": [
@@ -102,6 +131,18 @@
           "icon": "contract",
           "title": "What is an option?",
           "subtitle": "A contract where one side buys a choice, and the other side takes on an obligation."
+        },
+        {
+          "type": "text",
+          "heading": "The same idea, in plain numbers",
+          "body": "You pay $5 today for the right to buy one share at $100 any time up to the expiry date. That $5 is gone either way — it is the price of the right, not a deposit.",
+          "bullets": [
+            "Share ends at $130: you buy at $100, so the right was worth $30.",
+            "Share ends at $101: the right is worth $1 — better than nothing, but you still paid $5.",
+            "Share ends at $90: you simply do not use it. It expires worthless."
+          ],
+          "highlight": "A right you never have to use. That is the whole idea.",
+          "max_depth": 2
         },
         {
           "type": "text",
@@ -244,6 +285,18 @@
           ]
         },
         {
+          "type": "text",
+          "heading": "The payoff as a function",
+          "body": "A European call's value at expiry is max(S − K, 0), where S is the price at expiry and K the strike. The max is where the asymmetry lives: the downside is truncated at zero, and everything else about an option follows from that kink.",
+          "bullets": [
+            "The writer holds the mirror image, −max(S − K, 0), which is bounded above by zero.",
+            "The buyer's loss is bounded by the premium; the writer's is not.",
+            "European exercise fixes the decision at one date, which is what makes the closed-form price tractable.",
+            "American exercise adds an optimal-stopping problem, and for a non-dividend-paying share early exercise of a call is never optimal."
+          ],
+          "min_depth": 3
+        },
+        {
           "type": "summary",
           "heading": "What to remember",
           "takeaways": [
@@ -335,6 +388,35 @@
             }
           ],
           "teaching_note": "Finishing above the strike is not the same as finishing ahead. That gap is the whole reason break-even is a separate number to remember."
+        },
+        {
+          "type": "choice",
+          "id": "adv-2",
+          "min_depth": 3,
+          "prompt": "Put-call parity relates a call and a put with the same strike and expiry. What enforces it?",
+          "teaching_note": "Parity is not a modelling assumption — it follows from the two portfolios having identical payoffs in every state.",
+          "choices": [
+            {
+              "text": "Arbitrage: the two sides have identical payoffs, so any gap is a free profit",
+              "correct": true,
+              "explanation": "Right. It holds independently of any pricing model."
+            },
+            {
+              "text": "The Black-Scholes formula",
+              "correct": false,
+              "explanation": "Black-Scholes is consistent with parity, but parity holds without it."
+            },
+            {
+              "text": "An assumption of constant volatility",
+              "correct": false,
+              "explanation": "Parity does not depend on volatility at all."
+            },
+            {
+              "text": "Exchange rules on option listings",
+              "correct": false,
+              "explanation": "It is an economic relationship, not a listing convention."
+            }
+          ]
         }
       ],
       "cards": [
@@ -344,6 +426,19 @@
           "icon": "chart",
           "title": "Payoff at expiry",
           "subtitle": "At the deadline there is no time left, so an option is worth exactly what it is worth right then."
+        },
+        {
+          "type": "text",
+          "heading": "Finding break-even without a formula",
+          "body": "Break-even is just the point where what the option pays back equals what you paid for it.",
+          "bullets": [
+            "You paid $5 for a call struck at $100.",
+            "At $103 the call pays $3. You are still $2 down.",
+            "At $105 it pays $5, exactly what you paid. That is break-even.",
+            "Above $105 you are ahead."
+          ],
+          "highlight": "Break-even for a call is the strike plus the premium. Nothing more clever than that.",
+          "max_depth": 2
         },
         {
           "type": "text",
@@ -468,6 +563,18 @@
           ]
         },
         {
+          "type": "text",
+          "heading": "Payoff, profit, and the cost of carry",
+          "body": "Payoff diagrams and profit diagrams are not the same picture, and conflating them is the most common error in reading one.",
+          "bullets": [
+            "Payoff is the terminal value alone: max(S − K, 0). It is never negative for a holder.",
+            "Profit subtracts the premium — and, strictly, the premium compounded to expiry, since it was paid up front.",
+            "At typical rates and short maturities that compounding is small, which is why it is usually dropped.",
+            "Put-call parity, C − P = S − K·e^(−rT), ties the two payoffs together and holds by arbitrage, not by assumption."
+          ],
+          "min_depth": 3
+        },
+        {
           "type": "summary",
           "heading": "What to remember",
           "takeaways": [
@@ -569,6 +676,35 @@
             }
           ],
           "teaching_note": "Every model in this app is a simplification. Treat the numbers as illustrations of how the pieces interact, not as prices you could actually trade at."
+        },
+        {
+          "type": "choice",
+          "id": "adv-3",
+          "min_depth": 3,
+          "prompt": "An out-of-the-money call has an elasticity of about 12. What does that tell you?",
+          "teaching_note": "High elasticity and low probability of payoff are two descriptions of the same position.",
+          "choices": [
+            {
+              "text": "A 1% share move produces roughly a 12% option move — in both directions",
+              "correct": true,
+              "explanation": "Right, and the same leverage applies against you, from a position most likely to expire worthless."
+            },
+            {
+              "text": "The option is 12 times more likely to pay off",
+              "correct": false,
+              "explanation": "Elasticity is a sensitivity, not a probability — and high elasticity usually means the opposite."
+            },
+            {
+              "text": "The option costs 12 times the premium of an at-the-money call",
+              "correct": false,
+              "explanation": "Out-of-the-money options are cheaper, not dearer."
+            },
+            {
+              "text": "Delta is 12",
+              "correct": false,
+              "explanation": "Delta for a call lies between 0 and 1; elasticity scales it by share price over option price."
+            }
+          ]
         }
       ],
       "cards": [
@@ -578,6 +714,18 @@
           "icon": "shield",
           "title": "Why use options",
           "subtitle": "Three honest reasons — each with a cost attached."
+        },
+        {
+          "type": "text",
+          "heading": "Why anyone bothers, in three lines",
+          "body": "Options get used for three broad reasons. Each has a cost attached, and the cost is the part people forget.",
+          "bullets": [
+            "Protection: a put limits how far a holding can fall — and you pay for that, every time, whether or not it falls.",
+            "Leverage: a small premium controls a large position — which also means a small move against you wipes out a large share of it.",
+            "Income: writing options collects premium — and takes on an obligation that can cost far more than the premium collected."
+          ],
+          "highlight": "Every one of the three is a trade, not a free lunch.",
+          "max_depth": 2
         },
         {
           "type": "text",
@@ -707,6 +855,18 @@
           ]
         },
         {
+          "type": "text",
+          "heading": "Leverage, stated properly",
+          "body": "Leverage in options is not a slogan — it is a ratio you can compute, and it is largest exactly where the option is most likely to expire worthless.",
+          "bullets": [
+            "Elasticity, sometimes written lambda, is delta multiplied by S over the option price.",
+            "A cheap out-of-the-money call can have an elasticity above 10: a 1% move in the share moves the option more than 10%.",
+            "The same number applies on the way down, and the option has a floor at zero that the share does not.",
+            "Higher elasticity is not a better trade. It is a smaller probability of any payoff at all."
+          ],
+          "min_depth": 3
+        },
+        {
           "type": "summary",
           "heading": "What to remember",
           "takeaways": [
@@ -739,7 +899,7 @@
           "hint": "Price splits cleanly into two pieces.",
           "explanation": "Price = intrinsic value + time value, so time value = $8.50 - $5.00 = $3.50.",
           "teaching_note": "Intrinsic value is what expiry arithmetic from lesson 2 already gives you. Time value is everything the model adds on top for the time still left on the clock.",
-          "stretch": true
+          "min_depth": 2
         },
         {
           "type": "choice",
@@ -811,6 +971,35 @@
             }
           ],
           "teaching_note": "Every model number in this app rests on assumptions like these. Treat the price as an illustration of how the five inputs interact, not as a number you could actually trade at."
+        },
+        {
+          "type": "choice",
+          "id": "adv-4",
+          "min_depth": 3,
+          "prompt": "The implied-volatility surface is not flat across strikes. Which Black-Scholes assumption does that most directly contradict?",
+          "teaching_note": "A flat surface is what a single constant volatility would produce. The observed shape is the market disagreeing with that assumption.",
+          "choices": [
+            {
+              "text": "That volatility is a single constant over the life of the option",
+              "correct": true,
+              "explanation": "Right — a smile or skew is the market pricing strikes as if volatility differed between them."
+            },
+            {
+              "text": "That trading is frictionless",
+              "correct": false,
+              "explanation": "Frictions widen quoted spreads but do not produce the systematic shape across strikes."
+            },
+            {
+              "text": "That the option is European",
+              "correct": false,
+              "explanation": "Exercise style affects early-exercise premia, not the shape of the implied surface across strikes."
+            },
+            {
+              "text": "That interest rates are known",
+              "correct": false,
+              "explanation": "Rate uncertainty is a minor effect for short-dated equity options."
+            }
+          ]
         }
       ],
       "cards": [
@@ -820,6 +1009,18 @@
           "icon": "formula",
           "title": "The Black-Scholes-Merton price",
           "subtitle": "A formula for what an option should be worth today, before it ever gets to expiry."
+        },
+        {
+          "type": "text",
+          "heading": "What the formula is actually doing",
+          "body": "Strip away the notation and Black-Scholes asks one question: what is a fair price today for a payoff that has not happened yet?",
+          "bullets": [
+            "It weighs every price the share might end at.",
+            "It weighs them by how likely the model thinks they are.",
+            "It discounts the answer back to today, because money now is not money later."
+          ],
+          "highlight": "An average of what the option might pay, discounted to today. The symbols are bookkeeping on top of that idea.",
+          "max_depth": 2
         },
         {
           "type": "text",
@@ -1048,6 +1249,19 @@
           ]
         },
         {
+          "type": "text",
+          "heading": "The assumptions you are buying into",
+          "body": "The formula is exact given its assumptions. Every one of them is an approximation of a real market, and knowing which one is failing is most of what using the model well consists of.",
+          "bullets": [
+            "The share follows geometric Brownian motion: returns are lognormal, with no jumps.",
+            "Volatility and the discount rate are constant and known over the life of the option.",
+            "Trading is continuous and frictionless — no spread, no fees, no limit on shorting.",
+            "The hedge can be rebalanced continuously, which is what makes the risk-neutral argument work at all.",
+            "Real markets break all five. Jumps and stochastic volatility are why the implied-volatility surface is not flat."
+          ],
+          "min_depth": 3
+        },
+        {
           "type": "summary",
           "heading": "What to remember",
           "takeaways": [
@@ -1148,6 +1362,19 @@
             }
           ],
           "teaching_note": "Delta is the direction-taking Greek. Everything else on this page (gamma, vega) cares about the SIZE of an uncertain outcome, not which way it breaks — which is why they agree in sign between a call and a put."
+        },
+        {
+          "type": "numeric",
+          "id": "adv-5",
+          "min_depth": 3,
+          "setup": "An option is priced at $8.00 with delta 0.55 and gamma 0.04. The share rises by $2.00.",
+          "prompt": "Estimate the new option price using the second-order approximation.",
+          "answer": 9.18,
+          "tolerance": 0.03,
+          "unit_prefix": "$",
+          "explanation": "delta·ΔS + ½·gamma·ΔS² = 0.55×2 + 0.5×0.04×4 = 1.10 + 0.08 = $1.18, so about $9.18.",
+          "teaching_note": "The gamma term is what a delta-only estimate misses. It grows with the square of the move, so it matters most exactly when the move is large.",
+          "hint": "Add the delta term and the gamma term, then add both to the starting price."
         }
       ],
       "cards": [
@@ -1157,6 +1384,19 @@
           "icon": "insights",
           "title": "The Greeks",
           "subtitle": "Five numbers that say how an option's price reacts when one input moves."
+        },
+        {
+          "type": "text",
+          "heading": "Delta, with actual numbers",
+          "body": "Delta says how much the option price moves when the share moves by $1. A call with delta 0.50 moves about 50 cents.",
+          "bullets": [
+            "Share up $1, delta 0.50: the option gains roughly $0.50.",
+            "Share down $1: it loses roughly $0.50.",
+            "Deep in the money, delta approaches 1 and the option tracks the share almost one for one.",
+            "Far out of the money, delta approaches 0 and the share can move without the option caring much."
+          ],
+          "highlight": "Roughly. Delta itself changes as the share moves — that is what gamma measures.",
+          "max_depth": 2
         },
         {
           "type": "text",
@@ -1294,6 +1534,18 @@
           ]
         },
         {
+          "type": "text",
+          "heading": "Second order: gamma, theta and the cost of hedging",
+          "body": "Delta alone is a straight line drawn against a curve. Gamma measures how fast that line goes wrong, and theta is roughly what you pay for the privilege.",
+          "bullets": [
+            "A second-order estimate of the price change is delta·ΔS + ½·gamma·ΔS², which is why a large move surprises a delta-only view.",
+            "Gamma is greatest near the strike and close to expiry, exactly where a hedger has to rebalance most often.",
+            "For a long option, gamma is positive and theta is negative: convexity is not free, it is rented daily.",
+            "A delta-hedged long option therefore profits when realised volatility exceeds the implied volatility it was priced at, and loses when it does not."
+          ],
+          "min_depth": 3
+        },
+        {
           "type": "summary",
           "heading": "What to remember",
           "takeaways": [
@@ -1396,6 +1648,19 @@
             }
           ],
           "teaching_note": "Matching a strategy to a goal comes down to two questions: what view of the market does it need, and what is it willing to give up? Income now, in exchange for capped upside, is the covered call's whole trade."
+        },
+        {
+          "type": "numeric",
+          "id": "adv-6",
+          "min_depth": 3,
+          "setup": "You sell a $100 put for $4.00 and buy a $95 put for $1.50, both expiring on the same date.",
+          "prompt": "What is the most this position can lose?",
+          "answer": 2.5,
+          "tolerance": 0.01,
+          "unit_prefix": "$",
+          "explanation": "The strike width is $5.00 and the net credit is $4.00 − $1.50 = $2.50. Maximum loss is width minus credit: $5.00 − $2.50 = $2.50.",
+          "teaching_note": "The long put is what turns an open-ended obligation into a known worst case. Selling the $100 put alone would risk far more.",
+          "hint": "Work out the strike width, then subtract the credit you took in."
         }
       ],
       "cards": [
@@ -1405,6 +1670,18 @@
           "icon": "strategy",
           "title": "Options strategies",
           "subtitle": "Combining legs to fit a view of the market — and what each combination costs you."
+        },
+        {
+          "type": "text",
+          "heading": "A spread, counted out",
+          "body": "Buy the $100 call for $6 and sell the $110 call for $2. Net cost $4.",
+          "bullets": [
+            "Share ends below $100: both expire worthless. You lose the $4.",
+            "Share ends at $106: your call pays $6, the one you sold pays nothing. You are $2 up.",
+            "Share ends at $130: yours pays $30, the one you sold costs you $20. Net $10, less the $4 — capped at $6."
+          ],
+          "highlight": "You gave up the far upside to pay less at the start. That is the whole trade.",
+          "max_depth": 2
         },
         {
           "type": "text",
@@ -1645,6 +1922,18 @@
           ]
         },
         {
+          "type": "text",
+          "heading": "Spreads as building blocks",
+          "body": "Every strategy in this lesson is a sum of the same two payoffs. Once that is clear, the shape of any of them can be reasoned out rather than memorised.",
+          "bullets": [
+            "A vertical spread is long one strike, short another, same expiry — bounded on both ends because the two kinks cancel beyond the far strike.",
+            "A collar is a protective put funded by a written call; put-call parity says a collar on a holding is close to a spread on its own.",
+            "A straddle is long volatility with no directional view: it profits on a move either way, and bleeds if nothing happens.",
+            "Credit strategies collect premium up front and carry the obligation — max loss on a vertical credit spread is the strike width less the credit."
+          ],
+          "min_depth": 3
+        },
+        {
           "type": "summary",
           "heading": "What to remember",
           "takeaways": [
@@ -1701,7 +1990,7 @@
           "explanation": "In-out parity: 7.50 - 3.20 = 4.30. Holding both the knock-in and the knock-out leaves you holding the plain option, because exactly one of the two is alive at expiry — so the two must add up to it.",
           "hint": "If you owned BOTH the knock-in and the knock-out, what would you have?",
           "teaching_note": "This identity is exact, and it is the quickest sanity check on any barrier price.",
-          "stretch": true
+          "min_depth": 2
         },
         {
           "type": "choice",
@@ -1749,6 +2038,18 @@
             }
           ],
           "teaching_note": "Correlation is also the least stable input in the whole calculation, and it has a habit of rising towards 1 in a crash — exactly when a diversified basket is being relied on."
+        },
+        {
+          "type": "numeric",
+          "id": "adv-7",
+          "min_depth": 3,
+          "setup": "A Monte Carlo price using 10,000 paths has a standard error of $0.40.",
+          "prompt": "By what factor must the number of paths increase to bring the standard error down to $0.10?",
+          "answer": 16,
+          "tolerance": 0.5,
+          "explanation": "Error falls with 1/√N. Quartering the error needs 4² = 16 times the paths — 160,000 in total.",
+          "teaching_note": "This is why variance reduction matters. Buying accuracy with raw path count gets expensive very quickly.",
+          "hint": "The error falls with the square root of the path count, so work backwards from a factor of four."
         }
       ],
       "cards": [
@@ -1758,6 +2059,18 @@
           "kicker": "EXOTIC OPTIONS",
           "title": "Options that watch the path",
           "subtitle": "So far the only thing that mattered was where the price finished. Some contracts also care how it got there."
+        },
+        {
+          "type": "text",
+          "heading": "Why the journey can matter",
+          "body": "For a plain option only the final price counts. For a path-dependent option, how it got there counts too.",
+          "bullets": [
+            "A barrier option can be knocked out by one touch of a level, then recover — and still pay nothing.",
+            "An Asian option pays on the average price, so a single closing spike barely moves it.",
+            "Two shares can end at exactly the same price and these options pay completely different amounts."
+          ],
+          "highlight": "Same ending, different journey, different payout.",
+          "max_depth": 2
         },
         {
           "type": "text",
@@ -1873,6 +2186,18 @@
           "highlight": "You can try all of this yourself on the Advanced tab of the Sandbox."
         },
         {
+          "type": "text",
+          "heading": "What Monte Carlo costs to get right",
+          "body": "Path-dependent payoffs generally have no closed form, so they are simulated. Simulation converges slowly, and knowing how slowly is the difference between a usable number and a confident wrong one.",
+          "bullets": [
+            "The standard error of a Monte Carlo estimate falls with 1/√N: to halve the error you need four times the paths.",
+            "Discrete time steps add bias on top of that noise — a barrier can be crossed between two steps and never observed.",
+            "Continuity corrections and finer steps reduce that bias at a direct cost in compute.",
+            "Variance-reduction techniques — antithetic variates, control variates — buy accuracy far more cheaply than raw path count."
+          ],
+          "min_depth": 3
+        },
+        {
           "type": "summary",
           "heading": "What to take away",
           "takeaways": [
@@ -1955,7 +2280,7 @@
           "explanation": "Volatility is the square root of variance: sqrt(0.09) = 0.30, or 30%. Mixing the two up is the single easiest mistake to make with this model, and it produces answers that are wrong by a wide margin rather than a little.",
           "hint": "Volatility and variance are related by a square root.",
           "teaching_note": "Check which one a formula wants before putting a number into it.",
-          "stretch": true
+          "min_depth": 2
         },
         {
           "type": "choice",
@@ -1979,6 +2304,35 @@
             }
           ],
           "teaching_note": "This is called the leverage effect, and reproducing it is the main reason to reach for Heston over Black-Scholes."
+        },
+        {
+          "type": "choice",
+          "id": "adv-8",
+          "min_depth": 3,
+          "prompt": "In the Heston model, what does a negative correlation between the share's shocks and the variance's shocks produce?",
+          "teaching_note": "It is the parameter that lets the model reproduce the shape equity markets actually show.",
+          "choices": [
+            {
+              "text": "A downward skew — low strikes priced at higher implied volatility",
+              "correct": true,
+              "explanation": "Right. Falling prices coinciding with rising variance fattens the left tail, which is what equity skew looks like."
+            },
+            {
+              "text": "A flat surface across strikes",
+              "correct": false,
+              "explanation": "Zero correlation with no vol-of-vol gets closer to flat; negative correlation tilts it."
+            },
+            {
+              "text": "Higher implied volatility at high strikes only",
+              "correct": false,
+              "explanation": "That describes a positive skew, seen in some commodities, not equity index options."
+            },
+            {
+              "text": "Nothing — correlation only affects the price level",
+              "correct": false,
+              "explanation": "Correlation is precisely what controls the asymmetry of the distribution."
+            }
+          ]
         }
       ],
       "cards": [
@@ -1988,6 +2342,18 @@
           "kicker": "STOCHASTIC VOLATILITY",
           "title": "Volatility is not a constant",
           "subtitle": "Black-Scholes asks for one volatility. The market answers with a different one at every strike."
+        },
+        {
+          "type": "text",
+          "heading": "The smile, without the mathematics",
+          "body": "Black-Scholes assumes one volatility for a share. Ask the market what volatility its option prices imply and you get a different answer for every strike.",
+          "bullets": [
+            "Plot implied volatility against strike and the line curves rather than lying flat.",
+            "For equities it is usually a skew: low strikes imply higher volatility.",
+            "That is the market pricing crashes as more likely than a single fixed volatility would allow."
+          ],
+          "highlight": "The smile is not the market being wrong. It is the model being simple.",
+          "max_depth": 2
         },
         {
           "type": "text",
@@ -2131,6 +2497,18 @@
           ]
         },
         {
+          "type": "text",
+          "heading": "Heston: variance with a life of its own",
+          "body": "Heston's answer to the smile is to stop treating variance as a constant and give it its own stochastic process, mean-reverting around a long-run level.",
+          "bullets": [
+            "Variance reverts at rate kappa toward a long-run level theta, driven by its own volatility-of-volatility.",
+            "The correlation between the share's shocks and the variance's shocks is what produces skew — negative correlation tilts it the way equity markets actually trade.",
+            "Vanilla options still have a semi-analytic price through the characteristic function, so calibration is tractable.",
+            "The Feller condition, 2·kappa·theta > vol-of-vol², keeps variance from reaching zero; calibrated equity parameters often violate it, which matters for simulation schemes."
+          ],
+          "min_depth": 3
+        },
+        {
           "type": "summary",
           "heading": "What to take away",
           "takeaways": [
@@ -2166,7 +2544,7 @@
           "explanation": "100 x e^(-0.04 x 5) = 81.87. So about 82 of your 100 goes on the bond that provides the protection, and only the remaining 18 or so is available to buy the upside. This is the whole economics of a capital-protected note in one sum.",
           "hint": "Discount 100 back five years at 4% continuous compounding.",
           "teaching_note": "When rates fall, the bond costs more and less is left for options — which is why these products all but vanished in the near-zero-rate years.",
-          "stretch": true
+          "min_depth": 2
         },
         {
           "type": "choice",
@@ -2239,6 +2617,35 @@
             }
           ],
           "teaching_note": "Sell the note back the next day and you would get roughly the value, not the price. That gap is why these are held to maturity."
+        },
+        {
+          "type": "choice",
+          "id": "adv-9",
+          "min_depth": 3,
+          "prompt": "A note is advertised as capital protected. What risk does that phrase leave out?",
+          "teaching_note": "Protection is a promise from a company, and companies can fail. The payoff diagram cannot show that.",
+          "choices": [
+            {
+              "text": "Issuer credit risk — the protection is only as good as the issuer",
+              "correct": true,
+              "explanation": "Right. If the issuer defaults, the protection defaults with it."
+            },
+            {
+              "text": "None — protection means the money always comes back",
+              "correct": false,
+              "explanation": "It is a promise from the issuer, which is a very different statement."
+            },
+            {
+              "text": "That the index might rise",
+              "correct": false,
+              "explanation": "A rising index is the favourable case for the holder."
+            },
+            {
+              "text": "That interest rates might fall",
+              "correct": false,
+              "explanation": "Rates affect the bond component's cost, not whether protection is honoured."
+            }
+          ]
         }
       ],
       "cards": [
@@ -2248,6 +2655,18 @@
           "kicker": "STRUCTURED PRODUCTS",
           "title": "Taking the wrapper off",
           "subtitle": "A single certificate with a headline number. Inside: a bond and some options you already understand."
+        },
+        {
+          "type": "text",
+          "heading": "Taking one apart on the table",
+          "body": "A capital-protected note promising your money back plus some of the index return is two ordinary things in one wrapper.",
+          "bullets": [
+            "Most of your money buys a bond that grows back to the full amount by maturity.",
+            "What is left buys call options for the upside.",
+            "That is why the upside is only partial — the leftover only stretches so far."
+          ],
+          "highlight": "Nothing exotic inside. A bond and some options, sold as one product.",
+          "max_depth": 2
         },
         {
           "type": "text",
@@ -2408,6 +2827,18 @@
             "What is the worst case, stated as a number rather than a mood?",
             "What do the parts add up to, and how does that compare with the price?"
           ]
+        },
+        {
+          "type": "text",
+          "heading": "Where the cost hides, and who you are lending to",
+          "body": "Decomposing a note tells you what it is worth. Two things it will not tell you sit outside the payoff diagram entirely.",
+          "bullets": [
+            "The fee is the gap between what you pay and what the components cost to assemble — it is embedded, not invoiced.",
+            "Capital protection is the issuer's promise, so the note carries their credit risk. If the issuer fails, protection fails with it.",
+            "Notes are typically illiquid: exiting early means the issuer's own bid, not a market price.",
+            "Price the pieces separately and the answer to 'is this good value' usually stops being a matter of opinion."
+          ],
+          "min_depth": 3
         },
         {
           "type": "summary",

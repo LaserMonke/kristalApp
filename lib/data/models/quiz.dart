@@ -21,17 +21,19 @@ sealed class QuizQuestion {
     required this.prompt,
     this.setup,
     this.teachingNote,
-    this.isStretch = false,
+    this.minDepth = 1,
   });
 
-  /// Marks a question that assumes more than the lesson strictly taught — an
-  /// extra step of arithmetic, or a case the cards only implied.
+  /// The lowest learner depth this question is asked at (see
+  /// LearningProfile.depth). 1 means everybody.
   ///
-  /// Learners still early in their studies are not asked these by default
-  /// (see [LearningProfile]). It is a question about pitch, not about what
-  /// anyone is capable of: a question that needs algebra a learner has not met
-  /// yet tests the algebra, not their understanding of options.
-  final bool isStretch;
+  /// A question about pitch, not about capability: one that needs algebra a
+  /// learner has not met yet tests the algebra, not their understanding of
+  /// options. Questions above a learner's depth are simply not asked — they
+  /// are not marked wrong, and they never block finishing a lesson.
+  final int minDepth;
+
+  bool isAskedAt(int depth) => depth >= minDepth;
 
   /// Stable within a lesson. Used to key answers, so reordering questions in
   /// the JSON never silently re-attributes a saved result.
@@ -68,7 +70,7 @@ class MultipleChoiceQuestion extends QuizQuestion {
     required this.choices,
     super.setup,
     super.teachingNote,
-    super.isStretch,
+    super.minDepth,
   });
 
   final List<QuizChoice> choices;
@@ -91,7 +93,7 @@ class MultipleChoiceQuestion extends QuizQuestion {
         prompt: json['prompt'] as String,
         setup: json['setup'] as String?,
         teachingNote: json['teaching_note'] as String?,
-        isStretch: json['stretch'] as bool? ?? false,
+        minDepth: json['min_depth'] as int? ?? 1,
         choices: <QuizChoice>[
           for (final dynamic c in json['choices'] as List<dynamic>)
             QuizChoice.fromJson(c as Map<String, dynamic>),
@@ -134,7 +136,7 @@ class NumericQuestion extends QuizQuestion {
     required this.explanation,
     super.setup,
     super.teachingNote,
-    super.isStretch,
+    super.minDepth,
     this.tolerance = 0.01,
     this.unitPrefix = '',
     this.unitSuffix = '',
@@ -176,7 +178,7 @@ class NumericQuestion extends QuizQuestion {
     prompt: json['prompt'] as String,
     setup: json['setup'] as String?,
     teachingNote: json['teaching_note'] as String?,
-    isStretch: json['stretch'] as bool? ?? false,
+    minDepth: json['min_depth'] as int? ?? 1,
     answer: (json['answer'] as num).toDouble(),
     tolerance: (json['tolerance'] as num? ?? 0.01).toDouble(),
     unitPrefix: json['unit_prefix'] as String? ?? '',

@@ -64,23 +64,30 @@ class Lesson {
   int orderFor(LearningProfile profile) =>
       profile.usesAdvancedOrder ? (advancedOrder ?? order) : order;
 
-  /// This lesson as [profile] should meet it: the same cards, with the graded
-  /// questions narrowed to the ones that level is asked by default.
+  /// Cards this learner is not shown inline because they go deeper than their
+  /// level — offered by the player behind a "Go deeper" control instead.
+  List<LessonCard> deeperCards(LearningProfile profile) => <LessonCard>[
+    for (final LessonCard c in cards)
+      if (c.isDeeperThan(profile.depth)) c,
+  ];
+
+  /// This lesson as [profile] should meet it: cards and questions narrowed to
+  /// the depth band that level is pitched at.
   ///
   /// Personalisation happens HERE, once, at the point lessons are read — so
   /// every screen downstream (the path, the player, the Q&A, the certificate
   /// count) is looking at the same personalised lesson and cannot disagree
   /// about what finishing it requires.
   Lesson forProfile(LearningProfile profile) {
-    if (profile.asksStretchQuestions) return this;
-    final List<QuizQuestion> kept = <QuizQuestion>[
-      for (final QuizQuestion q in questions)
-        if (!q.isStretch) q,
+    final List<LessonCard> keptCards = <LessonCard>[
+      for (final LessonCard c in cards)
+        if (c.isPitchedAt(profile.depth)) c,
     ];
-    // Never leave a lesson with nothing to answer: if every question is a
-    // stretch question, ask them anyway rather than silently dropping the Q&A
-    // and changing what finishing the lesson means.
-    if (kept.isEmpty) return this;
+    final List<QuizQuestion> keptQuestions = <QuizQuestion>[
+      for (final QuizQuestion q in questions)
+        if (q.isAskedAt(profile.depth)) q,
+    ];
+
     return Lesson(
       id: id,
       order: order,
@@ -88,9 +95,15 @@ class Lesson {
       isAdvanced: isAdvanced,
       title: title,
       summary: summary,
-      cards: cards,
+      // A depth band that filtered everything out would leave a lesson with no
+      // content at all, which is worse than showing material slightly off
+      // pitch. Falling back is a guard against an authoring mistake, not a
+      // path anything is expected to take.
+      cards: keptCards.isEmpty ? cards : keptCards,
       estimatedMinutes: estimatedMinutes,
-      questions: kept,
+      // Same for the Q&A: dropping every question would silently move the
+      // unlock gate from "answer these" to "read the cards".
+      questions: keptQuestions.isEmpty ? questions : keptQuestions,
       reviewedBy: reviewedBy,
       reviewedOn: reviewedOn,
     );
@@ -128,7 +141,27 @@ class Lesson {
 /// Sealed so the renderer's switch is exhaustive — a new card type won't
 /// compile until it has been given a visual treatment.
 sealed class LessonCard {
-  const LessonCard();
+  const LessonCard({this.minDepth = 1, this.maxDepth = 4});
+
+  /// The depth band this card is written for (see LearningProfile.depth).
+  ///
+  /// A card with `maxDepth: 2` is scaffolding — a worked restatement a
+  /// beginner needs and a postgraduate would find patronising. A card with
+  /// `minDepth: 3` is a derivation or an extension the foundations do not
+  /// require. Most cards leave both at their defaults and are shown to
+  /// everybody.
+  ///
+  /// Cards outside a learner's band are not deleted: a deeper card stays
+  /// reachable behind the player's "Go deeper" control, because someone who
+  /// ticked "high school" at sign-up is still allowed to be curious.
+  final int minDepth;
+  final int maxDepth;
+
+  bool isPitchedAt(int depth) => depth >= minDepth && depth <= maxDepth;
+
+  /// True for material beyond this learner's band — shown on request rather
+  /// than in the main flow.
+  bool isDeeperThan(int depth) => minDepth > depth;
 
   factory LessonCard.fromJson(Map<String, dynamic> json) {
     final String type = json['type'] as String;
@@ -155,6 +188,8 @@ sealed class LessonCard {
 /// Opening card: sets up what the lesson is about.
 class TitleCard extends LessonCard {
   const TitleCard({
+    super.minDepth,
+    super.maxDepth,
     required this.title,
     required this.subtitle,
     this.kicker,
@@ -173,6 +208,8 @@ class TitleCard extends LessonCard {
   String get semanticLabel => '$title. $subtitle';
 
   factory TitleCard.fromJson(Map<String, dynamic> json) => TitleCard(
+        minDepth: json['min_depth'] as int? ?? 1,
+        maxDepth: json['max_depth'] as int? ?? 4,
     title: json['title'] as String,
     subtitle: json['subtitle'] as String,
     kicker: json['kicker'] as String?,
@@ -183,6 +220,8 @@ class TitleCard extends LessonCard {
 /// The workhorse: a short heading, a paragraph or two, optional bullets.
 class TextCard extends LessonCard {
   const TextCard({
+    super.minDepth,
+    super.maxDepth,
     required this.heading,
     required this.body,
     this.bullets = const <String>[],
@@ -208,6 +247,8 @@ class TextCard extends LessonCard {
   ].join('. ');
 
   factory TextCard.fromJson(Map<String, dynamic> json) => TextCard(
+        minDepth: json['min_depth'] as int? ?? 1,
+        maxDepth: json['max_depth'] as int? ?? 4,
     heading: json['heading'] as String,
     body: json['body'] as String,
     icon: json['icon'] as String?,
@@ -222,6 +263,8 @@ class TextCard extends LessonCard {
 /// A single piece of vocabulary, given room to land.
 class TermCard extends LessonCard {
   const TermCard({
+    super.minDepth,
+    super.maxDepth,
     required this.term,
     required this.definition,
     this.example,
@@ -238,6 +281,8 @@ class TermCard extends LessonCard {
       '$term. $definition${example == null ? '' : '. For example, $example'}';
 
   factory TermCard.fromJson(Map<String, dynamic> json) => TermCard(
+        minDepth: json['min_depth'] as int? ?? 1,
+        maxDepth: json['max_depth'] as int? ?? 4,
     term: json['term'] as String,
     definition: json['definition'] as String,
     example: json['example'] as String?,
@@ -248,6 +293,8 @@ class TermCard extends LessonCard {
 /// A payoff diagram drawn from strategy legs.
 class PayoffCard extends LessonCard {
   const PayoffCard({
+    super.minDepth,
+    super.maxDepth,
     required this.heading,
     required this.caption,
     required this.legs,
@@ -267,6 +314,8 @@ class PayoffCard extends LessonCard {
   String get semanticLabel => '$heading. $caption';
 
   factory PayoffCard.fromJson(Map<String, dynamic> json) => PayoffCard(
+        minDepth: json['min_depth'] as int? ?? 1,
+        maxDepth: json['max_depth'] as int? ?? 4,
     heading: json['heading'] as String,
     caption: json['caption'] as String,
     spotMin: (json['spot_min'] as num).toDouble(),
@@ -287,6 +336,8 @@ class PayoffCard extends LessonCard {
 /// forecast: it is the same idealised expiry arithmetic, evaluated live.
 class ExploreCard extends LessonCard {
   const ExploreCard({
+    super.minDepth,
+    super.maxDepth,
     required this.heading,
     required this.prompt,
     required this.legs,
@@ -322,6 +373,8 @@ class ExploreCard extends LessonCard {
       'the chart.';
 
   factory ExploreCard.fromJson(Map<String, dynamic> json) => ExploreCard(
+        minDepth: json['min_depth'] as int? ?? 1,
+        maxDepth: json['max_depth'] as int? ?? 4,
     heading: json['heading'] as String,
     prompt: json['prompt'] as String,
     spotMin: (json['spot_min'] as num).toDouble(),
@@ -354,6 +407,8 @@ enum PricerGreek { price, delta, gamma, vega, theta, rho }
 /// react, rather than a wall of symbols to take on faith.
 class PricerExploreCard extends LessonCard {
   const PricerExploreCard({
+    super.minDepth,
+    super.maxDepth,
     required this.heading,
     required this.prompt,
     required this.optionType,
@@ -406,6 +461,8 @@ class PricerExploreCard extends LessonCard {
 
   factory PricerExploreCard.fromJson(Map<String, dynamic> json) =>
       PricerExploreCard(
+        minDepth: json['min_depth'] as int? ?? 1,
+        maxDepth: json['max_depth'] as int? ?? 4,
         heading: json['heading'] as String,
         prompt: json['prompt'] as String,
         optionType: switch (json['option_type'] as String) {
@@ -442,6 +499,8 @@ class PricerExploreCard extends LessonCard {
 /// explanation appears, which is what makes the explanation stick.
 class ChoiceCard extends LessonCard {
   const ChoiceCard({
+    super.minDepth,
+    super.maxDepth,
     required this.question,
     required this.options,
     this.prompt,
@@ -459,6 +518,8 @@ class ChoiceCard extends LessonCard {
       '${options.map((ChoiceOption o) => o.text).join('; ')}.';
 
   factory ChoiceCard.fromJson(Map<String, dynamic> json) => ChoiceCard(
+        minDepth: json['min_depth'] as int? ?? 1,
+        maxDepth: json['max_depth'] as int? ?? 4,
     question: json['question'] as String,
     prompt: json['prompt'] as String?,
     options: <ChoiceOption>[
@@ -497,6 +558,8 @@ class ChoiceOption {
 /// next to each other rather than on consecutive cards.
 class CompareCard extends LessonCard {
   const CompareCard({
+    super.minDepth,
+    super.maxDepth,
     required this.heading,
     required this.left,
     required this.right,
@@ -514,6 +577,8 @@ class CompareCard extends LessonCard {
       '${footnote == null ? '' : ' $footnote'}';
 
   factory CompareCard.fromJson(Map<String, dynamic> json) => CompareCard(
+        minDepth: json['min_depth'] as int? ?? 1,
+        maxDepth: json['max_depth'] as int? ?? 4,
     heading: json['heading'] as String,
     footnote: json['footnote'] as String?,
     left: ComparePanel.fromJson(json['left'] as Map<String, dynamic>),
@@ -566,6 +631,8 @@ class ComparePanel {
 /// having to hold the whole thing in their head first and decode it after.
 class EquationCard extends LessonCard {
   const EquationCard({
+    super.minDepth,
+    super.maxDepth,
     required this.heading,
     required this.terms,
     this.footnote,
@@ -583,6 +650,8 @@ class EquationCard extends LessonCard {
       '${footnote == null ? '' : ' $footnote'}';
 
   factory EquationCard.fromJson(Map<String, dynamic> json) => EquationCard(
+        minDepth: json['min_depth'] as int? ?? 1,
+        maxDepth: json['max_depth'] as int? ?? 4,
     heading: json['heading'] as String,
     footnote: json['footnote'] as String?,
     terms: <EquationTerm>[
@@ -644,6 +713,8 @@ StrategyLeg _legFromJson(Map<String, dynamic> json) {
 /// to be stated plainly in every options lesson, so this card carries weight.
 class WarningCard extends LessonCard {
   const WarningCard({
+    super.minDepth,
+    super.maxDepth,
     required this.heading,
     required this.body,
     this.points = const <String>[],
@@ -658,6 +729,8 @@ class WarningCard extends LessonCard {
       'Risk warning. ${<String>[heading, body, ...points].join('. ')}';
 
   factory WarningCard.fromJson(Map<String, dynamic> json) => WarningCard(
+        minDepth: json['min_depth'] as int? ?? 1,
+        maxDepth: json['max_depth'] as int? ?? 4,
     heading: json['heading'] as String,
     body: json['body'] as String,
     points: <String>[
@@ -669,7 +742,9 @@ class WarningCard extends LessonCard {
 
 /// Closing card: the two or three things worth remembering.
 class SummaryCard extends LessonCard {
-  const SummaryCard({required this.heading, required this.takeaways});
+  const SummaryCard({
+    super.minDepth,
+    super.maxDepth,required this.heading, required this.takeaways});
 
   final String heading;
   final List<String> takeaways;
@@ -678,6 +753,8 @@ class SummaryCard extends LessonCard {
   String get semanticLabel => '$heading. ${takeaways.join('. ')}';
 
   factory SummaryCard.fromJson(Map<String, dynamic> json) => SummaryCard(
+        minDepth: json['min_depth'] as int? ?? 1,
+        maxDepth: json['max_depth'] as int? ?? 4,
     heading: json['heading'] as String,
     takeaways: <String>[
       for (final dynamic t in json['takeaways'] as List<dynamic>)

@@ -8,11 +8,11 @@ import 'package:optionsschool/data/models/quiz.dart';
 /// by default. The two rules that keep it defensible — nothing is hidden, and
 /// risk copy is never softened — are the ones worth testing hardest.
 void main() {
-  QuizQuestion question(String id, {bool stretch = false}) =>
+  QuizQuestion question(String id, {int minDepth = 1}) =>
       MultipleChoiceQuestion(
         id: id,
         prompt: 'p',
-        isStretch: stretch,
+        minDepth: minDepth,
         choices: const <QuizChoice>[
           QuizChoice(text: 'a', isCorrect: true, explanation: 'e'),
           QuizChoice(text: 'b', isCorrect: false, explanation: 'e'),
@@ -25,6 +25,9 @@ void main() {
     int? advancedOrder,
     bool advanced = false,
     List<QuizQuestion> questions = const <QuizQuestion>[],
+    List<LessonCard> cards = const <LessonCard>[
+      SummaryCard(heading: 'h', takeaways: <String>[]),
+    ],
   }) => Lesson(
     id: id,
     order: order,
@@ -32,7 +35,7 @@ void main() {
     isAdvanced: advanced,
     title: id,
     summary: 's',
-    cards: const <LessonCard>[SummaryCard(heading: 'h', takeaways: <String>[])],
+    cards: cards,
     questions: questions,
   );
 
@@ -158,7 +161,7 @@ void main() {
       order: 1,
       questions: <QuizQuestion>[
         question('a'),
-        question('b', stretch: true),
+        question('b', minDepth: 2),
         question('c'),
       ],
     );
@@ -169,7 +172,7 @@ void main() {
       );
       expect(forHs.quizQuestionCount, 2);
       expect(
-        forHs.questions.any((QuizQuestion q) => q.isStretch),
+        forHs.questions.any((QuizQuestion q) => q.minDepth > 1),
         isFalse,
       );
     });
@@ -192,8 +195,8 @@ void main() {
         id: 'l',
         order: 1,
         questions: <QuizQuestion>[
-          question('a', stretch: true),
-          question('b', stretch: true),
+          question('a', minDepth: 2),
+          question('b', minDepth: 2),
         ],
       );
       final Lesson forHs = allStretch.forProfile(
@@ -203,11 +206,80 @@ void main() {
       expect(forHs.quizQuestionCount, 2);
     });
 
-    test('cards are never filtered — only questions are', () {
-      final Lesson forHs = mixed.forProfile(
-        LearningProfile.forLevel(EducationLevel.highSchool),
+    test('a card outside the band is dropped from the main flow', () {
+      final Lesson banded = lesson(
+        id: 'l',
+        order: 1,
+        cards: const <LessonCard>[
+          SummaryCard(heading: 'everyone', takeaways: <String>[]),
+          SummaryCard(
+            heading: 'scaffold',
+            takeaways: <String>[],
+            maxDepth: 2,
+          ),
+          SummaryCard(heading: 'deep', takeaways: <String>[], minDepth: 3),
+        ],
+        questions: <QuizQuestion>[question('a')],
       );
-      expect(forHs.cards.length, mixed.cards.length);
+
+      final List<String> beginner = <String>[
+        for (final LessonCard c
+            in banded
+                .forProfile(LearningProfile.forLevel(EducationLevel.highSchool))
+                .cards)
+          (c as SummaryCard).heading,
+      ];
+      final List<String> expert = <String>[
+        for (final LessonCard c
+            in banded
+                .forProfile(
+                  LearningProfile.forLevel(EducationLevel.postgraduate),
+                )
+                .cards)
+          (c as SummaryCard).heading,
+      ];
+
+      expect(beginner, <String>['everyone', 'scaffold']);
+      expect(expert, <String>['everyone', 'deep']);
+    });
+
+    test('a deeper card is still reachable, never deleted', () {
+      final Lesson banded = lesson(
+        id: 'l',
+        order: 1,
+        cards: const <LessonCard>[
+          SummaryCard(heading: 'everyone', takeaways: <String>[]),
+          SummaryCard(heading: 'deep', takeaways: <String>[], minDepth: 3),
+        ],
+      );
+      final LearningProfile hs = LearningProfile.forLevel(
+        EducationLevel.highSchool,
+      );
+      expect(banded.deeperCards(hs), hasLength(1));
+      expect((banded.deeperCards(hs).single as SummaryCard).heading, 'deep');
+      // And nothing is deeper than an expert's own level.
+      expect(
+        banded.deeperCards(
+          LearningProfile.forLevel(EducationLevel.postgraduate),
+        ),
+        isEmpty,
+      );
+    });
+
+    test('a band that would empty a lesson falls back to showing it all', () {
+      final Lesson impossible = lesson(
+        id: 'l',
+        order: 1,
+        cards: const <LessonCard>[
+          SummaryCard(heading: 'deep', takeaways: <String>[], minDepth: 4),
+        ],
+      );
+      expect(
+        impossible
+            .forProfile(LearningProfile.forLevel(EducationLevel.highSchool))
+            .cards,
+        hasLength(1),
+      );
     });
 
     test('personalising twice is stable', () {

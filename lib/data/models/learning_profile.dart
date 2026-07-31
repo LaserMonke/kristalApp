@@ -20,6 +20,7 @@ import 'education_level.dart';
 class LearningProfile {
   const LearningProfile({
     required this.level,
+    required this.depth,
     required this.usesAdvancedOrder,
     required this.asksStretchQuestions,
     required this.pitch,
@@ -28,6 +29,25 @@ class LearningProfile {
   });
 
   final EducationLevel level;
+
+  /// How deep the material goes, 1 to 4.
+  ///
+  /// Cards and questions carry a depth range, so this genuinely changes what
+  /// is on screen: a level-1 learner gets extra scaffolding cards and is
+  /// spared the derivations, a level-4 learner gets the derivations and is
+  /// spared the scaffolding. It is the difference between "the same lesson,
+  /// reordered" and a lesson actually pitched at someone.
+  ///
+  /// The ladder puts postgraduate highest: an early-career learner has the
+  /// numeracy but, by their own description, is new to derivatives, while a
+  /// postgraduate has met the formal machinery. Nobody is capped — see
+  /// [showsDeepDives] for what a learner can still choose to read.
+  final int depth;
+
+  /// Whether the deeper cards are shown inline. When false they are not
+  /// deleted — the lesson player offers them behind a "Go deeper" control, so
+  /// curiosity is never punished by the level someone ticked at sign-up.
+  bool get showsDeepDives => depth >= 3;
 
   /// Whether the path follows each lesson's advanced ordering, which brings
   /// the exotics and stochastic-vol material forward instead of leaving it at
@@ -50,6 +70,7 @@ class LearningProfile {
   static LearningProfile forLevel(EducationLevel level) => switch (level) {
     EducationLevel.highSchool => const LearningProfile(
       level: EducationLevel.highSchool,
+      depth: 1,
       usesAdvancedOrder: false,
       asksStretchQuestions: false,
       pitch:
@@ -63,6 +84,7 @@ class LearningProfile {
     ),
     EducationLevel.undergraduate => const LearningProfile(
       level: EducationLevel.undergraduate,
+      depth: 2,
       usesAdvancedOrder: false,
       asksStretchQuestions: true,
       pitch:
@@ -75,6 +97,7 @@ class LearningProfile {
     ),
     EducationLevel.postgraduate => const LearningProfile(
       level: EducationLevel.postgraduate,
+      depth: 4,
       usesAdvancedOrder: true,
       asksStretchQuestions: true,
       pitch:
@@ -87,6 +110,7 @@ class LearningProfile {
     ),
     EducationLevel.earlyCareer => const LearningProfile(
       level: EducationLevel.earlyCareer,
+      depth: 3,
       usesAdvancedOrder: true,
       asksStretchQuestions: true,
       pitch:
@@ -99,6 +123,7 @@ class LearningProfile {
     ),
     EducationLevel.other => const LearningProfile(
       level: EducationLevel.other,
+      depth: 2,
       usesAdvancedOrder: false,
       asksStretchQuestions: true,
       pitch: 'The full path in order, with every question asked.',

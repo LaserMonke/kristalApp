@@ -129,6 +129,8 @@ class _LessonPlayerScreenState extends ConsumerState<LessonPlayerScreen> {
           cardCount: lesson.cards.length,
           currentIndex: _index,
           onClose: _close,
+          onGoDeeper: _deeper.isEmpty ? null : () => _showDeeper(context),
+          deeperCount: _deeper.length,
         ),
         Expanded(
           child: PageView.builder(
@@ -150,6 +152,59 @@ class _LessonPlayerScreenState extends ConsumerState<LessonPlayerScreen> {
           onFinish: () => _finish(lesson),
         ),
       ],
+    );
+  }
+
+  /// Cards written above this learner's level, kept out of the main deck but
+  /// never taken away.
+  ///
+  /// A learner who ticked "high school" at sign-up is still allowed to be
+  /// curious, and reading further must not cost them anything: these are not
+  /// counted in progress and not required to finish.
+  List<LessonCard> get _deeper {
+    final Lesson? lesson = ref.read(lessonProvider(widget.lessonId)).value;
+    if (lesson == null) return const <LessonCard>[];
+    return lesson.deeperCards(ref.read(learningProfileProvider));
+  }
+
+  void _showDeeper(BuildContext context) {
+    final List<LessonCard> cards = _deeper;
+    if (cards.isEmpty) return;
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (BuildContext sheet) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.85,
+        maxChildSize: 0.95,
+        builder: (BuildContext _, ScrollController scroll) => ListView(
+          controller: scroll,
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+          children: <Widget>[
+            Text(
+              'Going deeper',
+              style: Theme.of(sheet).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Written for a more advanced level than the one you picked. '
+              'Reading it changes nothing about your progress — it is here '
+              'because you asked.',
+              style: Theme.of(sheet).textTheme.bodySmall?.copyWith(
+                color: Theme.of(sheet).colorScheme.onSurfaceVariant,
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 16),
+            for (final LessonCard card in cards) ...<Widget>[
+              LessonCardView(card: card),
+              const SizedBox(height: 16),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }
@@ -219,12 +274,18 @@ class _PlayerHeader extends StatelessWidget {
     required this.cardCount,
     required this.currentIndex,
     required this.onClose,
+    required this.onGoDeeper,
+    required this.deeperCount,
   });
 
   final String title;
   final int cardCount;
   final int currentIndex;
   final VoidCallback onClose;
+
+  /// Null when this lesson has nothing written above the learner's level.
+  final VoidCallback? onGoDeeper;
+  final int deeperCount;
 
   @override
   Widget build(BuildContext context) {
@@ -252,6 +313,16 @@ class _PlayerHeader extends StatelessWidget {
                   textAlign: TextAlign.center,
                 ),
               ),
+              if (onGoDeeper != null)
+                IconButton(
+                  onPressed: onGoDeeper,
+                  icon: const Icon(Icons.school_outlined),
+                  tooltip:
+                      'Go deeper — $deeperCount extra '
+                      '${deeperCount == 1 ? 'card' : 'cards'} written for a '
+                      'more advanced level',
+                  visualDensity: VisualDensity.compact,
+                ),
               SizedBox(
                 width: 48,
                 child: Text(
