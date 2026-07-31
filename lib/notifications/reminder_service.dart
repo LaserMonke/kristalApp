@@ -54,7 +54,16 @@ abstract interface class ReminderService {
   /// Asks for OS notification permission (if needed) and schedules the one
   /// daily reminder. Returns false — leaving nothing scheduled — when the
   /// learner declines permission or the platform refuses.
-  Future<bool> scheduleDaily({required int hour, required int minute});
+  ///
+  /// [title] and [body] are supplied by the caller because the wording is
+  /// pitched to the learner's education level (see LearningProfile). The
+  /// service delivers copy; it never writes it.
+  Future<bool> scheduleDaily({
+    required int hour,
+    required int minute,
+    required String title,
+    required String body,
+  });
 
   /// Cancels the daily reminder.
   Future<void> cancel();

@@ -3,8 +3,10 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../data/models/learning_profile.dart';
 import '../notifications/local_reminder_service.dart';
 import '../notifications/reminder_service.dart';
+import 'lesson_providers.dart';
 import 'repository_providers.dart';
 
 /// Overridable seam so tests (and unsupported platforms) never touch the
@@ -31,6 +33,10 @@ class ReminderController extends AsyncNotifier<ReminderSettings> {
   SharedPreferences get _prefs => ref.read(sharedPreferencesProvider);
   ReminderService get _service => ref.read(reminderServiceProvider);
 
+  /// Reminder wording follows the learner's education level: the register
+  /// changes, never the pressure (CLAUDE.md rules 3 & 9).
+  LearningProfile get _profile => ref.read(learningProfileProvider);
+
   @override
   Future<ReminderSettings> build() async {
     final String? raw = _prefs.getString(_prefsKey);
@@ -51,6 +57,8 @@ class ReminderController extends AsyncNotifier<ReminderSettings> {
     final bool scheduled = await _service.scheduleDaily(
       hour: defaults.hour,
       minute: defaults.minute,
+      title: _profile.reminderTitle,
+      body: _profile.reminderBody,
     );
     final ReminderSettings settings = defaults.copyWith(enabled: scheduled);
     await _prefs.setString(_prefsKey, jsonEncode(settings.toJson()));
@@ -63,6 +71,8 @@ class ReminderController extends AsyncNotifier<ReminderSettings> {
     final bool scheduled = await _service.scheduleDaily(
       hour: hour,
       minute: minute,
+      title: _profile.reminderTitle,
+      body: _profile.reminderBody,
     );
     if (!scheduled) {
       await _save(

@@ -88,29 +88,42 @@ class LocalReminderService implements ReminderService {
   }
 
   @override
-  Future<bool> scheduleDaily({required int hour, required int minute}) async {
+  Future<bool> scheduleDaily({
+    required int hour,
+    required int minute,
+    required String title,
+    required String body,
+  }) async {
     if (!isSupported) return false;
 
     // Any platform failure — plugin missing, channel error, OS refusal — is
     // reported as "not scheduled" rather than crashing: a reminder is never
     // worth taking the app down for.
     try {
-      return await _schedule(hour: hour, minute: minute);
+      return await _schedule(
+        hour: hour,
+        minute: minute,
+        title: title,
+        body: body,
+      );
     } on Object {
       return false;
     }
   }
 
-  Future<bool> _schedule({required int hour, required int minute}) async {
+  Future<bool> _schedule({
+    required int hour,
+    required int minute,
+    required String title,
+    required String body,
+  }) async {
     await _ensureInitialized();
     if (!await _requestPermission()) return false;
 
     await _plugin.zonedSchedule(
       id: _dailyReminderId,
-      title: 'A few minutes of options study?',
-      body:
-          'One lesson card at a time. Your pace — this reminder is off '
-          'anytime in Settings.',
+      title: title,
+      body: body,
       scheduledDate: _nextInstanceOf(hour, minute),
       notificationDetails: const NotificationDetails(
         android: AndroidNotificationDetails(

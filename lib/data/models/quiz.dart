@@ -21,7 +21,17 @@ sealed class QuizQuestion {
     required this.prompt,
     this.setup,
     this.teachingNote,
+    this.isStretch = false,
   });
+
+  /// Marks a question that assumes more than the lesson strictly taught — an
+  /// extra step of arithmetic, or a case the cards only implied.
+  ///
+  /// Learners still early in their studies are not asked these by default
+  /// (see [LearningProfile]). It is a question about pitch, not about what
+  /// anyone is capable of: a question that needs algebra a learner has not met
+  /// yet tests the algebra, not their understanding of options.
+  final bool isStretch;
 
   /// Stable within a lesson. Used to key answers, so reordering questions in
   /// the JSON never silently re-attributes a saved result.
@@ -58,6 +68,7 @@ class MultipleChoiceQuestion extends QuizQuestion {
     required this.choices,
     super.setup,
     super.teachingNote,
+    super.isStretch,
   });
 
   final List<QuizChoice> choices;
@@ -80,6 +91,7 @@ class MultipleChoiceQuestion extends QuizQuestion {
         prompt: json['prompt'] as String,
         setup: json['setup'] as String?,
         teachingNote: json['teaching_note'] as String?,
+        isStretch: json['stretch'] as bool? ?? false,
         choices: <QuizChoice>[
           for (final dynamic c in json['choices'] as List<dynamic>)
             QuizChoice.fromJson(c as Map<String, dynamic>),
@@ -122,6 +134,7 @@ class NumericQuestion extends QuizQuestion {
     required this.explanation,
     super.setup,
     super.teachingNote,
+    super.isStretch,
     this.tolerance = 0.01,
     this.unitPrefix = '',
     this.unitSuffix = '',
@@ -163,6 +176,7 @@ class NumericQuestion extends QuizQuestion {
     prompt: json['prompt'] as String,
     setup: json['setup'] as String?,
     teachingNote: json['teaching_note'] as String?,
+    isStretch: json['stretch'] as bool? ?? false,
     answer: (json['answer'] as num).toDouble(),
     tolerance: (json['tolerance'] as num? ?? 0.01).toDouble(),
     unitPrefix: json['unit_prefix'] as String? ?? '',

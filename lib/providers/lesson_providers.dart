@@ -1,20 +1,62 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../data/models/app_user.dart';
+import '../data/models/education_level.dart';
+import '../data/models/learning_profile.dart';
 import '../data/models/lesson.dart';
 import '../data/models/lesson_progress.dart';
+import 'auth_controller.dart';
 import 'progress_controller.dart';
 import 'repository_providers.dart';
 
-/// All lessons, ordered.
-final FutureProvider<List<Lesson>> lessonsProvider =
-    FutureProvider<List<Lesson>>(
-      (Ref ref) => ref.watch(lessonRepoProvider).loadLessons(),
-    );
+/// How the app is pitched for the signed-in learner.
+///
+/// Falls back to [EducationLevel.other] — the neutral, everything-in-order
+/// profile — while auth is loading or when nobody is signed in, so no screen
+/// has to handle a null profile.
+final Provider<LearningProfile> learningProfileProvider =
+    Provider<LearningProfile>((Ref ref) {
+      final AppUser? user = ref.watch(currentUserProvider);
+      return LearningProfile.forLevel(
+        user?.educationLevel ?? EducationLevel.other,
+      );
+    });
 
-final lessonProvider = FutureProvider.family<Lesson?, String>(
-  (Ref ref, String lessonId) =>
-      ref.watch(lessonRepoProvider).loadLesson(lessonId),
-);
+/// All lessons, in the order this learner should meet them, each narrowed to
+/// the questions their level is asked.
+///
+/// Personalisation is applied once, here, rather than at every call site: the
+/// path, the player, the Q&A and the certificate count all read from this, so
+/// they cannot disagree about what a lesson contains or what finishing it
+/// requires.
+final FutureProvider<List<Lesson>> lessonsProvider =
+    FutureProvider<List<Lesson>>((Ref ref) async {
+      final LearningProfile profile = ref.watch(learningProfileProvider);
+      final List<Lesson> raw = await ref.watch(lessonRepoProvider).loadLessons();
+
+      final List<Lesson> personalised = <Lesson>[
+        for (final Lesson lesson in raw) lesson.forProfile(profile),
+      ];
+      personalised.sort(
+        (Lesson a, Lesson b) => a.orderFor(profile).compareTo(
+          b.orderFor(profile),
+        ),
+      );
+      return personalised;
+    });
+
+final lessonProvider = FutureProvider.family<Lesson?, String>((
+  Ref ref,
+  String lessonId,
+) async {
+  // Derived from the personalised list rather than read again from the repo,
+  // so the player and the Q&A never show a lesson the path does not agree with.
+  final List<Lesson> lessons = await ref.watch(lessonsProvider.future);
+  for (final Lesson lesson in lessons) {
+    if (lesson.id == lessonId) return lesson;
+  }
+  return null;
+});
 
 /// A lesson plus the learner's state for it.
 class LessonNode {

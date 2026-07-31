@@ -1,5 +1,6 @@
 import '../../pricing/black_scholes.dart' show OptionType;
 import '../../pricing/payoff.dart';
+import 'learning_profile.dart';
 import 'quiz.dart';
 
 /// Lesson content as DATA.
@@ -16,6 +17,8 @@ class Lesson {
     required this.title,
     required this.summary,
     required this.cards,
+    this.advancedOrder,
+    this.isAdvanced = false,
     this.estimatedMinutes = 3,
     this.questions = const <QuizQuestion>[],
     this.reviewedBy,
@@ -26,6 +29,17 @@ class Lesson {
 
   /// Position in the learning path. Lower comes first.
   final int order;
+
+  /// Position for a learner who already has the mathematics — postgraduate or
+  /// working (see [LearningProfile]). Authored per lesson rather than computed,
+  /// so the path a given learner walks is readable in the content file instead
+  /// of falling out of arithmetic in the engine. Null means "same as [order]".
+  final int? advancedOrder;
+
+  /// Marks the material that assumes the earlier lessons: exotics, stochastic
+  /// volatility, structured products. It changes where a lesson sits and how
+  /// it is labelled — never whether it can be opened.
+  final bool isAdvanced;
 
   final String title;
   final String summary;
@@ -46,6 +60,42 @@ class Lesson {
 
   int get quizQuestionCount => questions.length;
 
+  /// Where this lesson sits for [profile].
+  int orderFor(LearningProfile profile) =>
+      profile.usesAdvancedOrder ? (advancedOrder ?? order) : order;
+
+  /// This lesson as [profile] should meet it: the same cards, with the graded
+  /// questions narrowed to the ones that level is asked by default.
+  ///
+  /// Personalisation happens HERE, once, at the point lessons are read — so
+  /// every screen downstream (the path, the player, the Q&A, the certificate
+  /// count) is looking at the same personalised lesson and cannot disagree
+  /// about what finishing it requires.
+  Lesson forProfile(LearningProfile profile) {
+    if (profile.asksStretchQuestions) return this;
+    final List<QuizQuestion> kept = <QuizQuestion>[
+      for (final QuizQuestion q in questions)
+        if (!q.isStretch) q,
+    ];
+    // Never leave a lesson with nothing to answer: if every question is a
+    // stretch question, ask them anyway rather than silently dropping the Q&A
+    // and changing what finishing the lesson means.
+    if (kept.isEmpty) return this;
+    return Lesson(
+      id: id,
+      order: order,
+      advancedOrder: advancedOrder,
+      isAdvanced: isAdvanced,
+      title: title,
+      summary: summary,
+      cards: cards,
+      estimatedMinutes: estimatedMinutes,
+      questions: kept,
+      reviewedBy: reviewedBy,
+      reviewedOn: reviewedOn,
+    );
+  }
+
   factory Lesson.fromJson(Map<String, dynamic> json) {
     final List<dynamic> rawCards = json['cards'] as List<dynamic>? ?? <dynamic>[];
     final String? reviewedOn = json['reviewed_on'] as String?;
@@ -53,6 +103,8 @@ class Lesson {
     return Lesson(
       id: json['id'] as String,
       order: json['order'] as int,
+      advancedOrder: json['advanced_order'] as int?,
+      isAdvanced: json['advanced'] as bool? ?? false,
       title: json['title'] as String,
       summary: json['summary'] as String,
       estimatedMinutes: json['estimated_minutes'] as int? ?? 3,

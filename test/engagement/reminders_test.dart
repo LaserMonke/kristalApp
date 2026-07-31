@@ -134,17 +134,26 @@ class _FakeReminderService implements ReminderService {
   int attempts = 0;
   int? hour;
   int? minute;
+  String? title;
+  String? body;
 
   @override
   bool get isSupported => supported;
 
   @override
-  Future<bool> scheduleDaily({required int hour, required int minute}) async {
+  Future<bool> scheduleDaily({
+    required int hour,
+    required int minute,
+    required String title,
+    required String body,
+  }) async {
     attempts++;
     if (!permissionGranted) return false;
     scheduled = true;
     this.hour = hour;
     this.minute = minute;
+    this.title = title;
+    this.body = body;
     return true;
   }
 

@@ -252,7 +252,8 @@
             "A buyer's worst case is losing the whole premium. A seller's worst case is larger."
           ]
         }
-      ]
+      ],
+      "advanced_order": 1
     },
     {
       "id": "payoff-at-expiry",
@@ -475,7 +476,8 @@
             "The shape tells you the risk: flat lines are capped, sloping lines are not."
           ]
         }
-      ]
+      ],
+      "advanced_order": 2
     },
     {
       "id": "why-use-options",
@@ -714,7 +716,8 @@
             "Diagrams are idealised. Real markets add costs the chart does not show."
           ]
         }
-      ]
+      ],
+      "advanced_order": 3
     },
     {
       "id": "black-scholes-price",
@@ -735,7 +738,8 @@
           "unit_prefix": "$",
           "hint": "Price splits cleanly into two pieces.",
           "explanation": "Price = intrinsic value + time value, so time value = $8.50 - $5.00 = $3.50.",
-          "teaching_note": "Intrinsic value is what expiry arithmetic from lesson 2 already gives you. Time value is everything the model adds on top for the time still left on the clock."
+          "teaching_note": "Intrinsic value is what expiry arithmetic from lesson 2 already gives you. Time value is everything the model adds on top for the time still left on the clock.",
+          "stretch": true
         },
         {
           "type": "choice",
@@ -1052,7 +1056,8 @@
             "It is a model built on simplifying assumptions, not a live market quote."
           ]
         }
-      ]
+      ],
+      "advanced_order": 4
     },
     {
       "id": "the-greeks",
@@ -1297,7 +1302,8 @@
             "All five come from the same model as the price, and describe a moment — not a forecast."
           ]
         }
-      ]
+      ],
+      "advanced_order": 5
     },
     {
       "id": "options-strategies",
@@ -1648,7 +1654,8 @@
             "Covered calls and protective puts start from an existing share position and cap one side of it."
           ]
         }
-      ]
+      ],
+      "advanced_order": 8
     },
     {
       "id": "path-dependent-options",
@@ -1693,7 +1700,8 @@
           "unit_prefix": "$",
           "explanation": "In-out parity: 7.50 - 3.20 = 4.30. Holding both the knock-in and the knock-out leaves you holding the plain option, because exactly one of the two is alive at expiry — so the two must add up to it.",
           "hint": "If you owned BOTH the knock-in and the knock-out, what would you have?",
-          "teaching_note": "This identity is exact, and it is the quickest sanity check on any barrier price."
+          "teaching_note": "This identity is exact, and it is the quickest sanity check on any barrier price.",
+          "stretch": true
         },
         {
           "type": "choice",
@@ -1876,7 +1884,9 @@
             "These contracts have no formula, so their prices are simulated, and every simulated price comes with an uncertainty."
           ]
         }
-      ]
+      ],
+      "advanced_order": 7,
+      "advanced": true
     },
     {
       "id": "volatility-is-not-constant",
@@ -1944,7 +1954,8 @@
           "unit_suffix": "%",
           "explanation": "Volatility is the square root of variance: sqrt(0.09) = 0.30, or 30%. Mixing the two up is the single easiest mistake to make with this model, and it produces answers that are wrong by a wide margin rather than a little.",
           "hint": "Volatility and variance are related by a square root.",
-          "teaching_note": "Check which one a formula wants before putting a number into it."
+          "teaching_note": "Check which one a formula wants before putting a number into it.",
+          "stretch": true
         },
         {
           "type": "choice",
@@ -2131,7 +2142,9 @@
             "More parameters mean more ways to be wrong. Reproducing today's prices is not the same as knowing what happens next."
           ]
         }
-      ]
+      ],
+      "advanced_order": 6,
+      "advanced": true
     },
     {
       "id": "structured-products",
@@ -2152,7 +2165,8 @@
           "unit_prefix": "$",
           "explanation": "100 x e^(-0.04 x 5) = 81.87. So about 82 of your 100 goes on the bond that provides the protection, and only the remaining 18 or so is available to buy the upside. This is the whole economics of a capital-protected note in one sum.",
           "hint": "Discount 100 back five years at 4% continuous compounding.",
-          "teaching_note": "When rates fall, the bond costs more and less is left for options — which is why these products all but vanished in the near-zero-rate years."
+          "teaching_note": "When rates fall, the bond costs more and less is left for options — which is why these products all but vanished in the near-zero-rate years.",
+          "stretch": true
         },
         {
           "type": "choice",
@@ -2407,7 +2421,9 @@
             "A note sold at 100 is usually worth less than 100 on day one, and the gap is paid by the buyer."
           ]
         }
-      ]
+      ],
+      "advanced_order": 9,
+      "advanced": true
     }
   ]
 }

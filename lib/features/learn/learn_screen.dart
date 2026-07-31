@@ -8,6 +8,7 @@ import '../../core/widgets/disclaimer_text.dart';
 import '../../core/widgets/settings_button.dart';
 import '../../core/widgets/theme_toggle_button.dart';
 import '../../data/models/app_user.dart';
+import '../../data/models/learning_profile.dart';
 import '../../providers/auth_controller.dart';
 import '../../providers/lesson_providers.dart';
 import '../leaderboard/leaderboard_screen.dart';
@@ -50,6 +51,7 @@ class _LessonsView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final ThemeData theme = Theme.of(context);
     final AppUser? user = ref.watch(currentUserProvider);
+    final LearningProfile profile = ref.watch(learningProfileProvider);
     final AsyncValue<List<LessonNode>> path = ref.watch(lessonPathProvider);
 
     return ListView(
@@ -61,11 +63,30 @@ class _LessonsView extends ConsumerWidget {
           Text(
             user == null
                 ? 'Start with what an option actually is.'
-                : 'Pitched for: ${user.educationLevel.label}',
+                : profile.pitch,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
+              height: 1.35,
             ),
           ),
+          if (user != null) ...<Widget>[
+            const SizedBox(height: 6),
+            // Personalisation is stated and changeable, never silent: a
+            // learner should know why their path looks the way it does, and be
+            // able to change it in one tap.
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: () => context.push(Routes.profile),
+                icon: const Icon(Icons.tune, size: 16),
+                label: Text('Change level (${user.educationLevel.label})'),
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                ),
+              ),
+            ),
+          ],
           const SizedBox(height: 20),
           const DisclaimerBanner(
             text: Disclaimers.noAdviceShort,
@@ -141,13 +162,47 @@ class _LessonTile extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      Text(
-                        node.lesson.title,
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          color: locked
-                              ? theme.colorScheme.onSurfaceVariant
-                              : null,
-                        ),
+                      Row(
+                        children: <Widget>[
+                          Flexible(
+                            child: Text(
+                              node.lesson.title,
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                color: locked
+                                    ? theme.colorScheme.onSurfaceVariant
+                                    : null,
+                              ),
+                            ),
+                          ),
+                          // Says which lessons build on the rest, so their
+                          // position in the path is explained rather than
+                          // arbitrary. It is a label, never a lock.
+                          if (node.lesson.isAdvanced) ...<Widget>[
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 1,
+                              ),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(4),
+                                border: Border.all(
+                                  color: theme.colorScheme.outline.withValues(
+                                    alpha: 0.6,
+                                  ),
+                                ),
+                              ),
+                              child: Text(
+                                'ADVANCED',
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  fontSize: 9,
+                                  letterSpacing: 0.5,
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                       const SizedBox(height: 4),
                       Text(
