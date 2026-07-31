@@ -49,6 +49,40 @@ class SupabaseMarketRepo implements MarketRepo {
     }
   }
 
+  @override
+  Future<List<SymbolMatch>> search(String query) async {
+    if (query.trim().isEmpty) return const <SymbolMatch>[];
+
+    try {
+      final sb.FunctionResponse response = await client.functions.invoke(
+        functionName,
+        body: <String, dynamic>{'query': query.trim()},
+      );
+
+      final Object? data = response.data;
+      if (response.status != 200 || data is! Map) {
+        return offline.search(query);
+      }
+
+      final Object? rows = data['matches'];
+      if (rows is! List) return offline.search(query);
+
+      final List<SymbolMatch> matches = <SymbolMatch>[
+        for (final Object? row in rows)
+          if (row is Map)
+            SymbolMatch(
+              symbol: (row['symbol'] as String).toUpperCase(),
+              description: row['description'] as String? ?? '',
+            ),
+      ];
+      // Falling back to the offline list keeps search usable when the lookup
+      // is down; those entries say they were not looked up.
+      return matches.isEmpty ? offline.search(query) : matches;
+    } catch (_) {
+      return offline.search(query);
+    }
+  }
+
   Quote _fromRow(Map<String, dynamic> row) => Quote(
     symbol: row['symbol'] as String,
     price: (row['price'] as num).toDouble(),

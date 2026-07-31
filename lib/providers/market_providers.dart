@@ -13,15 +13,82 @@ import 'repository_providers.dart';
 /// because everything already gates on it.
 final Provider<bool> marketUnlockedProvider = Provider<bool>((Ref ref) => true);
 
-/// Polls the watchlist on a gentle loop. `autoDispose` so it stops the moment
-/// the tab is left — no background polling, no wasted calls.
+/// The symbols this learner follows. Starts at [kDefaultWatchlist] and is
+/// theirs to change — searching for a ticker and trading it adds it here.
+class WatchlistController extends Notifier<List<String>> {
+  static const String _key = 'market_watchlist_v1';
+
+  @override
+  List<String> build() {
+    final List<String>? saved = ref
+        .watch(sharedPreferencesProvider)
+        .getStringList(_key);
+    return saved == null || saved.isEmpty ? kDefaultWatchlist : saved;
+  }
+
+  /// Returns null on success, or why the symbol was not added.
+  Future<String?> add(String raw) async {
+    final String symbol = raw.trim().toUpperCase();
+    if (!isPlausibleSymbol(symbol)) return 'That does not look like a ticker.';
+    if (state.contains(symbol)) return null;
+    if (state.length >= kMaxWatchlist) {
+      return 'You are following $kMaxWatchlist symbols already. Remove one '
+          'first.';
+    }
+    await _write(<String>[symbol, ...state]);
+    return null;
+  }
+
+  Future<void> remove(String symbol) async {
+    await _write(state.where((String s) => s != symbol).toList());
+  }
+
+  Future<void> _write(List<String> next) async {
+    state = next;
+    await ref.read(sharedPreferencesProvider).setStringList(_key, next);
+  }
+}
+
+final NotifierProvider<WatchlistController, List<String>> watchlistProvider =
+    NotifierProvider<WatchlistController, List<String>>(
+      WatchlistController.new,
+    );
+
+/// Every symbol that needs a price: the watchlist, plus anything held. A
+/// position must stay marked to market even if its symbol is dropped from the
+/// list, or the portfolio would quietly freeze at its last known value.
+final Provider<List<String>> polledSymbolsProvider = Provider<List<String>>((
+  Ref ref,
+) {
+  final Portfolio? p = ref.watch(portfolioControllerProvider).value;
+  final Set<String> symbols = <String>{
+    ...ref.watch(watchlistProvider),
+    if (p != null) ...<String>[
+      for (final Holding h in p.holdings) h.symbol,
+      for (final OptionHolding o in p.options) o.symbol,
+    ],
+  };
+  return symbols.toList();
+});
+
+/// Polls the followed symbols on a gentle loop. `autoDispose` so it stops the
+/// moment the tab is left — no background polling, no wasted calls.
 final StreamProvider<List<Quote>> quotesProvider =
     StreamProvider.autoDispose<List<Quote>>((Ref ref) async* {
       final repo = ref.watch(marketRepoProvider);
+      final List<String> symbols = ref.watch(polledSymbolsProvider);
       while (true) {
-        yield await repo.quotes(kWatchlist);
+        yield await repo.quotes(symbols);
         await Future<void>.delayed(const Duration(seconds: 15));
       }
+    });
+
+/// Symbol search for the Market tab. `autoDispose` and keyed by query so each
+/// keystroke's result is cached briefly and dropped when the field clears.
+final symbolSearchProvider = FutureProvider.autoDispose
+    .family<List<SymbolMatch>, String>((Ref ref, String query) async {
+      if (query.trim().isEmpty) return const <SymbolMatch>[];
+      return ref.watch(marketRepoProvider).search(query);
     });
 
 /// Latest price per symbol, for marking positions to market.

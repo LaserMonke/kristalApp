@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -5,6 +7,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/widgets/disclaimer_text.dart';
 import '../../data/models/market.dart';
 import '../../providers/market_providers.dart';
+import '../../providers/repository_providers.dart';
 
 /// The Phase 9 fake-money practice market (shares).
 ///
@@ -59,6 +62,9 @@ class MarketView extends ConsumerWidget {
           orElse: () => const SizedBox.shrink(),
         ),
 
+        const _SymbolSearch(),
+        const SizedBox(height: 18),
+
         _SectionLabel('Watchlist'),
         const SizedBox(height: 8),
         quotes.when(
@@ -71,6 +77,12 @@ class MarketView extends ConsumerWidget {
                 _QuoteRow(
                   quote: q,
                   onTap: () => _openTradeSheet(context, q),
+                  onRemove: () =>
+                      ref.read(watchlistProvider.notifier).remove(q.symbol),
+                ),
+              if (list.isEmpty)
+                const _Note(
+                  'Nothing on your watchlist. Search above to add a symbol.',
                 ),
             ],
           ),
@@ -123,6 +135,174 @@ class MarketView extends ConsumerWidget {
     if (yes ?? false) {
       await ref.read(portfolioControllerProvider.notifier).reset();
     }
+  }
+}
+
+/// Search any ticker and trade it.
+///
+/// The watchlist is a starting point, not a boundary: whatever the learner
+/// finds here gets added to it and priced like anything else. Lookups are
+/// debounced because each one costs a call against the paid data plan.
+class _SymbolSearch extends ConsumerStatefulWidget {
+  const _SymbolSearch();
+
+  @override
+  ConsumerState<_SymbolSearch> createState() => _SymbolSearchState();
+}
+
+class _SymbolSearchState extends ConsumerState<_SymbolSearch> {
+  final TextEditingController _controller = TextEditingController();
+  Timer? _debounce;
+  String _query = '';
+  bool _opening = false;
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _onChanged(String value) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 350), () {
+      if (mounted) setState(() => _query = value.trim());
+    });
+  }
+
+  void _clear() {
+    _debounce?.cancel();
+    _controller.clear();
+    setState(() => _query = '');
+    FocusScope.of(context).unfocus();
+  }
+
+  /// Adds the symbol to the watchlist, then opens its ticket. The quote is
+  /// fetched directly rather than waiting for the next poll, so the sheet has
+  /// a price to trade at straight away.
+  Future<void> _open(String symbol) async {
+    if (_opening) return;
+    setState(() => _opening = true);
+    FocusScope.of(context).unfocus();
+
+    final String? failed = await ref
+        .read(watchlistProvider.notifier)
+        .add(symbol);
+    if (!mounted) return;
+    if (failed != null) {
+      setState(() => _opening = false);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(failed)));
+      return;
+    }
+
+    final List<Quote> found = await ref
+        .read(marketRepoProvider)
+        .quotes(<String>[symbol]);
+    if (!mounted) return;
+    setState(() => _opening = false);
+
+    if (found.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'No price came back for $symbol. It is on your watchlist — try '
+            'again in a moment.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    _clear();
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (BuildContext _) => _TradeSheet(quote: found.first),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final AsyncValue<List<SymbolMatch>> results = _query.isEmpty
+        ? const AsyncValue<List<SymbolMatch>>.data(<SymbolMatch>[])
+        : ref.watch(symbolSearchProvider(_query));
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        TextField(
+          controller: _controller,
+          onChanged: _onChanged,
+          textCapitalization: TextCapitalization.characters,
+          textInputAction: TextInputAction.search,
+          onSubmitted: (String v) {
+            if (v.trim().isNotEmpty) _open(v.trim().toUpperCase());
+          },
+          decoration: InputDecoration(
+            hintText: 'Search any symbol — AAPL, KO, VOO…',
+            prefixIcon: const Icon(Icons.search),
+            suffixIcon: _query.isEmpty && _controller.text.isEmpty
+                ? null
+                : IconButton(
+                    icon: const Icon(Icons.close),
+                    tooltip: 'Clear search',
+                    onPressed: _clear,
+                  ),
+            border: const OutlineInputBorder(),
+            isDense: true,
+          ),
+        ),
+        if (_query.isNotEmpty) ...<Widget>[
+          const SizedBox(height: 8),
+          results.when(
+            loading: () => const Padding(
+              padding: EdgeInsets.symmetric(vertical: 14),
+              child: Center(
+                child: SizedBox(
+                  height: 18,
+                  width: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2.5),
+                ),
+              ),
+            ),
+            error: (Object e, StackTrace _) =>
+                const _Note('Symbol search is unavailable right now.'),
+            data: (List<SymbolMatch> matches) => matches.isEmpty
+                ? const _Note('No symbols match that.')
+                : Column(
+                    children: <Widget>[
+                      for (final SymbolMatch m in matches)
+                        Card(
+                          margin: const EdgeInsets.only(bottom: 6),
+                          child: ListTile(
+                            dense: true,
+                            title: Text(
+                              m.symbol,
+                              style: theme.textTheme.titleSmall,
+                            ),
+                            subtitle: m.description.isEmpty
+                                ? null
+                                : Text(
+                                    m.description,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                            trailing: _opening
+                                ? null
+                                : const Icon(Icons.add_chart, size: 20),
+                            onTap: _opening ? null : () => _open(m.symbol),
+                          ),
+                        ),
+                    ],
+                  ),
+          ),
+        ],
+      ],
+    );
   }
 }
 
@@ -460,10 +640,15 @@ class _ShortBadge extends StatelessWidget {
 }
 
 class _QuoteRow extends StatelessWidget {
-  const _QuoteRow({required this.quote, required this.onTap});
+  const _QuoteRow({
+    required this.quote,
+    required this.onTap,
+    required this.onRemove,
+  });
 
   final Quote quote;
   final VoidCallback onTap;
+  final VoidCallback onRemove;
 
   @override
   Widget build(BuildContext context) {
@@ -476,6 +661,23 @@ class _QuoteRow extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: onTap,
+        // Long-press to stop following. Positions are unaffected — anything
+        // held stays priced whether or not it is on the list.
+        onLongPress: () => showModalBottomSheet<void>(
+          context: context,
+          showDragHandle: true,
+          builder: (BuildContext sheet) => SafeArea(
+            child: ListTile(
+              leading: const Icon(Icons.playlist_remove),
+              title: Text('Remove ${quote.symbol} from watchlist'),
+              subtitle: const Text('Any position you hold keeps its price.'),
+              onTap: () {
+                Navigator.pop(sheet);
+                onRemove();
+              },
+            ),
+          ),
+        ),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           child: Row(

@@ -14,17 +14,14 @@
 
 const FINNHUB = "https://finnhub.io/api/v1";
 
-// An allow-list so a caller cannot turn this into a free proxy for the whole
-// API. Extend deliberately.
-const ALLOWED = new Set<string>([
-  "AAPL",
-  "MSFT",
-  "SPY",
-  "TSLA",
-  "NVDA",
-  "AMZN",
-  "GOOGL",
-]);
+// Learners can follow any ticker, so a fixed allow-list is gone. What remains
+// is shape validation and hard caps: this endpoint still only ever reaches two
+// Finnhub paths, never takes a URL from the caller, and refuses anything that
+// is not ticker-shaped — so it cannot be turned into a general proxy for the
+// API the key pays for.
+const SYMBOL = /^[A-Z][A-Z0-9.\-]{0,9}$/;
+const MAX_SYMBOLS = 20;
+const MAX_MATCHES = 15;
 
 const CORS: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
@@ -56,21 +53,28 @@ Deno.serve(async (req: Request): Promise<Response> => {
     return json({ error: "Market data is not configured on the server." }, 503);
   }
 
-  let symbols: string[];
+  let body: Record<string, unknown>;
   try {
-    const body = await req.json();
-    symbols = Array.isArray(body?.symbols) ? body.symbols : [];
+    body = await req.json();
   } catch (_) {
-    return json({ error: "Expected a JSON body with a symbols array." }, 400);
+    return json({ error: "Expected a JSON body." }, 400);
   }
 
-  // Normalise, filter to the allow-list, cap the count.
+  // Two actions, both fixed here. The caller picks between them; it never
+  // supplies a path.
+  if (typeof body?.query === "string") {
+    return await handleSearch(body.query, key);
+  }
+
+  const symbols = Array.isArray(body?.symbols) ? body.symbols : [];
+
+  // Normalise, keep only ticker-shaped entries, cap the count.
   const wanted = [...new Set(symbols.map((s) => String(s).toUpperCase()))]
-    .filter((s) => ALLOWED.has(s))
-    .slice(0, 10);
+    .filter((s) => SYMBOL.test(s))
+    .slice(0, MAX_SYMBOLS);
 
   if (wanted.length === 0) {
-    return json({ error: "No allowed symbols requested.", quotes: [] }, 200);
+    return json({ error: "No valid symbols requested.", quotes: [] }, 200);
   }
 
   try {
@@ -88,6 +92,40 @@ Deno.serve(async (req: Request): Promise<Response> => {
     return json({ error: "Could not reach the market data provider." }, 502);
   }
 });
+
+// Symbol lookup for the Market tab's search field. Returns tickers and names
+// only — no prices, so nothing here needs the delayed-data label.
+async function handleSearch(raw: string, key: string): Promise<Response> {
+  const query = raw.trim();
+  if (query.length === 0 || query.length > 40) {
+    return json({ matches: [] }, 200);
+  }
+
+  try {
+    const res = await fetch(
+      `${FINNHUB}/search?q=${encodeURIComponent(query)}&exchange=US&token=${key}`,
+    );
+    if (!res.ok) return json({ error: "Symbol search failed.", matches: [] }, 502);
+
+    const body = await res.json();
+    const result = Array.isArray(body?.result) ? body.result : [];
+    const matches = result
+      // Common stock and ETFs only: the learner cannot trade the rest here, so
+      // offering them would just be a dead end.
+      .filter((r: Record<string, unknown>) =>
+        typeof r?.symbol === "string" && SYMBOL.test(r.symbol)
+      )
+      .slice(0, MAX_MATCHES)
+      .map((r: Record<string, unknown>) => ({
+        symbol: r.symbol as string,
+        description: typeof r.description === "string" ? r.description : "",
+      }));
+
+    return json({ matches }, 200);
+  } catch (_) {
+    return json({ error: "Could not reach the market data provider." }, 502);
+  }
+}
 
 async function fetchQuote(symbol: string, key: string): Promise<Quote | null> {
   const res = await fetch(

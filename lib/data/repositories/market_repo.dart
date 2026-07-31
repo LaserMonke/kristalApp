@@ -8,6 +8,11 @@ abstract interface class MarketRepo {
   /// Latest quote per requested symbol. Order is not guaranteed; match on
   /// [Quote.symbol].
   Future<List<Quote>> quotes(List<String> symbols);
+
+  /// Tickers matching [query], for the Market tab's search field. Returns an
+  /// empty list rather than throwing when nothing matches or the lookup is
+  /// unavailable — an empty result set is a normal answer, not an error.
+  Future<List<SymbolMatch>> search(String query);
 }
 
 class MarketException implements Exception {

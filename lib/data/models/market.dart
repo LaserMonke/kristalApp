@@ -4,15 +4,51 @@ import 'package:flutter/foundation.dart';
 
 import '../../pricing/black_scholes.dart';
 
-/// The symbols the practice market follows. Must stay within the Edge
-/// Function's allow-list (`supabase/functions/market-data-proxy`).
-const List<String> kWatchlist = <String>[
+/// The symbols a learner starts with. They can search for and add any other
+/// ticker; this is only the opening list, not a limit.
+const List<String> kDefaultWatchlist = <String>[
   'AAPL',
   'MSFT',
   'SPY',
   'TSLA',
   'NVDA',
 ];
+
+/// How many symbols one learner may follow at once. A ceiling, not a
+/// curation: each one is a quote fetched every poll, so an unbounded list
+/// would hammer the data provider for no teaching benefit.
+const int kMaxWatchlist = 20;
+
+/// A ticker as typed or as returned by symbol search.
+///
+/// [description] is the company or fund name where the provider gives one, so
+/// the learner can tell VOO from VOOG before trading it.
+@immutable
+class SymbolMatch {
+  const SymbolMatch({required this.symbol, this.description = ''});
+
+  final String symbol;
+  final String description;
+
+  @override
+  bool operator ==(Object other) =>
+      other is SymbolMatch &&
+      other.symbol == symbol &&
+      other.description == description;
+
+  @override
+  int get hashCode => Object.hash(symbol, description);
+}
+
+/// Whether [raw] could plausibly be a ticker, so obvious nonsense is rejected
+/// before it costs a network round trip. Deliberately loose — exchanges use
+/// dots and hyphens (BRK.B, RDS-A) — and never a judgement about whether the
+/// symbol actually exists, which only the provider can answer.
+bool isPlausibleSymbol(String raw) {
+  final String s = raw.trim().toUpperCase();
+  if (s.isEmpty || s.length > 10) return false;
+  return RegExp(r'^[A-Z][A-Z0-9.\-]*$').hasMatch(s);
+}
 
 /// A single price snapshot.
 ///
