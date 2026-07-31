@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/feedback/haptics.dart';
 import '../../core/router/app_router.dart';
 import '../../data/models/lesson.dart';
 import '../../data/models/quiz.dart';
@@ -68,6 +69,9 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
     setState(() {
       _session = _session!.answer(question.id, correct: correct);
     });
+    // A marked answer is worth feeling. Same tick either way — a heavier buzz
+    // for a wrong answer would punish a learner for learning.
+    ref.read(hapticsProvider).impact();
   }
 
   /// Grades whatever is in the field. No-op unless there is a number to grade,

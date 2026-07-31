@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/feedback/feedback_settings.dart';
+import '../../core/feedback/haptics.dart';
 import '../../core/widgets/data_location_text.dart';
 import '../../core/widgets/disclaimer_text.dart';
 import '../../core/widgets/theme_toggle_button.dart';
@@ -51,6 +53,10 @@ class ProfileScreen extends ConsumerWidget {
           _SectionLabel('Appearance', theme: theme),
           const SizedBox(height: 8),
           const _ThemeModeSelector(),
+          const SizedBox(height: 24),
+          _SectionLabel('Sound & vibration', theme: theme),
+          const SizedBox(height: 8),
+          const _FeedbackSection(),
           const SizedBox(height: 24),
           _SectionLabel('Learning level', theme: theme),
           const SizedBox(height: 8),
@@ -290,6 +296,54 @@ class _IdentityCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Both feedback channels, off in one tap each.
+///
+/// They default on because they make the app feel finished, but neither ever
+/// carries information on its own: every buzz confirms something already on
+/// screen, and the chime says nothing at all. A learner who turns both off
+/// loses nothing (CLAUDE.md accessibility, rule 9).
+class _FeedbackSection extends ConsumerWidget {
+  const _FeedbackSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final bool haptics = ref.watch(hapticsEnabledProvider);
+    final bool sound = ref.watch(introSoundEnabledProvider);
+
+    return Card(
+      child: Column(
+        children: <Widget>[
+          SwitchListTile(
+            secondary: const Icon(Icons.vibration),
+            title: const Text('Vibration'),
+            subtitle: const Text(
+              'A short buzz when a trade fills or an answer is marked',
+            ),
+            value: haptics,
+            onChanged: (bool on) {
+              ref.read(hapticsEnabledProvider.notifier).set(on);
+              // Feel the setting you just turned on.
+              if (on) ref.read(hapticsProvider).tick();
+            },
+          ),
+          const Divider(height: 1),
+          SwitchListTile(
+            secondary: const Icon(Icons.music_note_outlined),
+            title: const Text('Opening sound'),
+            subtitle: const Text(
+              'The chime when the app starts. Plays once per launch, nowhere '
+              'else',
+            ),
+            value: sound,
+            onChanged: (bool on) =>
+                ref.read(introSoundEnabledProvider.notifier).set(on),
+          ),
+        ],
       ),
     );
   }

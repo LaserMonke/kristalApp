@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/feedback/haptics.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/disclaimer_text.dart';
 import '../../data/models/market.dart';
@@ -24,10 +25,15 @@ class MarketView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // This screen drives the live feed, so it is where the persisted
-    // leaderboard bonus gets refreshed — keeping the board off the feed.
-    ref.listen<int>(liveMarketBonusProvider, (int? _, int next) {
-      ref.read(marketBonusPointsProvider.notifier).update(next);
+    // This screen is the only place with live prices, so it is where the
+    // trading week starts and where it settles. Points land at most once a
+    // week; the rest of the app just reads the total.
+    ref.listen<AsyncValue<Portfolio>>(portfolioControllerProvider, (
+      AsyncValue<Portfolio>? _,
+      AsyncValue<Portfolio> next,
+    ) {
+      final Portfolio? p = next.value;
+      if (p != null) _reconcile(context, ref, p);
     });
 
     if (!ref.watch(marketUnlockedProvider)) {
@@ -40,6 +46,16 @@ class MarketView extends ConsumerWidget {
     final AsyncValue<Portfolio> portfolio = ref.watch(
       portfolioControllerProvider,
     );
+
+    // Also settle on the first build, not only when the portfolio changes —
+    // otherwise a learner who opens the tab and trades nothing never starts
+    // (or closes) a week.
+    final Portfolio? loaded = portfolio.value;
+    if (loaded != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (context.mounted) _reconcile(context, ref, loaded);
+      });
+    }
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
@@ -102,6 +118,40 @@ class MarketView extends ConsumerWidget {
     );
   }
 
+  /// Starts the trading week, or settles it if a week has passed, telling the
+  /// learner plainly what they earned. A losing week settles too — it just
+  /// earns nothing, and says so rather than staying silent.
+  Future<void> _reconcile(
+    BuildContext context,
+    WidgetRef ref,
+    Portfolio portfolio,
+  ) async {
+    final Map<String, double> prices = ref.read(pricesProvider);
+    // No prices yet means no honest way to value the week.
+    if (prices.isEmpty) return;
+
+    final double equity = portfolio.equity(prices, DateTime.now());
+    final int? earned = await ref
+        .read(marketSettlementProvider.notifier)
+        .reconcile(equity, DateTime.now());
+    if (earned == null || !context.mounted) return;
+
+    await ref.read(hapticsProvider).impact();
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          earned > 0
+              ? 'Your practice week settled: $earned points from simulated '
+                    'gains. A new week starts now.'
+              : 'Your practice week settled flat or down, so no points this '
+                    'time. Nothing was taken away. A new week starts now.',
+        ),
+        duration: const Duration(seconds: 6),
+      ),
+    );
+  }
+
   void _openTradeSheet(BuildContext context, Quote quote) {
     showModalBottomSheet<void>(
       context: context,
@@ -133,7 +183,10 @@ class MarketView extends ConsumerWidget {
       ),
     );
     if (yes ?? false) {
+      await ref.read(hapticsProvider).warn();
       await ref.read(portfolioControllerProvider.notifier).reset();
+      // A fresh account must not settle against a week it never traded.
+      await ref.read(marketSettlementProvider.notifier).clear();
     }
   }
 }
@@ -345,14 +398,14 @@ class _FeedLabel extends StatelessWidget {
   }
 }
 
-class _Summary extends StatelessWidget {
+class _Summary extends ConsumerWidget {
   const _Summary({required this.portfolio, required this.prices});
 
   final Portfolio portfolio;
   final Map<String, double> prices;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final ThemeData theme = Theme.of(context);
     final DateTime now = DateTime.now();
     final double equity = portfolio.equity(prices, now);
@@ -425,9 +478,85 @@ class _Summary extends StatelessWidget {
                 ),
               ),
             ],
+            const SizedBox(height: 12),
+            const Divider(height: 1),
+            const SizedBox(height: 12),
+            const _WeekInProgress(),
           ],
         ),
       ),
+    );
+  }
+}
+
+/// The trading week: what it has made so far, what that would pay, and when it
+/// settles.
+///
+/// Stated rather than hinted at, because points arriving out of nowhere a week
+/// later would be mystifying — and because a week that is down should say so
+/// plainly instead of quietly showing nothing (CLAUDE.md rule 9).
+class _WeekInProgress extends ConsumerWidget {
+  const _WeekInProgress();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final ThemeData theme = Theme.of(context);
+    final ({double gain, int points, Duration left, bool started}) week = ref
+        .watch(weekInProgressProvider);
+
+    if (!week.started) {
+      return Text(
+        'Your first practice week starts as soon as prices load. Every seven '
+        'days, a week that finished up earns points — one per '
+        '\$${kDollarsPerPoint.toStringAsFixed(0)} of simulated gain, up to '
+        '$kMaxWeeklyPoints.',
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
+          height: 1.35,
+        ),
+      );
+    }
+
+    final bool up = week.gain > 0;
+    final Color c = up ? theme.pnl.gain : theme.colorScheme.onSurfaceVariant;
+    final int days = week.left.inDays;
+    final int hours = week.left.inHours % 24;
+    final String when = week.left == Duration.zero
+        ? 'settling now'
+        : days > 0
+        ? 'settles in $days ${days == 1 ? 'day' : 'days'}'
+        : 'settles in $hours ${hours == 1 ? 'hour' : 'hours'}';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Row(
+          children: <Widget>[
+            Icon(Icons.event_repeat_outlined, size: 16, color: c),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                'This week ${up ? '+' : ''}${_money(week.gain)} · $when',
+                style: theme.textTheme.labelLarge?.copyWith(color: c),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          week.points > 0
+              ? 'Worth ${week.points} '
+                    '${week.points == 1 ? 'point' : 'points'} if the week ended '
+                    'now. Only the settled figure counts, and it can still '
+                    'change.'
+              : 'No points from the market this week unless it finishes up. A '
+                    'down week never costs you points.',
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+            height: 1.35,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -1004,6 +1133,12 @@ class _TradeSheetState extends ConsumerState<_TradeSheet> {
 
     if (!mounted) return;
     if (error == null) {
+      // Writing an option is the one trade here that opens an obligation, so
+      // it gets the firmer, doubled confirmation.
+      await (_options && _writing
+          ? ref.read(hapticsProvider).warn()
+          : ref.read(hapticsProvider).tick());
+      if (!mounted) return;
       Navigator.pop(context);
     } else {
       setState(() {
@@ -1191,6 +1326,8 @@ class _SellOptionSheetState extends ConsumerState<_SellOptionSheet> {
 
     if (!mounted) return;
     if (error == null) {
+      await ref.read(hapticsProvider).tick();
+      if (!mounted) return;
       Navigator.pop(context);
     } else {
       setState(() {
