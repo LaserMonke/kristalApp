@@ -64,17 +64,18 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('greets the learner and shows points, level and streak', (
-    WidgetTester tester,
-  ) async {
+  testWidgets('shows points, level and streak', (WidgetTester tester) async {
     await pumpHome(tester);
 
-    expect(find.text('Welcome back, sam'), findsOneWidget);
-    expect(find.text('S'), findsOneWidget, reason: 'avatar initial');
+    // The greeting and avatar this test once asserted were removed
+    // deliberately in "Settings reachable from every tab; drop tab titles and
+    // Home greeting" — the tab opens straight onto the learner's standing.
+    // Every stat is words AND a number, never colour alone (accessibility).
     expect(find.text('0'), findsWidgets, reason: 'points and streak start at 0');
     expect(find.text('Newcomer'), findsOneWidget);
     expect(find.text('day streak'), findsOneWidget);
     expect(find.text('points'), findsOneWidget);
+    expect(find.textContaining('level 1 of'), findsOneWidget);
   });
 
   testWidgets('a fresh learner is pointed at the first lesson', (
