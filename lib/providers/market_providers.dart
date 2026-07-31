@@ -1,6 +1,8 @@
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../data/models/market.dart';
 import 'repository_providers.dart';
@@ -101,42 +103,172 @@ final Provider<Map<String, double>> pricesProvider =
       };
     });
 
-/// Extra leaderboard points earned from the practice portfolio's simulated
-/// gains: one point per $200 of profit, capped at 300 so the market can never
-/// dwarf the learning. A flat or losing portfolio earns zero — market losses
-/// never cost lesson points (CLAUDE.md rules 2 & 9: encouragement, not a
-/// penalty, and never a profit promise — these are points in a game, not money).
-final Provider<int> liveMarketBonusProvider = Provider<int>((Ref ref) {
-  final Portfolio? p = ref.watch(portfolioControllerProvider).value;
-  if (p == null) return 0;
-  final double profit = p.totalReturn(
-    ref.watch(pricesProvider),
-    DateTime.now(),
-  );
-  if (profit <= 0) return 0;
-  return math.min((profit / 200).floor(), 300);
-});
+/// How long a trading week runs before it pays out.
+const Duration kSettlementPeriod = Duration(days: 7);
 
-/// The persisted bonus the rest of the app reads — the leaderboard especially.
+/// Simulated profit needed per point, and the ceiling on one week's award.
+const double kDollarsPerPoint = 200;
+const int kMaxWeeklyPoints = 300;
+
+/// Points for a week's simulated gain: one per $200, capped.
 ///
-/// It never touches the live feed: no background polling, and no leaked timers
-/// in widget tests that pump the board. The Market screen (the one place the
-/// feed belongs) keeps it current by mirroring [liveMarketBonusProvider] here.
-class MarketBonusController extends Notifier<int> {
-  static const String _key = 'market_bonus_points_v1';
+/// A flat or losing week earns zero and never takes points away — market
+/// losses must not cost lesson progress (CLAUDE.md rules 2 & 9: encouragement,
+/// not a penalty, and never a profit promise; these are points in a game, not
+/// money). The cap keeps the market from ever dwarfing the learning, which is
+/// what the app is actually for.
+int pointsForGain(double gain) {
+  if (gain <= 0) return 0;
+  return math.min((gain / kDollarsPerPoint).floor(), kMaxWeeklyPoints);
+}
 
-  @override
-  int build() => ref.watch(sharedPreferencesProvider).getInt(_key) ?? 0;
+/// Where the current trading week stands.
+@immutable
+class SettlementState {
+  const SettlementState({
+    required this.weekStarted,
+    required this.openingEquity,
+    required this.awardedTotal,
+  });
 
-  Future<void> update(int points) async {
-    if (points == state) return;
-    state = points;
-    await ref.read(sharedPreferencesProvider).setInt(_key, points);
+  /// When this week began. Null before the first equity reading — the clock
+  /// cannot start until there is a value to measure the week against.
+  final DateTime? weekStarted;
+  final double openingEquity;
+
+  /// Cumulative points from every settled week. This is what the leaderboard
+  /// reads, and it only ever goes up.
+  final int awardedTotal;
+
+  bool isDue(DateTime now) =>
+      weekStarted != null && !now.isBefore(weekStarted!.add(kSettlementPeriod));
+
+  Duration timeRemaining(DateTime now) {
+    if (weekStarted == null) return kSettlementPeriod;
+    final Duration left = weekStarted!.add(kSettlementPeriod).difference(now);
+    return left.isNegative ? Duration.zero : left;
   }
 }
 
-final NotifierProvider<MarketBonusController, int> marketBonusPointsProvider =
-    NotifierProvider<MarketBonusController, int>(MarketBonusController.new);
+/// Settles the practice portfolio once a week.
+///
+/// Points are awarded on what the week actually returned — equity now against
+/// equity when the week opened — rather than continuously off an unrealised
+/// number that moves every fifteen seconds. That is both honest about what a
+/// return is and a far better teacher: it rewards a position that worked out,
+/// not a screen that happened to be green when you looked at it.
+class MarketBonusController extends Notifier<SettlementState> {
+  static const String _pointsKey = 'market_bonus_points_v1';
+  static const String _startedKey = 'market_week_started_v1';
+  static const String _openingKey = 'market_week_opening_equity_v1';
+
+  @override
+  SettlementState build() {
+    final SharedPreferences prefs = ref.watch(sharedPreferencesProvider);
+    final int? startedMs = prefs.getInt(_startedKey);
+    return SettlementState(
+      weekStarted: startedMs == null
+          ? null
+          : DateTime.fromMillisecondsSinceEpoch(startedMs),
+      openingEquity: prefs.getDouble(_openingKey) ?? 0,
+      awardedTotal: prefs.getInt(_pointsKey) ?? 0,
+    );
+  }
+
+  /// Starts the clock, or settles the week if it is up. Returns the points
+  /// just awarded, or null if nothing settled.
+  ///
+  /// Called with the equity currently on screen, so it only ever runs where
+  /// there are real prices to value the portfolio with.
+  Future<int?> reconcile(double equityNow, DateTime now) async {
+    if (state.weekStarted == null) {
+      await _write(
+        SettlementState(
+          weekStarted: now,
+          openingEquity: equityNow,
+          awardedTotal: state.awardedTotal,
+        ),
+      );
+      return null;
+    }
+
+    if (!state.isDue(now)) return null;
+
+    final int earned = pointsForGain(equityNow - state.openingEquity);
+    await _write(
+      SettlementState(
+        weekStarted: now,
+        openingEquity: equityNow,
+        awardedTotal: state.awardedTotal + earned,
+      ),
+    );
+    return earned;
+  }
+
+  /// Back to no history — used when the practice account is reset, so a fresh
+  /// account does not settle against a week it never traded.
+  Future<void> clear() => _write(
+    const SettlementState(
+      weekStarted: null,
+      openingEquity: 0,
+      awardedTotal: 0,
+    ),
+  );
+
+  Future<void> _write(SettlementState next) async {
+    state = next;
+    final SharedPreferences prefs = ref.read(sharedPreferencesProvider);
+    await prefs.setInt(_pointsKey, next.awardedTotal);
+    await prefs.setDouble(_openingKey, next.openingEquity);
+    if (next.weekStarted == null) {
+      await prefs.remove(_startedKey);
+    } else {
+      await prefs.setInt(_startedKey, next.weekStarted!.millisecondsSinceEpoch);
+    }
+  }
+}
+
+final NotifierProvider<MarketBonusController, SettlementState>
+marketSettlementProvider =
+    NotifierProvider<MarketBonusController, SettlementState>(
+      MarketBonusController.new,
+    );
+
+/// The settled bonus the rest of the app reads — the leaderboard especially.
+///
+/// It never touches the live feed: no background polling, and no leaked timers
+/// in widget tests that pump the board.
+final Provider<int> marketBonusPointsProvider = Provider<int>(
+  (Ref ref) => ref.watch(marketSettlementProvider).awardedTotal,
+);
+
+/// What this week has made so far, and what it would pay if it settled now.
+/// Shown on the Market tab so the week in progress is never a mystery.
+final Provider<({double gain, int points, Duration left, bool started})>
+weekInProgressProvider =
+    Provider<({double gain, int points, Duration left, bool started})>((
+      Ref ref,
+    ) {
+      final SettlementState s = ref.watch(marketSettlementProvider);
+      final Portfolio? p = ref.watch(portfolioControllerProvider).value;
+      final DateTime now = DateTime.now();
+      if (p == null || s.weekStarted == null) {
+        return (
+          gain: 0.0,
+          points: 0,
+          left: kSettlementPeriod,
+          started: false,
+        );
+      }
+      final double gain =
+          p.equity(ref.watch(pricesProvider), now) - s.openingEquity;
+      return (
+        gain: gain,
+        points: pointsForGain(gain),
+        left: s.timeRemaining(now),
+        started: true,
+      );
+    });
 
 /// True when the prices on screen are the made-up offline walk, so the UI can
 /// say "simulated prices" rather than "delayed data" (CLAUDE.md rule 4 & 8).
