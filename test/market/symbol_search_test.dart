@@ -56,6 +56,19 @@ void main() {
       expect(hits.first.description, contains('not looked up'));
     });
 
+    test('a misspelled company beats the literal ticker it spells', () async {
+      // "aple" is far likelier to be a typo for Apple than a symbol called
+      // APLE, so the correction leads and the raw ticker trails.
+      final List<SymbolMatch> hits = await repo.search('aple');
+      expect(hits.first.symbol, 'AAPL');
+      expect(hits.last.symbol, 'APLE');
+    });
+
+    test('searching a company name finds its ticker offline too', () async {
+      final List<SymbolMatch> hits = await repo.search('coca cola');
+      expect(hits.first.symbol, 'KO');
+    });
+
     test('an empty query returns nothing rather than everything', () async {
       expect(await repo.search('   '), isEmpty);
     });

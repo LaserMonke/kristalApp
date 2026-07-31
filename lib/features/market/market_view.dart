@@ -243,7 +243,7 @@ class _SymbolSearchState extends ConsumerState<_SymbolSearch> {
             if (v.trim().isNotEmpty) _open(v.trim().toUpperCase());
           },
           decoration: InputDecoration(
-            hintText: 'Search any symbol — AAPL, KO, VOO…',
+            hintText: 'Search by name or ticker — Apple, Coca-Cola, NVDA…',
             prefixIcon: const Icon(Icons.search),
             suffixIcon: _query.isEmpty && _controller.text.isEmpty
                 ? null

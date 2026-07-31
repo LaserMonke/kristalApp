@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 
 import '../local/local_market_repo.dart';
+import '../market/symbol_index.dart';
 import '../models/market.dart';
 import '../repositories/market_repo.dart';
 
@@ -49,38 +50,75 @@ class SupabaseMarketRepo implements MarketRepo {
     }
   }
 
+  /// Provider results merged with the bundled catalogue.
+  ///
+  /// The provider knows every listing but matches literally, so a misspelled
+  /// name returns nothing at all. The catalogue is small but forgiving. Taking
+  /// both means "coca cola" and "coca cloa" and "KO" all land on the same
+  /// company, and an obscure ticker the catalogue has never heard of still
+  /// resolves.
+  ///
+  /// Order: confident catalogue hits (the learner typed a name or ticker we
+  /// recognise), then everything the provider returned, then the fuzzier
+  /// catalogue guesses. A guess never sits above a literal match.
   @override
   Future<List<SymbolMatch>> search(String query) async {
     if (query.trim().isEmpty) return const <SymbolMatch>[];
 
+    final List<ScoredCompany> catalog = searchCatalog(query);
+    final List<SymbolMatch> confident = <SymbolMatch>[
+      for (final ScoredCompany hit in catalog)
+        if (hit.score >= 0.86)
+          SymbolMatch(symbol: hit.company.symbol, description: hit.company.name),
+    ];
+    final List<SymbolMatch> guesses = <SymbolMatch>[
+      for (final ScoredCompany hit in catalog)
+        if (hit.score < 0.86)
+          SymbolMatch(symbol: hit.company.symbol, description: hit.company.name),
+    ];
+
+    List<SymbolMatch> provider;
     try {
-      final sb.FunctionResponse response = await client.functions.invoke(
-        functionName,
-        body: <String, dynamic>{'query': query.trim()},
-      );
-
-      final Object? data = response.data;
-      if (response.status != 200 || data is! Map) {
-        return offline.search(query);
-      }
-
-      final Object? rows = data['matches'];
-      if (rows is! List) return offline.search(query);
-
-      final List<SymbolMatch> matches = <SymbolMatch>[
-        for (final Object? row in rows)
-          if (row is Map)
-            SymbolMatch(
-              symbol: (row['symbol'] as String).toUpperCase(),
-              description: row['description'] as String? ?? '',
-            ),
-      ];
-      // Falling back to the offline list keeps search usable when the lookup
-      // is down; those entries say they were not looked up.
-      return matches.isEmpty ? offline.search(query) : matches;
+      provider = await _providerSearch(query);
     } catch (_) {
-      return offline.search(query);
+      provider = const <SymbolMatch>[];
     }
+
+    final Set<String> seen = <String>{};
+    final List<SymbolMatch> merged = <SymbolMatch>[
+      for (final SymbolMatch m in <SymbolMatch>[
+        ...confident,
+        ...provider,
+        ...guesses,
+      ])
+        if (seen.add(m.symbol)) m,
+    ];
+
+    // Nothing anywhere: fall back to the offline repo, which will still offer
+    // a plausible ticker typed directly, labelled as not looked up.
+    return merged.isEmpty ? offline.search(query) : merged;
+  }
+
+  Future<List<SymbolMatch>> _providerSearch(String query) async {
+    final sb.FunctionResponse response = await client.functions.invoke(
+      functionName,
+      body: <String, dynamic>{'query': query.trim()},
+    );
+
+    final Object? data = response.data;
+    if (response.status != 200 || data is! Map) return const <SymbolMatch>[];
+
+    final Object? rows = data['matches'];
+    if (rows is! List) return const <SymbolMatch>[];
+
+    return <SymbolMatch>[
+      for (final Object? row in rows)
+        if (row is Map)
+          SymbolMatch(
+            symbol: (row['symbol'] as String).toUpperCase(),
+            description: row['description'] as String? ?? '',
+          ),
+    ];
   }
 
   Quote _fromRow(Map<String, dynamic> row) => Quote(

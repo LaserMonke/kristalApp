@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import '../market/symbol_index.dart';
 import '../models/market.dart';
 import '../repositories/market_repo.dart';
 
@@ -20,27 +21,6 @@ class LocalMarketRepo implements MarketRepo {
     'NVDA': 120,
   };
 
-  /// A handful of well-known tickers so offline search returns something
-  /// recognisable. Not a market listing — the real lookup is the provider's.
-  static const Map<String, String> _known = <String, String>{
-    'AAPL': 'Apple Inc',
-    'MSFT': 'Microsoft Corp',
-    'SPY': 'SPDR S&P 500 ETF Trust',
-    'TSLA': 'Tesla Inc',
-    'NVDA': 'NVIDIA Corp',
-    'AMZN': 'Amazon.com Inc',
-    'GOOGL': 'Alphabet Inc Class A',
-    'META': 'Meta Platforms Inc',
-    'NFLX': 'Netflix Inc',
-    'AMD': 'Advanced Micro Devices Inc',
-    'INTC': 'Intel Corp',
-    'JPM': 'JPMorgan Chase & Co',
-    'DIS': 'Walt Disney Co',
-    'KO': 'Coca-Cola Co',
-    'QQQ': 'Invesco QQQ Trust',
-    'VOO': 'Vanguard S&P 500 ETF',
-  };
-
   @override
   Future<List<Quote>> quotes(List<String> symbols) async {
     // A slowly-moving clock so successive polls drift rather than jump wildly,
@@ -59,18 +39,23 @@ class LocalMarketRepo implements MarketRepo {
     if (q.isEmpty) return const <SymbolMatch>[];
 
     final List<SymbolMatch> hits = <SymbolMatch>[
-      for (final MapEntry<String, String> e in _known.entries)
-        if (e.key.startsWith(q) || e.value.toUpperCase().contains(q))
-          SymbolMatch(symbol: e.key, description: e.value),
+      for (final ScoredCompany hit in searchCatalog(query))
+        SymbolMatch(
+          symbol: hit.company.symbol,
+          description: hit.company.name,
+        ),
     ];
 
     // Offline there is no listing to check against, so a plausible ticker the
-    // list has never heard of is still offered — with the description saying
-    // plainly that it was not looked up.
-    if (hits.every((SymbolMatch m) => m.symbol != q) &&
-        isPlausibleSymbol(q)) {
-      hits.insert(
-        0,
+    // catalogue has never heard of is still offered — with the description
+    // saying plainly that it was not looked up.
+    //
+    // It goes LAST whenever the catalogue found anything, because a query that
+    // matched a company is far more likely to be a misspelled name than a
+    // ticker: someone typing "aple" wants Apple, not a symbol called APLE. When
+    // nothing matched, it is the only answer there is, so it leads.
+    if (isPlausibleSymbol(q) && hits.every((SymbolMatch m) => m.symbol != q)) {
+      hits.add(
         SymbolMatch(symbol: q, description: 'Simulated — not looked up'),
       );
     }
