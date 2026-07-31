@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/widgets/settings_button.dart';
 import '../../core/widgets/theme_toggle_button.dart';
 import '../../data/models/leaderboard.dart';
 import '../../providers/leaderboard_providers.dart';
@@ -28,7 +29,7 @@ class LeaderboardScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Ranks'),
+        leading: const SettingsButton(),
         actions: const <Widget>[ThemeToggleButton(), SizedBox(width: 4)],
       ),
       body: Column(

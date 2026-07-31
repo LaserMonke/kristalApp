@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/widgets/settings_button.dart';
 import '../../core/widgets/theme_toggle_button.dart';
 import '../../providers/lesson_providers.dart';
 import '../../providers/sandbox_tutorial_controller.dart';
@@ -44,7 +45,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Sandbox'),
+          leading: const SettingsButton(),
           actions: <Widget>[
             IconButton(
               tooltip: 'How the Sandbox works',

@@ -5,9 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../../core/router/app_router.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/disclaimer_text.dart';
+import '../../core/widgets/settings_button.dart';
 import '../../core/widgets/theme_toggle_button.dart';
-import '../../data/models/app_user.dart';
-import '../../providers/auth_controller.dart';
 import '../../providers/engagement_providers.dart';
 import '../../providers/lesson_providers.dart';
 import 'widgets/engagement_strip.dart';
@@ -21,7 +20,6 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ThemeData theme = Theme.of(context);
-    final AppUser? user = ref.watch(currentUserProvider);
     final AsyncValue<List<LessonNode>> path = ref.watch(lessonPathProvider);
     final AsyncValue<CertificateStatus> certificate = ref.watch(
       certificateStatusProvider,
@@ -29,18 +27,12 @@ class HomeScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.settings_outlined),
-          tooltip: 'Settings',
-          onPressed: () => context.push(Routes.profile),
-        ),
+        leading: const SettingsButton(),
         actions: const <Widget>[ThemeToggleButton(), SizedBox(width: 4)],
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
         children: <Widget>[
-          _Greeting(user: user),
-          const SizedBox(height: 16),
           const EngagementStrip(),
           const SizedBox(height: 24),
           Text('Up next', style: theme.textTheme.titleMedium),
@@ -72,55 +64,6 @@ class HomeScreen extends ConsumerWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-/// Avatar + name, same visual language as the Profile identity card.
-class _Greeting extends StatelessWidget {
-  const _Greeting({required this.user});
-
-  final AppUser? user;
-
-  @override
-  Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-
-    return Row(
-      children: <Widget>[
-        CircleAvatar(
-          radius: 26,
-          backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.16),
-          child: Text(
-            user?.initial ?? '?',
-            style: theme.textTheme.titleLarge?.copyWith(
-              color: theme.colorScheme.primary,
-            ),
-          ),
-        ),
-        const SizedBox(width: 14),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text(
-                user == null ? 'Welcome' : 'Welcome back, ${user!.username}',
-                style: theme.textTheme.headlineSmall,
-                overflow: TextOverflow.ellipsis,
-              ),
-              if (user != null) ...<Widget>[
-                const SizedBox(height: 2),
-                Text(
-                  'Lessons pitched for: ${user!.educationLevel.label}',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ],
     );
   }
 }

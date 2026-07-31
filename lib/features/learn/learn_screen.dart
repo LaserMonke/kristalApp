@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/router/app_router.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/disclaimer_text.dart';
+import '../../core/widgets/settings_button.dart';
 import '../../core/widgets/theme_toggle_button.dart';
 import '../../data/models/app_user.dart';
 import '../../providers/auth_controller.dart';
@@ -22,7 +23,7 @@ class LearnScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Learn'),
+        leading: const SettingsButton(),
         actions: <Widget>[const ThemeToggleButton(), const SizedBox(width: 4)],
       ),
       body: ListView(
