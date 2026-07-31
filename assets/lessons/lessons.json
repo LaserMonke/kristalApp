@@ -196,7 +196,12 @@
           "spot_min": 60,
           "spot_max": 140,
           "legs": [
-            { "kind": "call", "side": "long", "strike": 100, "premium": 5 }
+            {
+              "kind": "call",
+              "side": "long",
+              "strike": 100,
+              "premium": 5
+            }
           ]
         },
         {
@@ -206,7 +211,12 @@
           "spot_min": 60,
           "spot_max": 140,
           "legs": [
-            { "kind": "put", "side": "long", "strike": 100, "premium": 6 }
+            {
+              "kind": "put",
+              "side": "long",
+              "strike": 100,
+              "premium": 6
+            }
           ]
         },
         {
@@ -352,7 +362,12 @@
           "spot_min": 60,
           "spot_max": 140,
           "legs": [
-            { "kind": "call", "side": "long", "strike": 100, "premium": 5 }
+            {
+              "kind": "call",
+              "side": "long",
+              "strike": 100,
+              "premium": 5
+            }
           ]
         },
         {
@@ -375,7 +390,12 @@
           "spot_start": 95,
           "adjust_strike": true,
           "legs": [
-            { "kind": "call", "side": "long", "strike": 100, "premium": 5 }
+            {
+              "kind": "call",
+              "side": "long",
+              "strike": 100,
+              "premium": 5
+            }
           ]
         },
         {
@@ -385,7 +405,12 @@
           "spot_min": 60,
           "spot_max": 140,
           "legs": [
-            { "kind": "put", "side": "long", "strike": 100, "premium": 6 }
+            {
+              "kind": "put",
+              "side": "long",
+              "strike": 100,
+              "premium": 6
+            }
           ]
         },
         {
@@ -423,7 +448,12 @@
           "spot_min": 60,
           "spot_max": 160,
           "legs": [
-            { "kind": "call", "side": "short", "strike": 100, "premium": 5 }
+            {
+              "kind": "call",
+              "side": "short",
+              "strike": 100,
+              "premium": 5
+            }
           ]
         },
         {
@@ -564,8 +594,17 @@
           "spot_min": 60,
           "spot_max": 140,
           "legs": [
-            { "kind": "underlying", "side": "long", "premium": 100 },
-            { "kind": "put", "side": "long", "strike": 95, "premium": 4 }
+            {
+              "kind": "underlying",
+              "side": "long",
+              "premium": 100
+            },
+            {
+              "kind": "put",
+              "side": "long",
+              "strike": 95,
+              "premium": 4
+            }
           ]
         },
         {
@@ -576,8 +615,17 @@
           "spot_max": 140,
           "spot_start": 100,
           "legs": [
-            { "kind": "underlying", "side": "long", "premium": 100 },
-            { "kind": "put", "side": "long", "strike": 95, "premium": 4 }
+            {
+              "kind": "underlying",
+              "side": "long",
+              "premium": 100
+            },
+            {
+              "kind": "put",
+              "side": "long",
+              "strike": 95,
+              "premium": 4
+            }
           ]
         },
         {
@@ -818,15 +866,42 @@
           "type": "equation",
           "heading": "The call price, piece by piece",
           "terms": [
-            { "text": "C", "caption": "Call price" },
-            { "text": "=" },
-            { "text": "S", "caption": "Spot price", "tone": "gain" },
-            { "text": "x" },
-            { "text": "N(d1)", "caption": "Weight: how likely, and how much, you would receive", "tone": "gain" },
-            { "text": "-" },
-            { "text": "K.e^(-rT)", "caption": "Strike, discounted to today", "tone": "loss" },
-            { "text": "x" },
-            { "text": "N(d2)", "caption": "Probability of finishing in the money", "tone": "loss" }
+            {
+              "text": "C",
+              "caption": "Call price"
+            },
+            {
+              "text": "="
+            },
+            {
+              "text": "S",
+              "caption": "Spot price",
+              "tone": "gain"
+            },
+            {
+              "text": "x"
+            },
+            {
+              "text": "N(d1)",
+              "caption": "Weight: how likely, and how much, you would receive",
+              "tone": "gain"
+            },
+            {
+              "text": "-"
+            },
+            {
+              "text": "K.e^(-rT)",
+              "caption": "Strike, discounted to today",
+              "tone": "loss"
+            },
+            {
+              "text": "x"
+            },
+            {
+              "text": "N(d2)",
+              "caption": "Probability of finishing in the money",
+              "tone": "loss"
+            }
           ],
           "footnote": "The value of what you would receive, weighted by likelihood and size — minus the discounted cost of what you would pay, weighted by how likely you will actually pay it."
         },
@@ -845,15 +920,42 @@
           "type": "equation",
           "heading": "The put price mirrors the call",
           "terms": [
-            { "text": "P", "caption": "Put price" },
-            { "text": "=" },
-            { "text": "K.e^(-rT)", "caption": "Strike, discounted to today", "tone": "gain" },
-            { "text": "x" },
-            { "text": "N(-d2)", "caption": "Probability of finishing in the money", "tone": "gain" },
-            { "text": "-" },
-            { "text": "S", "caption": "Spot price", "tone": "loss" },
-            { "text": "x" },
-            { "text": "N(-d1)", "caption": "Weight: how likely, and how much, you would give up", "tone": "loss" }
+            {
+              "text": "P",
+              "caption": "Put price"
+            },
+            {
+              "text": "="
+            },
+            {
+              "text": "K.e^(-rT)",
+              "caption": "Strike, discounted to today",
+              "tone": "gain"
+            },
+            {
+              "text": "x"
+            },
+            {
+              "text": "N(-d2)",
+              "caption": "Probability of finishing in the money",
+              "tone": "gain"
+            },
+            {
+              "text": "-"
+            },
+            {
+              "text": "S",
+              "caption": "Spot price",
+              "tone": "loss"
+            },
+            {
+              "text": "x"
+            },
+            {
+              "text": "N(-d1)",
+              "caption": "Weight: how likely, and how much, you would give up",
+              "tone": "loss"
+            }
           ],
           "footnote": "Same shape, flipped: the value of receiving the strike, if you end up exercising, minus the discounted value of giving up the stock."
         },
@@ -1316,8 +1418,18 @@
           "spot_min": 70,
           "spot_max": 140,
           "legs": [
-            { "kind": "call", "side": "long", "strike": 100, "premium": 8 },
-            { "kind": "call", "side": "short", "strike": 110, "premium": 4 }
+            {
+              "kind": "call",
+              "side": "long",
+              "strike": 100,
+              "premium": 8
+            },
+            {
+              "kind": "call",
+              "side": "short",
+              "strike": 110,
+              "premium": 4
+            }
           ]
         },
         {
@@ -1338,8 +1450,18 @@
           "spot_min": 60,
           "spot_max": 130,
           "legs": [
-            { "kind": "put", "side": "long", "strike": 100, "premium": 6 },
-            { "kind": "put", "side": "short", "strike": 90, "premium": 2 }
+            {
+              "kind": "put",
+              "side": "long",
+              "strike": 100,
+              "premium": 6
+            },
+            {
+              "kind": "put",
+              "side": "short",
+              "strike": 90,
+              "premium": 2
+            }
           ]
         },
         {
@@ -1360,8 +1482,18 @@
           "spot_min": 60,
           "spot_max": 140,
           "legs": [
-            { "kind": "call", "side": "long", "strike": 100, "premium": 8 },
-            { "kind": "put", "side": "long", "strike": 100, "premium": 6 }
+            {
+              "kind": "call",
+              "side": "long",
+              "strike": 100,
+              "premium": 8
+            },
+            {
+              "kind": "put",
+              "side": "long",
+              "strike": 100,
+              "premium": 6
+            }
           ]
         },
         {
@@ -1372,8 +1504,18 @@
           "spot_max": 140,
           "spot_start": 100,
           "legs": [
-            { "kind": "call", "side": "long", "strike": 100, "premium": 8 },
-            { "kind": "put", "side": "long", "strike": 100, "premium": 6 }
+            {
+              "kind": "call",
+              "side": "long",
+              "strike": 100,
+              "premium": 8
+            },
+            {
+              "kind": "put",
+              "side": "long",
+              "strike": 100,
+              "premium": 6
+            }
           ]
         },
         {
@@ -1393,8 +1535,17 @@
           "spot_min": 60,
           "spot_max": 140,
           "legs": [
-            { "kind": "underlying", "side": "long", "premium": 100 },
-            { "kind": "call", "side": "short", "strike": 110, "premium": 4 }
+            {
+              "kind": "underlying",
+              "side": "long",
+              "premium": 100
+            },
+            {
+              "kind": "call",
+              "side": "short",
+              "strike": 110,
+              "premium": 4
+            }
           ]
         },
         {
@@ -1415,8 +1566,17 @@
           "spot_min": 60,
           "spot_max": 140,
           "legs": [
-            { "kind": "underlying", "side": "long", "premium": 100 },
-            { "kind": "put", "side": "long", "strike": 90, "premium": 2 }
+            {
+              "kind": "underlying",
+              "side": "long",
+              "premium": 100
+            },
+            {
+              "kind": "put",
+              "side": "long",
+              "strike": 90,
+              "premium": 2
+            }
           ]
         },
         {
@@ -1486,6 +1646,765 @@
             "Spreads trade a smaller cost for a capped payout in both directions.",
             "A straddle is a bet on the size of a move, not its direction.",
             "Covered calls and protective puts start from an existing share position and cap one side of it."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "path-dependent-options",
+      "order": 7,
+      "title": "Options that watch the path",
+      "summary": "Barriers, averages and baskets — when the route matters, not just the destination.",
+      "estimated_minutes": 7,
+      "reviewed_by": null,
+      "reviewed_on": null,
+      "questions": [
+        {
+          "type": "choice",
+          "id": "q1-knockout-direction",
+          "setup": "You buy a down-and-out call struck at 100, with a barrier at 85. Over the next six months the price dips to 84, recovers, and finishes at 120.",
+          "prompt": "What is the option worth at expiry?",
+          "choices": [
+            {
+              "text": "Nothing",
+              "correct": true,
+              "explanation": "It touched 85 on the way, which killed it. Being right about the direction did not help: the contract had already ceased to exist before the price recovered. This is the risk a knock-out adds that a plain call does not have."
+            },
+            {
+              "text": "20 — it finished 20 above the strike",
+              "correct": false,
+              "explanation": "That is what the plain call would pay. The knock-out died when the price touched 85, and a dead option does not come back to life however well things go afterwards."
+            },
+            {
+              "text": "15 — the distance from the barrier to the finish",
+              "correct": false,
+              "explanation": "The barrier is a trigger, not a strike. It decides whether the option exists; it never enters the payoff calculation."
+            }
+          ],
+          "teaching_note": "A knock-out can be perfectly right about direction and still pay nothing. That is precisely why it costs less than the plain option."
+        },
+        {
+          "type": "numeric",
+          "id": "q2-in-out-parity",
+          "setup": "A plain put on the same underlying, same strike and same expiry is worth 7.50. The down-and-in version of it is worth 3.20.",
+          "prompt": "What is the down-and-OUT put worth?",
+          "answer": 4.3,
+          "tolerance": 0.02,
+          "unit_prefix": "$",
+          "explanation": "In-out parity: 7.50 - 3.20 = 4.30. Holding both the knock-in and the knock-out leaves you holding the plain option, because exactly one of the two is alive at expiry — so the two must add up to it.",
+          "hint": "If you owned BOTH the knock-in and the knock-out, what would you have?",
+          "teaching_note": "This identity is exact, and it is the quickest sanity check on any barrier price."
+        },
+        {
+          "type": "choice",
+          "id": "q3-asian-cheaper",
+          "prompt": "Why is an average-price (Asian) call usually cheaper than the otherwise identical European call?",
+          "choices": [
+            {
+              "text": "Averaging smooths out the extremes, so the number the payoff depends on is less volatile",
+              "correct": true,
+              "explanation": "Exactly. An average wanders less than the endpoint it is drawn from, and an option on something less volatile is worth less. Nothing is being taken away unfairly — you are being paid less because you are buying exposure to a steadier quantity."
+            },
+            {
+              "text": "It expires earlier, so there is less time value",
+              "correct": false,
+              "explanation": "Both options run to the same expiry date. The difference is what the payoff looks at, not when it is settled."
+            },
+            {
+              "text": "The seller keeps the dividends",
+              "correct": false,
+              "explanation": "Dividends affect both contracts the same way. The averaging is what makes the difference."
+            }
+          ],
+          "teaching_note": "Averaging also makes the payoff much harder to manipulate on a single date, which is why Asians are common in commodity and currency markets."
+        },
+        {
+          "type": "choice",
+          "id": "q4-basket-correlation",
+          "setup": "You are comparing two baskets of three shares each. Everything is the same except that basket A's members move almost in lockstep, while basket B's move nearly independently.",
+          "prompt": "Which basket call costs more, and why?",
+          "choices": [
+            {
+              "text": "Basket A, because assets moving together make the blend more volatile",
+              "correct": true,
+              "explanation": "Right. When members move together the blend swings almost as much as a single share, so the option on it is dear. In basket B one member rising while another falls leaves the blend nearly unchanged — a steadier blend, and a cheaper option."
+            },
+            {
+              "text": "Basket B, because independent assets create more possible outcomes",
+              "correct": false,
+              "explanation": "More combinations of individual outcomes, but a narrower distribution for the BLEND — the independent moves partly cancel. It is the blend the option pays on."
+            },
+            {
+              "text": "They cost the same, since the members have the same volatility",
+              "correct": false,
+              "explanation": "Individual volatilities are only half the story. How the members move relative to each other decides the volatility of the blend, and that is what the option is written on."
+            }
+          ],
+          "teaching_note": "Correlation is also the least stable input in the whole calculation, and it has a habit of rising towards 1 in a crash — exactly when a diversified basket is being relied on."
+        }
+      ],
+      "cards": [
+        {
+          "type": "title",
+          "icon": "compass",
+          "kicker": "EXOTIC OPTIONS",
+          "title": "Options that watch the path",
+          "subtitle": "So far the only thing that mattered was where the price finished. Some contracts also care how it got there."
+        },
+        {
+          "type": "text",
+          "icon": "chart",
+          "heading": "Everything so far looked at one number",
+          "body": "A plain call or put settles on the price at expiry. What happened in between — a crash and a recovery, a slow drift, a wild month — leaves no trace. Two very different journeys that end at the same price pay exactly the same.",
+          "highlight": "A vanilla option has no memory."
+        },
+        {
+          "type": "term",
+          "icon": "waves",
+          "term": "Path-dependent option",
+          "definition": "An option whose payoff depends on the route the price took, not only on where it ended up.",
+          "example": "Two shares both finish the year at 120. One climbed steadily; the other fell to 70 first. A vanilla call pays the same on both. A path-dependent option need not."
+        },
+        {
+          "type": "text",
+          "icon": "flag",
+          "heading": "Barrier options",
+          "body": "A barrier option adds a trigger level. A knock-out dies the moment the price touches it and pays nothing ever after. A knock-in does not exist until the price touches it, and pays nothing if it never does.",
+          "bullets": [
+            "The barrier is a switch, not a strike — it decides whether the option exists, and never enters the payoff sum.",
+            "Down barriers sit below today's price; up barriers sit above it.",
+            "Both kinds are CHEAPER than the plain option they are carved from."
+          ]
+        },
+        {
+          "type": "compare",
+          "heading": "Two ways to attach a trigger",
+          "left": {
+            "label": "Knock-out",
+            "icon": "lock",
+            "tone": "neutral",
+            "tagline": "Alive now. Dead if the level is touched.",
+            "points": [
+              "Starts as an ordinary option.",
+              "One touch of the barrier ends it permanently.",
+              "Recovery afterwards does not revive it."
+            ]
+          },
+          "right": {
+            "label": "Knock-in",
+            "icon": "target",
+            "tone": "neutral",
+            "tagline": "Dormant now. Alive once the level is touched.",
+            "points": [
+              "Pays nothing unless the barrier is reached.",
+              "From the moment it is, behaves like a plain option.",
+              "If the level is never touched, it expires worthless."
+            ]
+          },
+          "footnote": "Own both halves and you own the plain option: exactly one of them is alive at expiry. So their prices must add up to it — a check worth remembering."
+        },
+        {
+          "type": "warning",
+          "heading": "Cheaper is not better value",
+          "body": "A barrier option costs less because it pays in fewer situations, not because it is a bargain. The discount is the market charging you for a smaller set of outcomes.",
+          "points": [
+            "A knock-out can be completely right about direction and still pay nothing, because the price dipped through the barrier on the way. That is a route to losing 100% of the premium that a plain option does not have.",
+            "The nearer the barrier sits to today's price, the cheaper the option and the more likely it is to be triggered. Cheap barrier options are cheap for a reason.",
+            "Some combinations can never pay at all. A down-and-out put struck below its own barrier is worth exactly nothing: to finish in the money the price must first pass through the level that kills it."
+          ]
+        },
+        {
+          "type": "term",
+          "icon": "scale",
+          "term": "Asian (average-price) option",
+          "definition": "An option that settles on the AVERAGE price over its life instead of the final price.",
+          "example": "A one-year Asian call might average the closing price on every trading day, then pay the amount that average finished above the strike."
+        },
+        {
+          "type": "text",
+          "icon": "insights",
+          "heading": "Why an average costs less",
+          "body": "An average wanders less than the endpoint it is drawn from — a spike on one day is diluted by every other day. The option pays on a steadier quantity, so it is worth less than the vanilla.",
+          "bullets": [
+            "It is also far harder to manipulate. Moving one day's closing price barely shifts a year's average.",
+            "That is why Asians are common in commodity and currency markets, where a business is hedging an average exposure anyway."
+          ],
+          "highlight": "You are not being short-changed. You are buying exposure to something calmer."
+        },
+        {
+          "type": "text",
+          "icon": "split",
+          "heading": "Basket options: one contract, several underlyings",
+          "body": "A basket option pays on a weighted blend of several shares rather than one. Its price is NOT the sum of the prices of the individual options, and the gap between the two is the whole point of the instrument.",
+          "bullets": [
+            "If the members move together, the blend is nearly as volatile as one share and the option is dear.",
+            "If they move independently, one rising while another falls leaves the blend steadier — so the option is cheap.",
+            "Diversification shows up in an option price as lower volatility, and therefore as a smaller premium."
+          ],
+          "highlight": "Correlation, not volatility alone, sets the price of a basket option."
+        },
+        {
+          "type": "warning",
+          "heading": "The input most likely to be wrong",
+          "body": "Correlation is estimated from history, it is not constant, and it has a well-documented habit of rising towards 1 in a crash — precisely when a diversified basket is being relied on to hold up.",
+          "points": [
+            "A basket option that looks cheap because of a low correlation estimate is only cheap if that estimate holds.",
+            "Diversification is real, but it is weakest exactly when it is needed most."
+          ]
+        },
+        {
+          "type": "text",
+          "icon": "formula",
+          "heading": "Why these need simulation",
+          "body": "Black-Scholes gives an exact formula because a European option depends on one number. Once the payoff depends on the whole route, or on several assets at once, there is usually no formula at all. So the price is estimated instead: generate many possible futures, work out what the contract would have paid on each, and average them.",
+          "bullets": [
+            "That average is an ESTIMATE, not a value. Run it again with different random numbers and you get a slightly different answer.",
+            "A simulated price should always arrive with an error bar. A price quoted to the cent with no stated uncertainty is claiming a precision it does not have.",
+            "Four times the work halves the error, and no more — the error falls with the square root of the effort."
+          ],
+          "highlight": "You can try all of this yourself on the Advanced tab of the Sandbox."
+        },
+        {
+          "type": "summary",
+          "heading": "What to take away",
+          "takeaways": [
+            "A vanilla option looks only at the finishing price. Barrier and Asian options look at the route.",
+            "A knock-in plus a knock-out equals the plain option, because exactly one of them survives to expiry.",
+            "Barrier options are cheaper because they pay in fewer situations — you can be right about direction and still get nothing.",
+            "Averaging damps the extremes, so Asian options cost less than their vanilla twins.",
+            "For a basket, correlation sets the price — and it is the input that moves most when it matters most.",
+            "These contracts have no formula, so their prices are simulated, and every simulated price comes with an uncertainty."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "volatility-is-not-constant",
+      "order": 8,
+      "title": "Volatility is not a constant",
+      "summary": "The volatility smile, what it tells you, and the Heston model that reproduces it.",
+      "estimated_minutes": 7,
+      "reviewed_by": null,
+      "reviewed_on": null,
+      "questions": [
+        {
+          "type": "choice",
+          "id": "q1-what-implied-vol-is",
+          "prompt": "What does \"implied volatility\" actually measure?",
+          "choices": [
+            {
+              "text": "The volatility number that makes Black-Scholes return the price the option is trading at",
+              "correct": true,
+              "explanation": "It is the formula run backwards. You know the market price, you solve for the one input you cannot observe. It is a way of quoting a price in more comparable units — not a measurement of anything in the world."
+            },
+            {
+              "text": "How much the underlying has actually moved over the past year",
+              "correct": false,
+              "explanation": "That is realised (historical) volatility, computed from past prices. Implied volatility is backed out of today's option prices and can differ from it substantially."
+            },
+            {
+              "text": "A forecast of how much the underlying will move, published by the exchange",
+              "correct": false,
+              "explanation": "Nobody publishes it as a forecast. It is derived from prices, and it embeds supply, demand and risk appetite as well as any view about future movement."
+            }
+          ],
+          "teaching_note": "Implied volatility is a price expressed in different units. Treating it as a prediction is one of the most common mistakes in the subject."
+        },
+        {
+          "type": "choice",
+          "id": "q2-smile-contradiction",
+          "setup": "On the same underlying, on the same day, options at different strikes imply different volatilities.",
+          "prompt": "Why is that a problem for Black-Scholes?",
+          "choices": [
+            {
+              "text": "The model assumes one constant volatility for the underlying, so it cannot have several at once",
+              "correct": true,
+              "explanation": "Exactly. Volatility in Black-Scholes is a property of the SHARE, not of the contract, so every option on it should imply the same number. That they do not is the market telling us the model's picture of how prices move is too simple."
+            },
+            {
+              "text": "It means the options are mispriced and there is an arbitrage",
+              "correct": false,
+              "explanation": "Tempting, but no. The pattern is stable, persistent and present in every liquid market. It is a sign the model is incomplete, not that traders have made an error."
+            },
+            {
+              "text": "It means the rate on a safe asset is wrong",
+              "correct": false,
+              "explanation": "The rate affects all strikes in a predictable way and cannot produce a curved pattern across them."
+            }
+          ],
+          "teaching_note": "A model failing in a stable, repeatable way is far more informative than one failing randomly — it tells you what to fix."
+        },
+        {
+          "type": "numeric",
+          "id": "q3-variance-vs-volatility",
+          "setup": "The Heston model is written in terms of VARIANCE rather than volatility. A set of parameters starts with a variance of 0.09.",
+          "prompt": "What is that as a volatility, in percent?",
+          "answer": 30,
+          "tolerance": 0.5,
+          "unit_suffix": "%",
+          "explanation": "Volatility is the square root of variance: sqrt(0.09) = 0.30, or 30%. Mixing the two up is the single easiest mistake to make with this model, and it produces answers that are wrong by a wide margin rather than a little.",
+          "hint": "Volatility and variance are related by a square root.",
+          "teaching_note": "Check which one a formula wants before putting a number into it."
+        },
+        {
+          "type": "choice",
+          "id": "q4-negative-correlation",
+          "prompt": "In Heston, what does a NEGATIVE correlation between the price and its volatility produce?",
+          "choices": [
+            {
+              "text": "A fatter left tail, making downside protection more expensive",
+              "correct": true,
+              "explanation": "Prices falling while volatility spikes is exactly what equity markets do in a sell-off. Modelling it makes large falls more likely than Black-Scholes assumes, so puts at low strikes cost more — which is the downward-sloping skew real markets show."
+            },
+            {
+              "text": "A perfectly flat implied volatility across strikes",
+              "correct": false,
+              "explanation": "A flat line is what Black-Scholes predicts. Correlation is what TILTS the curve away from flat."
+            },
+            {
+              "text": "Lower option prices at every strike",
+              "correct": false,
+              "explanation": "It redistributes value between strikes rather than lowering everything. Low strikes get dearer; high strikes get cheaper."
+            }
+          ],
+          "teaching_note": "This is called the leverage effect, and reproducing it is the main reason to reach for Heston over Black-Scholes."
+        }
+      ],
+      "cards": [
+        {
+          "type": "title",
+          "icon": "waves",
+          "kicker": "STOCHASTIC VOLATILITY",
+          "title": "Volatility is not a constant",
+          "subtitle": "Black-Scholes asks for one volatility. The market answers with a different one at every strike."
+        },
+        {
+          "type": "text",
+          "icon": "formula",
+          "heading": "The assumption we quietly accepted",
+          "body": "Black-Scholes needs a single number for volatility, held fixed for the life of the option. That is a property of the SHARE, not of any particular contract — so every option on the same underlying, expiring on the same day, should need the same number.",
+          "highlight": "One underlying, one volatility. That is what the model claims."
+        },
+        {
+          "type": "term",
+          "icon": "question",
+          "term": "Implied volatility",
+          "definition": "The volatility you have to put into Black-Scholes to get the price the option is actually trading at.",
+          "example": "A call is trading at 6.20. Feed in 24% and the formula says 6.20. The implied volatility is 24% — the formula run backwards."
+        },
+        {
+          "type": "text",
+          "icon": "lightbulb",
+          "heading": "It is a price in different units",
+          "body": "Implied volatility is not a measurement of the world and not a forecast anyone published. It is a way of restating a price so that options at different strikes and expiries can be compared. Treating it as a prediction of future movement is one of the commonest mistakes in the subject.",
+          "highlight": "Quoting an option in implied volatility is like quoting a bond in yield."
+        },
+        {
+          "type": "compare",
+          "heading": "What the model says, and what markets do",
+          "left": {
+            "label": "Black-Scholes predicts",
+            "icon": "chart",
+            "tone": "neutral",
+            "tagline": "A flat line across strikes.",
+            "points": [
+              "Volatility belongs to the share.",
+              "Every strike must imply the same figure.",
+              "Anything else would be a contradiction."
+            ]
+          },
+          "right": {
+            "label": "Markets actually show",
+            "icon": "insights",
+            "tone": "neutral",
+            "tagline": "A curve, usually tilted.",
+            "points": [
+              "Low strikes imply HIGHER volatility.",
+              "The pattern is stable and shows up everywhere.",
+              "It has been there in equities since 1987."
+            ]
+          },
+          "footnote": "The curve is called the volatility smile, and its tilt is called the skew. A model failing in a stable, repeatable way tells you exactly what to fix."
+        },
+        {
+          "type": "text",
+          "icon": "shield",
+          "heading": "Why the tilt points that way",
+          "body": "In equity markets, prices and volatility move in opposite directions. Calm markets drift upward; frightened markets fall hard and fast. So a large drop is more likely, and arrives with more turbulence, than a model with fixed volatility would ever expect.",
+          "bullets": [
+            "That makes low-strike puts — crash protection — dearer than Black-Scholes says.",
+            "It also means the flat-volatility model systematically understates the chance of a severe fall."
+          ],
+          "highlight": "The skew is the market pricing in the fact that crashes are faster than rallies."
+        },
+        {
+          "type": "text",
+          "icon": "waves",
+          "heading": "The Heston model",
+          "body": "Heston (1993) fixes the assumption directly: instead of a constant, volatility becomes a second random process with its own motion, pulled back over time towards a long-run level, and correlated with the price itself.",
+          "bullets": [
+            "Variance is dragged towards a long-run level — turbulent periods calm down, quiet ones eventually stir.",
+            "It has a volatility of its own, so it wanders rather than following a fixed path.",
+            "Its shocks are correlated with the price's, which is what creates the tilt."
+          ]
+        },
+        {
+          "type": "equation",
+          "heading": "How variance moves under Heston",
+          "terms": [
+            {
+              "text": "change in v",
+              "caption": "how variance moves over a small step",
+              "tone": "neutral"
+            },
+            {
+              "text": "="
+            },
+            {
+              "text": "k (0 - v) dt",
+              "caption": "pulled back towards its long-run level, at speed k",
+              "tone": "neutral"
+            },
+            {
+              "text": "+"
+            },
+            {
+              "text": "x sqrt(v) dW",
+              "caption": "plus a random shock, sized by the volatility of volatility x",
+              "tone": "neutral"
+            }
+          ],
+          "footnote": "In words: variance drifts back towards where it usually sits, while being knocked about along the way. The share price gets its own equation, and the two random shocks are correlated — that correlation is what tilts the smile."
+        },
+        {
+          "type": "term",
+          "icon": "scale",
+          "term": "Variance, not volatility",
+          "definition": "Heston is written in terms of variance — the SQUARE of volatility. A 20% volatility is a variance of 0.04.",
+          "example": "Set a long-run variance of 0.09 and you are saying volatility settles around 30%, because sqrt(0.09) = 0.30."
+        },
+        {
+          "type": "text",
+          "icon": "target",
+          "heading": "What each dial does",
+          "body": "Five numbers define a Heston world, and each one changes the shape of the smile in its own way.",
+          "bullets": [
+            "Volatility today: where the whole curve sits.",
+            "Long-run volatility: where it drifts towards over longer expiries.",
+            "Speed of return: how quickly today's level stops mattering.",
+            "Volatility of volatility: how far the wings lift — more of it means fatter tails on both sides.",
+            "Correlation: the tilt. Negative pushes value into low strikes; positive does the reverse."
+          ],
+          "highlight": "The Heston tab in the Sandbox puts all five on sliders."
+        },
+        {
+          "type": "warning",
+          "heading": "A more elaborate model is not a truer one",
+          "body": "Heston reproduces the smile. That is a real achievement and it is not the same as being right about the future.",
+          "points": [
+            "It has five parameters where Black-Scholes has one, which means five things to estimate wrongly. Several quite different combinations often fit the same market prices about equally well.",
+            "It assumes volatility moves smoothly, with no jumps. Real markets gap — and the days that matter most are usually the days they gap.",
+            "It assumes those five parameters are constants. In practice they are re-fitted constantly, which is an admission that they are not.",
+            "It keeps every frictionless-market assumption Black-Scholes made: no spreads, no fees, no limits on trading.",
+            "Fitting today's smile is not predicting tomorrow's."
+          ]
+        },
+        {
+          "type": "text",
+          "icon": "formula",
+          "heading": "Two ways to get a price out of it",
+          "body": "Heston has no simple formula for an option price, but it does have one for the distribution of the future price. Ordinary calls and puts can be recovered from that by an integral — fast and essentially exact. Anything path-dependent has to be simulated instead.",
+          "bullets": [
+            "The two methods share almost no machinery, so when they agree on a vanilla option, that is real evidence both are working.",
+            "The simulation carries an extra error the formula does not: stepping through time in chunks is itself an approximation, and no error bar describes it. More steps are the fix, not more paths."
+          ]
+        },
+        {
+          "type": "summary",
+          "heading": "What to take away",
+          "takeaways": [
+            "Implied volatility is a price restated in different units, not a forecast and not a measurement.",
+            "Options at different strikes imply different volatilities — a stable, worldwide pattern Black-Scholes cannot account for.",
+            "In equities the curve tilts: crash protection is expensive because falls are faster and more violent than rises.",
+            "Heston makes volatility a second random process, correlated with the price, which reproduces that tilt.",
+            "It is written in variance; volatility is the square root of it.",
+            "More parameters mean more ways to be wrong. Reproducing today's prices is not the same as knowing what happens next."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "structured-products",
+      "order": 9,
+      "title": "Structured products: taking the wrapper off",
+      "summary": "A bond plus some options, sold as one certificate — and how to see what is really inside.",
+      "estimated_minutes": 8,
+      "reviewed_by": null,
+      "reviewed_on": null,
+      "questions": [
+        {
+          "type": "numeric",
+          "id": "q1-bond-leg",
+          "setup": "A five-year note promises to return your 100 in full at maturity. The rate on a safe asset is 4%, continuously compounded.",
+          "prompt": "What does that promise cost to buy today?",
+          "answer": 81.87,
+          "tolerance": 0.6,
+          "unit_prefix": "$",
+          "explanation": "100 x e^(-0.04 x 5) = 81.87. So about 82 of your 100 goes on the bond that provides the protection, and only the remaining 18 or so is available to buy the upside. This is the whole economics of a capital-protected note in one sum.",
+          "hint": "Discount 100 back five years at 4% continuous compounding.",
+          "teaching_note": "When rates fall, the bond costs more and less is left for options — which is why these products all but vanished in the near-zero-rate years."
+        },
+        {
+          "type": "choice",
+          "id": "q2-reverse-convertible-shape",
+          "setup": "A one-year reverse convertible pays a 12% coupon whatever happens. If the underlying finishes below its starting level, you are repaid in shares instead of cash.",
+          "prompt": "What is the shape of that position?",
+          "choices": [
+            {
+              "text": "Gain capped at the coupon; loss uncapped all the way to zero",
+              "correct": true,
+              "explanation": "You have bought a bond and SOLD a put. However far the underlying rises you get the coupon and nothing more; however far it falls, you absorb it. A high coupon is not generosity — it is the premium for insurance you have written."
+            },
+            {
+              "text": "Gain uncapped; loss limited to the coupon",
+              "correct": false,
+              "explanation": "That is the shape of owning an option, not selling one. Here the upside stops dead at the coupon."
+            },
+            {
+              "text": "Both gain and loss capped, like a spread",
+              "correct": false,
+              "explanation": "The gain is capped, but nothing caps the loss. If the underlying goes to zero you are left with worthless shares and the coupon."
+            }
+          ],
+          "teaching_note": "Any time a product offers a coupon far above the going rate, look for the option that has been sold to pay for it."
+        },
+        {
+          "type": "choice",
+          "id": "q3-barrier-not-a-floor",
+          "setup": "A barrier reverse convertible has a strike at 100 and a barrier at 65. During the year the underlying touches 60, then recovers to finish at 64.",
+          "prompt": "What do you get back, ignoring the coupon?",
+          "choices": [
+            {
+              "text": "Shares worth 64 — you absorb the fall from 100, not from 65",
+              "correct": true,
+              "explanation": "The barrier decides WHETHER the sold put wakes up, not how much it can cost you. Once breached it is an ordinary put struck at 100, so the loss is measured from 100 down. Breaching a 65% barrier means losing at least 35%, not at most 35%."
+            },
+            {
+              "text": "Shares worth 65 — the barrier acts as a floor",
+              "correct": false,
+              "explanation": "This is the most common and most expensive misreading of this product. The barrier is a trigger, not a floor. It never limits the loss."
+            },
+            {
+              "text": "The full 100 — the price recovered above the barrier",
+              "correct": false,
+              "explanation": "Recovering above the BARRIER does not help; only recovering above the STRIKE would. It finished at 64, below the strike of 100."
+            }
+          ],
+          "teaching_note": "These products pay well most of the time and occasionally lose a lot. That shape flatters a short track record."
+        },
+        {
+          "type": "choice",
+          "id": "q4-issue-margin",
+          "setup": "You add up the parts of a note sold at 100 and find the bond and options are worth 96.",
+          "prompt": "What is that 4 difference?",
+          "choices": [
+            {
+              "text": "The issuer's costs and profit, paid by the buyer on day one",
+              "correct": true,
+              "explanation": "It is not a scandal — an issuer has real costs and is entitled to a margin. But a buyer who cannot see it cannot judge whether the deal is fair, and the brochure will not print it. Being able to add up the parts yourself is the whole skill."
+            },
+            {
+              "text": "A pricing error — the parts must add up to the price",
+              "correct": false,
+              "explanation": "They add up to the VALUE. The price is what you pay, and the two are not the same thing for anything sold with a margin."
+            },
+            {
+              "text": "A safety buffer that gets returned at maturity",
+              "correct": false,
+              "explanation": "Nothing is returned. It is spent when you buy."
+            }
+          ],
+          "teaching_note": "Sell the note back the next day and you would get roughly the value, not the price. That gap is why these are held to maturity."
+        }
+      ],
+      "cards": [
+        {
+          "type": "title",
+          "icon": "wallet",
+          "kicker": "STRUCTURED PRODUCTS",
+          "title": "Taking the wrapper off",
+          "subtitle": "A single certificate with a headline number. Inside: a bond and some options you already understand."
+        },
+        {
+          "type": "text",
+          "icon": "contract",
+          "heading": "What is being sold",
+          "body": "Structured products are the derivatives most often sold to ordinary savers. They arrive with a headline — \"100% capital protection with 70% of any rise\", \"12% coupon\" — and a brochure that rarely takes the wrapper off. Underneath, every one of them is a bundle of things covered in earlier lessons.",
+          "highlight": "Nothing in this lesson is new mathematics. It is all recognition."
+        },
+        {
+          "type": "term",
+          "icon": "shield",
+          "term": "Capital-protected note",
+          "definition": "A bond that grows back to your money by maturity, plus call options bought with whatever is left over.",
+          "example": "Of 100 invested for five years at 4%, about 82 buys the bond that guarantees the 100 back. The other 18 buys the upside."
+        },
+        {
+          "type": "equation",
+          "heading": "A capital-protected note, decomposed",
+          "terms": [
+            {
+              "text": "the note",
+              "caption": "what you bought",
+              "tone": "neutral"
+            },
+            {
+              "text": "="
+            },
+            {
+              "text": "a bond",
+              "caption": "grows back to your money by maturity",
+              "tone": "gain"
+            },
+            {
+              "text": "+"
+            },
+            {
+              "text": "calls",
+              "caption": "bought with whatever the bond did not use",
+              "tone": "gain"
+            }
+          ],
+          "footnote": "The participation rate is not a policy decision by the issuer. It is simply how many calls the leftover money could buy."
+        },
+        {
+          "type": "text",
+          "icon": "coins",
+          "heading": "Why participation collapsed when rates did",
+          "body": "The bond has to reach the full amount by maturity, so the lower the interest rate, the more it costs today and the less remains for options.",
+          "bullets": [
+            "At 4% over five years the bond costs about 82, leaving 18 for upside.",
+            "At 0.5% it costs about 98, leaving 2 — barely enough to buy anything.",
+            "That is why these products were everywhere when rates were high and almost extinct when rates were near zero."
+          ],
+          "highlight": "The protection is real. It is paid for with the interest you would otherwise have earned."
+        },
+        {
+          "type": "warning",
+          "heading": "What \"protected\" leaves out",
+          "body": "The word does a lot of work in a brochure. Four things it does not cover:",
+          "points": [
+            "It applies AT MATURITY only. Sell early and you get the market price, which can be well below par.",
+            "You get your money back in nominal terms. Over five years of inflation, with no dividends and no interest, that can still be a real loss.",
+            "Participation is on the PRICE of the underlying, not its total return. Dividends stay with the issuer, and over five years those are substantial.",
+            "It is an unsecured promise by a bank. If the issuer fails, the protection fails with it — Lehman Brothers issued capital-protected notes."
+          ]
+        },
+        {
+          "type": "term",
+          "icon": "coins",
+          "term": "Reverse convertible",
+          "definition": "A bond paying a high fixed coupon, funded by SELLING a put on the underlying.",
+          "example": "A 12% coupon on a one-year note. If the underlying finishes below its starting level, you are repaid in shares rather than cash."
+        },
+        {
+          "type": "payoff",
+          "heading": "The shape you have taken on",
+          "caption": "A reverse convertible without its bond leg: you receive a premium (the coupon) and have sold someone the right to hand you the shares. Gains stop at the coupon; losses do not stop.",
+          "spot_min": 40,
+          "spot_max": 160,
+          "legs": [
+            {
+              "kind": "put",
+              "side": "short",
+              "strike": 100,
+              "premium": 12
+            }
+          ]
+        },
+        {
+          "type": "compare",
+          "heading": "What you got, and what you gave",
+          "left": {
+            "label": "What you receive",
+            "icon": "coins",
+            "tone": "gain",
+            "tagline": "A coupon well above the going rate.",
+            "points": [
+              "Paid whatever the underlying does.",
+              "Known in advance, to the penny.",
+              "And that is the entire upside."
+            ]
+          },
+          "right": {
+            "label": "What you sold",
+            "icon": "warning",
+            "tone": "loss",
+            "tagline": "The right to be handed the shares.",
+            "points": [
+              "If the price falls, they are yours at the strike.",
+              "Your loss grows all the way down to zero.",
+              "The underlying doubling adds nothing."
+            ]
+          },
+          "footnote": "A high coupon is not generosity. It is the premium for insurance you have written — which is why it is high."
+        },
+        {
+          "type": "text",
+          "icon": "flag",
+          "heading": "Adding a barrier",
+          "body": "The most widely sold version softens the sold put into a DOWN-AND-IN put: it only wakes up if the underlying ever falls through a level well below today's price. Most of the time it never does, the coupon is paid, and the product looks like an unusually good bond.",
+          "bullets": [
+            "The sold option is cheaper, so the coupon is lower than a plain reverse convertible would pay.",
+            "The result is a run of good years punctuated by an occasional large loss."
+          ],
+          "highlight": "That shape looks safest for longest, and flatters a short track record."
+        },
+        {
+          "type": "warning",
+          "heading": "The barrier is a trigger, not a floor",
+          "body": "This is the most expensive misreading in the whole subject, and the product invites it.",
+          "points": [
+            "The barrier decides WHETHER the sold put comes alive. It never limits what the put can cost you.",
+            "Once breached, it is an ordinary sold put struck at the original level — so the loss is measured from the STRIKE, not from the barrier.",
+            "A 65% barrier that breaks means losing at least 35% of the underlying, not at most 35%.",
+            "And the gain is still capped at the coupon, however far the underlying recovers."
+          ]
+        },
+        {
+          "type": "text",
+          "icon": "scale",
+          "heading": "The number the brochure does not print",
+          "body": "Add up what the bond and the options are actually worth, and a note sold at 100 will usually come to less than 100. The difference is the issuer's costs and profit, and the buyer pays it the moment they buy.",
+          "bullets": [
+            "This is not a scandal. Issuers have real costs and are entitled to a margin.",
+            "But it is why selling the note back the next day returns roughly the value, not the price.",
+            "Being able to add up the parts yourself is the entire skill this lesson is teaching."
+          ],
+          "highlight": "The Structured tab in the Sandbox does the addition for you, and shows the gap."
+        },
+        {
+          "type": "text",
+          "icon": "lightbulb",
+          "heading": "How to read any of them",
+          "body": "Four questions will take the wrapper off almost any structured product you meet.",
+          "bullets": [
+            "What is the bond leg, and what is it worth today?",
+            "Which options have been BOUGHT, and which have been SOLD? The sold ones are where the risk lives.",
+            "What is the worst case, stated as a number rather than a mood?",
+            "What do the parts add up to, and how does that compare with the price?"
+          ]
+        },
+        {
+          "type": "summary",
+          "heading": "What to take away",
+          "takeaways": [
+            "Every structured product is a bond plus options. Recognising the parts is the whole skill.",
+            "A capital-protected note spends most of your money on the bond; low rates leave almost nothing for upside.",
+            "\"Protected\" means at maturity, in nominal terms, without dividends, and only if the issuer survives.",
+            "A reverse convertible caps your gain at the coupon and leaves your loss uncapped — because you sold a put.",
+            "A barrier is a trigger, not a floor. Breached, the loss is measured from the strike.",
+            "A note sold at 100 is usually worth less than 100 on day one, and the gap is paid by the buyer."
           ]
         }
       ]

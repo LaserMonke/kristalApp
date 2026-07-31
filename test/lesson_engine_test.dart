@@ -28,7 +28,7 @@ void main() {
     });
 
     test('parses and comes back in path order', () {
-      expect(lessons, hasLength(6));
+      expect(lessons, hasLength(9));
       expect(lessons.map((Lesson l) => l.id), <String>[
         'what-is-an-option',
         'payoff-at-expiry',
@@ -36,6 +36,10 @@ void main() {
         'black-scholes-price',
         'the-greeks',
         'options-strategies',
+        // Phase 8's advanced instruments.
+        'path-dependent-options',
+        'volatility-is-not-constant',
+        'structured-products',
       ]);
       for (int i = 1; i < lessons.length; i++) {
         expect(lessons[i].order, greaterThan(lessons[i - 1].order));
@@ -255,6 +259,71 @@ void main() {
       for (final String? name in used.whereType<String>()) {
         expect(known, contains(name));
       }
+    });
+
+    /// The Phase 8 lessons cover instruments that are routinely mis-sold, so
+    /// the specific misreadings each one invites are asserted individually
+    /// rather than trusted to the general risk-card rule above.
+    group('the advanced instruments say the dangerous part out loud', () {
+      String textOf(String lessonId) {
+        final Lesson lesson = lessons.firstWhere(
+          (Lesson l) => l.id == lessonId,
+        );
+        return <String>[
+          for (final LessonCard card in lesson.cards) card.semanticLabel,
+          for (final QuizQuestion q in lesson.questions) q.semanticLabel,
+        ].join(' ').toLowerCase();
+      }
+
+      test('barriers: being right about direction can still pay nothing', () {
+        final String text = textOf('path-dependent-options');
+        expect(text, contains('right about direction'));
+        // Cheapness is explained as fewer payoffs, never as good value.
+        expect(text, contains('cheaper is not better value'));
+        // In-out parity, the one exact check on any barrier price.
+        expect(text, contains('add up'));
+      });
+
+      test('baskets: correlation is named as the shakiest input', () {
+        final String text = textOf('path-dependent-options');
+        expect(text, contains('towards 1 in a crash'));
+      });
+
+      test('simulated prices are described as estimates with error', () {
+        final String text = textOf('path-dependent-options');
+        expect(text, contains('estimate'));
+        expect(text, contains('error bar'));
+      });
+
+      test('Heston: more parameters are not more truth', () {
+        final String text = textOf('volatility-is-not-constant');
+        expect(text, contains('more elaborate model is not a truer one'));
+        expect(text, contains('five things to estimate wrongly'));
+        // Implied volatility must not be presented as a forecast.
+        expect(text, contains('not a forecast'));
+      });
+
+      test('structured products: the barrier is a trigger, not a floor', () {
+        final String text = textOf('structured-products');
+        expect(text, contains('trigger, not a floor'));
+        // The specific number that gets misread, stated the right way round.
+        expect(text, contains('at least 35%'));
+        expect(text, contains('not at most 35%'));
+      });
+
+      test('structured products: capped gain, uncapped loss', () {
+        final String text = textOf('structured-products');
+        expect(text, contains('uncapped'));
+        expect(text, contains('coupon is not generosity'));
+      });
+
+      test('structured products: issuer risk and the day-one margin', () {
+        final String text = textOf('structured-products');
+        expect(text, contains('lehman'));
+        expect(text, contains('issuer'));
+        // The gap between what it costs and what it is worth.
+        expect(text, contains("issuer's costs and profit"));
+      });
     });
   });
 

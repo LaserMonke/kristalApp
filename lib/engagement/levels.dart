@@ -24,11 +24,26 @@ class Level {
   final String iconName;
 }
 
-/// Thresholds are sized against the shipped curriculum: six lessons, each
+/// Thresholds were sized against the original curriculum: six lessons, each
 /// worth up to 75 points (20 deck + 4 × 10 answers + 15 perfect bonus), 450 in
-/// total. Graduate at 360 means "every deck finished and every question
-/// eventually answered correctly" — reachable by persistence, since the best
-/// Q&A attempt is what counts. A content test asserts reachability.
+/// total, with Graduate at 360 meaning "every deck finished and every question
+/// eventually answered correctly". A content test asserts reachability.
+///
+/// PHASE 8 ADDED THREE LESSONS, taking the curriculum to 675 points, so
+/// Graduate is now reached at roughly two-thirds of the way through rather
+/// than at the end. The thresholds were deliberately NOT rescaled to match.
+///
+/// Rescaling would have demoted every learner who had already earned a level —
+/// someone who woke up as an Analyst and found themselves an Apprentice again,
+/// having done nothing wrong and lost nothing. Taking recognition back to
+/// preserve a ratio is exactly the sort of thing CLAUDE.md rule 9 rules out,
+/// and the ratio was never the point.
+///
+/// Nothing is misrepresented by leaving them: levels are cosmetic recognition
+/// of points accumulated, and they still are. The CERTIFICATE — the claim that
+/// actually says a learner has finished the course — is gated on completing
+/// every lesson's Q&A, so it tracked the new lessons automatically the moment
+/// they shipped, and still means what it says.
 const List<Level> levels = <Level>[
   Level(rank: 1, name: 'Newcomer', minPoints: 0, iconName: 'seedling'),
   Level(rank: 2, name: 'Observer', minPoints: 40, iconName: 'eye'),
