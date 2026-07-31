@@ -139,56 +139,85 @@ class PortfolioController extends AsyncNotifier<Portfolio> {
     return null;
   }
 
-  /// Opens (or adds to) an option position. [spec] carries the contract terms,
-  /// the number of contracts, and the premium per share paid at the mark.
-  Future<String?> buyOption(OptionHolding spec) async {
-    if (spec.contracts <= 0) return 'Choose at least one contract.';
+  /// The one path every option trade goes through.
+  ///
+  /// Positions net by contract, and [OptionHolding.contracts] is signed, so the
+  /// four cases a learner meets are all the same arithmetic: buying with no
+  /// position opens a long, selling into a long closes it, selling past zero
+  /// WRITES the option, and buying back a written one closes it. [size] is
+  /// always positive — [selling] carries the direction.
+  ///
+  /// [prices] is the whole watchlist, not just this symbol, because collateral
+  /// is checked across every written position at once.
+  Future<String?> tradeOption({
+    required OptionHolding contract,
+    required int size,
+    required bool selling,
+    required double markPerShare,
+    required Map<String, double> prices,
+  }) async {
+    if (size <= 0) return 'Choose at least one contract.';
     final Portfolio? p = state.value;
     if (p == null) return 'The portfolio is still loading.';
 
-    final double cost = spec.costBasis();
-    if (cost > p.cash) return 'Not enough simulated cash for that.';
+    final OptionHolding? existing = p.optionFor(contract.key);
+    final int before = existing?.contracts ?? 0;
+    final int delta = selling ? -size : size;
+    final int after = before + delta;
 
-    final OptionHolding? existing = p.optionFor(spec.key);
     final List<OptionHolding> options = List<OptionHolding>.of(p.options);
-    if (existing == null) {
-      options.add(spec);
+    if (after == 0) {
+      options.removeWhere((OptionHolding o) => o.key == contract.key);
     } else {
-      final int total = existing.contracts + spec.contracts;
-      final double avg =
-          (existing.costBasis() + cost) / (total * kContractMultiplier);
-      options[options.indexOf(existing)] =
-          existing.copyWith(contracts: total, premiumPaid: avg);
-    }
-    await _persist(p.copyWith(cash: p.cash - cost, options: options));
-    return null;
-  }
+      // The average premium only moves when the position grows in the
+      // direction it already had, or flips outright. Trimming a position
+      // leaves the basis where it was, so the P/L on what remains is unchanged.
+      final double basis;
+      if (before == 0 || before.sign != after.sign) {
+        basis = markPerShare;
+      } else if (delta.sign == before.sign) {
+        basis =
+            (existing!.premiumPaid * before.abs() + markPerShare * size) /
+            after.abs();
+      } else {
+        basis = existing!.premiumPaid;
+      }
 
-  /// Closes some or all of an option position at [markPerShare].
-  Future<String?> sellOption(
-    String key,
-    int contracts,
-    double markPerShare,
-  ) async {
-    if (contracts <= 0) return 'Choose at least one contract.';
-    final Portfolio? p = state.value;
-    if (p == null) return 'The portfolio is still loading.';
-
-    final OptionHolding? existing = p.optionFor(key);
-    if (existing == null || existing.contracts < contracts) {
-      return 'You do not hold that many contracts.';
+      final OptionHolding next = OptionHolding(
+        symbol: contract.symbol,
+        isCall: contract.isCall,
+        strike: contract.strike,
+        expiry: contract.expiry,
+        contracts: after,
+        premiumPaid: basis,
+      );
+      if (existing == null) {
+        options.add(next);
+      } else {
+        options[options.indexOf(existing)] = next;
+      }
     }
 
-    final double proceeds = markPerShare * contracts * kContractMultiplier;
-    final int remaining = existing.contracts - contracts;
-    final List<OptionHolding> options = List<OptionHolding>.of(p.options);
-    if (remaining == 0) {
-      options.removeWhere((OptionHolding o) => o.key == key);
-    } else {
-      options[options.indexOf(existing)] =
-          existing.copyWith(contracts: remaining);
+    // Selling takes premium in, buying pays it out — including buying back
+    // something you wrote, which is where a short position bites.
+    final double cashDelta =
+        (selling ? 1 : -1) * markPerShare * size * kContractMultiplier;
+    final Portfolio candidate = p.copyWith(
+      cash: p.cash + cashDelta,
+      options: options,
+    );
+
+    if (candidate.cash < 0) return 'Not enough simulated cash for that.';
+
+    final DateTime now = DateTime.now();
+    if (candidate.buyingPower(prices, now) < 0) {
+      final double needed = candidate.marginHeld(prices, now);
+      return 'Writing that would tie up ${_money(needed)} of collateral and '
+          'you have ${_money(p.cash)} in simulated cash. Write fewer '
+          'contracts, or close something first.';
     }
-    await _persist(p.copyWith(cash: p.cash + proceeds, options: options));
+
+    await _persist(candidate);
     return null;
   }
 
@@ -200,3 +229,5 @@ class PortfolioController extends AsyncNotifier<Portfolio> {
     await ref.read(portfolioRepoProvider).save(next);
   }
 }
+
+String _money(double v) => '\$${v.toStringAsFixed(2)}';

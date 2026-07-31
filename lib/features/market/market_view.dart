@@ -178,6 +178,7 @@ class _Summary extends StatelessWidget {
     final double equity = portfolio.equity(prices, now);
     final double pnl = portfolio.totalReturn(prices, now);
     final Color pnlColor = pnl >= 0 ? theme.pnl.gain : theme.pnl.loss;
+    final double margin = portfolio.marginHeld(prices, now);
 
     return Card(
       child: Padding(
@@ -226,8 +227,24 @@ class _Summary extends StatelessWidget {
                   label: 'Positions',
                   value: _money(equity - portfolio.cash),
                 ),
+                // Only worth the space once something is written — otherwise
+                // collateral is always zero and buying power is just cash.
+                if (margin > 0)
+                  _MiniStat(label: 'Collateral', value: _money(margin)),
               ],
             ),
+            if (margin > 0) ...<Widget>[
+              const SizedBox(height: 8),
+              Text(
+                'Buying power ${_money(portfolio.buyingPower(prices, now))} — '
+                'collateral is held against your written options and cannot be '
+                'spent until you close them.',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  height: 1.35,
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -374,10 +391,18 @@ class _OptionPositionCard extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    Text(holding.label, style: theme.textTheme.titleSmall),
+                    Row(
+                      children: <Widget>[
+                        Text(holding.label, style: theme.textTheme.titleSmall),
+                        if (holding.isShort) ...<Widget>[
+                          const SizedBox(width: 6),
+                          _ShortBadge(unbounded: holding.hasUnboundedLoss),
+                        ],
+                      ],
+                    ),
                     Text(
-                      '${holding.contracts} contract'
-                      '${holding.contracts == 1 ? '' : 's'} · '
+                      '${holding.isShort ? 'Wrote' : 'Long'} ${holding.size} '
+                      'contract${holding.size == 1 ? '' : 's'} · '
                       'exp ${_shortDate(holding.expiry)}',
                       style: theme.textTheme.labelSmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
@@ -398,6 +423,36 @@ class _OptionPositionCard extends ConsumerWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Marks a written position in the list. Not colour alone — the word "SHORT"
+/// carries it, so it still reads for a colourblind learner (CLAUDE.md
+/// accessibility).
+class _ShortBadge extends StatelessWidget {
+  const _ShortBadge({required this.unbounded});
+
+  final bool unbounded;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+      decoration: BoxDecoration(
+        color: theme.pnl.loss.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: theme.pnl.loss.withValues(alpha: 0.5)),
+      ),
+      child: Text(
+        unbounded ? 'SHORT · NO CAP' : 'SHORT',
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: theme.pnl.loss,
+          fontSize: 10,
+          letterSpacing: 0.5,
         ),
       ),
     );
@@ -472,9 +527,11 @@ class _TradeSheetState extends ConsumerState<_TradeSheet> {
   bool _buying = true;
   int _shares = 1;
 
-  // Options — LONG only. The most a long option can lose is its premium, which
-  // is the honest default here; no short/naked positions with open-ended loss
-  // (CLAUDE.md rule 2). Closing existing positions happens from the holding.
+  // Options. Buying is the default and stays the default: the most a long
+  // option can lose is its premium. Writing is available but never the
+  // pre-selected choice, and the sheet states the downside in full before the
+  // button can be pressed (CLAUDE.md rule 2).
+  bool _writing = false;
   bool _isCall = true;
   int _strikeIndex = 2;
   int _expiryDays = 30;
@@ -584,9 +641,31 @@ class _TradeSheetState extends ConsumerState<_TradeSheet> {
 
   List<Widget> _optionControls(ThemeData theme) {
     final double premium = optionMarkPrice(_spec(), _spot, DateTime.now());
-    final double cost = premium * _contracts * kContractMultiplier;
+    final double consideration = premium * _contracts * kContractMultiplier;
+    final double collateral = _writing
+        ? shortMarginPerContract(
+                isCall: _isCall,
+                spot: _spot,
+                strike: _strikes[_strikeIndex],
+                premium: premium,
+              ) *
+              _contracts
+        : 0;
 
     return <Widget>[
+      SegmentedButton<bool>(
+        segments: const <ButtonSegment<bool>>[
+          ButtonSegment<bool>(value: false, label: Text('Buy')),
+          ButtonSegment<bool>(value: true, label: Text('Write')),
+        ],
+        selected: <bool>{_writing},
+        showSelectedIcon: false,
+        onSelectionChanged: (Set<bool> s) => setState(() {
+          _writing = s.first;
+          _error = null;
+        }),
+      ),
+      const SizedBox(height: 16),
       SegmentedButton<bool>(
         segments: const <ButtonSegment<bool>>[
           ButtonSegment<bool>(value: true, label: Text('Call')),
@@ -648,16 +727,33 @@ class _TradeSheetState extends ConsumerState<_TradeSheet> {
         ),
       ),
       const SizedBox(height: 2),
-      Text('Cost: ${_money(cost)}', style: theme.textTheme.bodyMedium),
-      const SizedBox(height: 6),
       Text(
-        'Long options only — the most you can lose is the premium. Priced with '
-        'one flat volatility, so treat it as illustrative.',
-        style: theme.textTheme.labelSmall?.copyWith(
-          color: theme.colorScheme.onSurfaceVariant,
-          height: 1.4,
-        ),
+        _writing
+            ? 'Premium received: ${_money(consideration)}'
+            : 'Cost: ${_money(consideration)}',
+        style: theme.textTheme.bodyMedium,
       ),
+      if (_writing) ...<Widget>[
+        const SizedBox(height: 2),
+        Text(
+          'Collateral held: ${_money(collateral)}',
+          style: theme.textTheme.bodyMedium,
+        ),
+      ],
+      const SizedBox(height: 10),
+      if (_writing)
+        _WriteRiskNote(isCall: _isCall, strike: _strikes[_strikeIndex],
+            premium: premium, contracts: _contracts)
+      else
+        Text(
+          'The most a bought option can lose is the premium — it can expire '
+          'worthless and often does. Priced with one flat volatility, so treat '
+          'it as illustrative.',
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+            height: 1.4,
+          ),
+        ),
     ];
   }
 
@@ -672,7 +768,8 @@ class _TradeSheetState extends ConsumerState<_TradeSheet> {
 
   String _buttonLabel() {
     if (_options) {
-      return 'Buy $_contracts contract${_contracts == 1 ? '' : 's'}';
+      final String verb = _writing ? 'Write' : 'Buy';
+      return '$verb $_contracts contract${_contracts == 1 ? '' : 's'}';
     }
     return _buying ? 'Buy $_shares' : 'Sell $_shares';
   }
@@ -690,15 +787,12 @@ class _TradeSheetState extends ConsumerState<_TradeSheet> {
     if (_options) {
       final OptionHolding spec = _spec();
       final double premium = optionMarkPrice(spec, _spot, DateTime.now());
-      error = await c.buyOption(
-        OptionHolding(
-          symbol: spec.symbol,
-          isCall: spec.isCall,
-          strike: spec.strike,
-          expiry: spec.expiry,
-          contracts: spec.contracts,
-          premiumPaid: premium,
-        ),
+      error = await c.tradeOption(
+        contract: spec,
+        size: _contracts,
+        selling: _writing,
+        markPerShare: premium,
+        prices: ref.read(pricesProvider),
       );
     } else {
       error = _buying
@@ -718,6 +812,81 @@ class _TradeSheetState extends ConsumerState<_TradeSheet> {
   }
 }
 
+/// States, in cash, what writing this particular contract can cost.
+///
+/// Deliberately concrete rather than a generic warning: "unlimited" is easy to
+/// nod past, "$4,200 if it falls to zero" is not. Required by CLAUDE.md rule 2
+/// — a written option's downside has to be told plainly, every time.
+class _WriteRiskNote extends StatelessWidget {
+  const _WriteRiskNote({
+    required this.isCall,
+    required this.strike,
+    required this.premium,
+    required this.contracts,
+  });
+
+  final bool isCall;
+  final double strike;
+  final double premium;
+  final int contracts;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final double kept = premium * contracts * kContractMultiplier;
+    final double worstPut =
+        (strike - premium) * contracts * kContractMultiplier;
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: theme.pnl.loss.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: theme.pnl.loss.withValues(alpha: 0.45)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Icon(Icons.warning_amber_rounded, size: 18, color: theme.pnl.loss),
+              const SizedBox(width: 6),
+              Text(
+                'Writing carries the obligation',
+                style: theme.textTheme.labelLarge?.copyWith(
+                  color: theme.pnl.loss,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            isCall
+                ? 'The most you can make is the ${_money(kept)} premium. The '
+                      'loss has no ceiling — you are obliged to deliver at '
+                      '${_money(strike)} however high the price goes, so the '
+                      'more it rises the more it costs to buy back.'
+                : 'The most you can make is the ${_money(kept)} premium. The '
+                      'worst case is ${_money(worstPut)}, if the price falls to '
+                      'zero and you must still buy at ${_money(strike)}.',
+            style: theme.textTheme.labelSmall?.copyWith(height: 1.4),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Collateral is held against the position while it is open, and this '
+            'sandbox recomputes it from one flat volatility. A real broker '
+            'would demand more, and could close you out.',
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// Close some or all of an option position at its current model mark.
 class _SellOptionSheet extends ConsumerStatefulWidget {
   const _SellOptionSheet({required this.holding, required this.mark});
@@ -730,14 +899,19 @@ class _SellOptionSheet extends ConsumerStatefulWidget {
 }
 
 class _SellOptionSheetState extends ConsumerState<_SellOptionSheet> {
-  late int _contracts = widget.holding.contracts;
+  late int _contracts = widget.holding.size;
   String? _error;
   bool _working = false;
+
+  /// Closing a long means selling; closing a written position means buying it
+  /// back, and paying whatever it now costs.
+  bool get _short => widget.holding.isShort;
 
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    final double proceeds = widget.mark * _contracts * kContractMultiplier;
+    final double consideration =
+        widget.mark * _contracts * kContractMultiplier;
 
     return Padding(
       padding: EdgeInsets.fromLTRB(
@@ -753,8 +927,11 @@ class _SellOptionSheetState extends ConsumerState<_SellOptionSheet> {
           Text('Close ${widget.holding.label}', style: theme.textTheme.titleLarge),
           const SizedBox(height: 4),
           Text(
-            'Sell at the model mark of ${_money(widget.mark)} / share. '
-            'Practice only.',
+            _short
+                ? 'Buy back what you wrote, at the model mark of '
+                      '${_money(widget.mark)} / share. Practice only.'
+                : 'Sell at the model mark of ${_money(widget.mark)} / share. '
+                      'Practice only.',
             style: theme.textTheme.labelSmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
@@ -764,12 +941,17 @@ class _SellOptionSheetState extends ConsumerState<_SellOptionSheet> {
             label: 'Contracts',
             value: _contracts,
             onDown: _contracts > 1 ? () => setState(() => _contracts--) : null,
-            onUp: _contracts < widget.holding.contracts
+            onUp: _contracts < widget.holding.size
                 ? () => setState(() => _contracts++)
                 : null,
           ),
           const SizedBox(height: 8),
-          Text('Proceeds: ${_money(proceeds)}', style: theme.textTheme.bodyMedium),
+          Text(
+            _short
+                ? 'Cost to close: ${_money(consideration)}'
+                : 'Proceeds: ${_money(consideration)}',
+            style: theme.textTheme.bodyMedium,
+          ),
           if (_error != null) ...<Widget>[
             const SizedBox(height: 10),
             Text(
@@ -780,7 +962,9 @@ class _SellOptionSheetState extends ConsumerState<_SellOptionSheet> {
           const SizedBox(height: 16),
           FilledButton(
             onPressed: _working ? null : _submit,
-            child: Text('Sell $_contracts'),
+            child: Text(
+              _short ? 'Buy back $_contracts' : 'Sell $_contracts',
+            ),
           ),
         ],
       ),
@@ -792,9 +976,16 @@ class _SellOptionSheetState extends ConsumerState<_SellOptionSheet> {
       _working = true;
       _error = null;
     });
+    // Closing runs the opposite way to how the position was opened.
     final String? error = await ref
         .read(portfolioControllerProvider.notifier)
-        .sellOption(widget.holding.key, _contracts, widget.mark);
+        .tradeOption(
+          contract: widget.holding,
+          size: _contracts,
+          selling: !_short,
+          markPerShare: widget.mark,
+          prices: ref.read(pricesProvider),
+        );
 
     if (!mounted) return;
     if (error == null) {

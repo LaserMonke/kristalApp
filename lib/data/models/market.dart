@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/foundation.dart';
 
 import '../../pricing/black_scholes.dart';
@@ -89,6 +91,14 @@ const int kContractMultiplier = 100;
 /// One fake-money option position: [contracts] of a call or put on [symbol].
 /// [premiumPaid] is the average premium PER SHARE; a contract costs that times
 /// [kContractMultiplier].
+///
+/// [contracts] is SIGNED. Positive means long (you bought and hold the right);
+/// negative means short (you WROTE the option and carry the obligation). The
+/// two are not mirror images of each other in risk terms: a long option can
+/// lose at most the premium, while a written option's loss is bounded only by
+/// how far the underlying moves — unbounded for a naked call (CLAUDE.md rule
+/// 2). Every formula below works off the sign, so a short position marks to a
+/// NEGATIVE value: it is a liability you would have to buy back.
 @immutable
 class OptionHolding {
   const OptionHolding({
@@ -115,6 +125,26 @@ class OptionHolding {
 
   String get label =>
       '$symbol ${strike.toStringAsFixed(0)} ${isCall ? 'Call' : 'Put'}';
+
+  /// True when this position was written rather than bought.
+  bool get isShort => contracts < 0;
+
+  /// Contracts without the sign, for counting and for labels that state the
+  /// direction in words instead.
+  int get size => contracts.abs();
+
+  /// A written call has no ceiling on what it can cost to buy back, because the
+  /// underlying has no ceiling. Everything else has a worst case you can name.
+  bool get hasUnboundedLoss => isShort && isCall;
+
+  /// The worst case in cash terms, or null when there isn't one (naked call).
+  /// A written put is worst at a spot of zero: you are obliged to buy at the
+  /// strike something now worthless, less the premium you kept.
+  double? worstCaseLoss() {
+    if (!isShort) return costBasis().abs();
+    if (isCall) return null;
+    return (strike - premiumPaid) * size * kContractMultiplier;
+  }
 
   double costBasis() => premiumPaid * contracts * kContractMultiplier;
   double marketValue(double markPerShare) =>
@@ -170,6 +200,28 @@ double optionMarkPrice(OptionHolding h, double spot, DateTime now) {
       timeToExpiry: years,
     ),
   ).price;
+}
+
+/// Simulated collateral one written contract ties up, in cash.
+///
+/// A simplified Reg-T-style naked requirement: 20% of the underlying less the
+/// amount the option is out of the money, floored at 10% (of spot for a call,
+/// of strike for a put), plus the premium taken in. Real brokers differ, charge
+/// more for volatile names, and recompute it daily; this exists so writing
+/// options costs something and cannot be done without limit, which is the
+/// lesson. It is NOT a model of any particular broker's margin.
+double shortMarginPerContract({
+  required bool isCall,
+  required double spot,
+  required double strike,
+  required double premium,
+}) {
+  final double outOfTheMoney = isCall
+      ? math.max(strike - spot, 0.0)
+      : math.max(spot - strike, 0.0);
+  final double standard = 0.20 * spot - outOfTheMoney + premium;
+  final double floor = (isCall ? 0.10 * spot : 0.10 * strike) + premium;
+  return math.max(math.max(standard, floor), 0.0) * kContractMultiplier;
 }
 
 /// The fake-money account: simulated [cash] plus [holdings] (shares) and
@@ -229,6 +281,31 @@ class Portfolio {
 
   double totalReturn(Map<String, double> prices, DateTime now) =>
       equity(prices, now) - startingCash;
+
+  /// Cash locked up as collateral against written options. It is not spendable
+  /// while the position is open, which is the point: writing options is not
+  /// free money, however much the premium landing in cash looks like it.
+  double marginHeld(Map<String, double> prices, DateTime now) {
+    double held = 0;
+    for (final OptionHolding o in options) {
+      if (!o.isShort) continue;
+      final double? spot = prices[o.symbol];
+      if (spot == null) continue;
+      held +=
+          shortMarginPerContract(
+            isCall: o.isCall,
+            spot: spot,
+            strike: o.strike,
+            premium: optionMarkPrice(o, spot, now),
+          ) *
+          o.size;
+    }
+    return held;
+  }
+
+  /// What is actually available to spend or to post against a new short.
+  double buyingPower(Map<String, double> prices, DateTime now) =>
+      cash - marginHeld(prices, now);
 
   Portfolio copyWith({
     double? cash,
