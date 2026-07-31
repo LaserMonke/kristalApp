@@ -205,7 +205,21 @@ DONE in Phase 6 — this section is now a description of what is wired, not a to
    one — the learner — and the screen explains that standings need a server rather than
    implying nobody else is learning. Rankings are deliberately NOT cached offline: a stale
    ranking shown as current would be a false claim about other people's scores.
-8. Still to do: deploy the market-data-proxy Edge Function with its secret before Phase 9,
+8. Phase 8 adds the `price-heavy` Edge Function (see §1d and
+   `supabase/functions/price-heavy/README.md`). It is an OPTIMISATION, NEVER A DEPENDENCY:
+   `AdvancedPricer` runs jobs inline below ~200k random draws, on a `compute()` isolate up to
+   ~20M, and only offers anything larger to the server — falling back to an isolate if the
+   call fails, since the same pure-Dart engine is already on the device. The app is fully
+   functional with the function never deployed.
+   Two things to know before deploying it. (a) It re-implements the path generator in
+   TypeScript, and the two engines are held together by `vectors.json` — reference prices
+   generated from the DART engine, which `engine.test.ts` checks bit-for-bit. Regenerate and
+   re-run that test after touching anything in `lib/pricing/`; if they disagree, the Dart
+   wins. (b) It requires a real session, because the publishable key ships in every copy of
+   the app and would otherwise make the project free compute. Requests carry only a
+   contract's numbers — no id, no username, nothing stored, and the success log deliberately
+   omits the request body.
+9. Still to do: deploy the market-data-proxy Edge Function with its secret before Phase 9,
    and publish the privacy policy (Phase 10) — data now leaves the device and usernames plus
    point totals are visible to other learners on the leaderboard, so the policy is a release
    requirement. Settings → "Data we collect" discloses both.
