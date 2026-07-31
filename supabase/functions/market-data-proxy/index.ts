@@ -102,29 +102,50 @@ async function handleSearch(raw: string, key: string): Promise<Response> {
   }
 
   try {
-    const res = await fetch(
-      `${FINNHUB}/search?q=${encodeURIComponent(query)}&exchange=US&token=${key}`,
-    );
-    if (!res.ok) return json({ error: "Symbol search failed.", matches: [] }, 502);
+    let matches = await searchOnce(query, key);
 
-    const body = await res.json();
-    const result = Array.isArray(body?.result) ? body.result : [];
-    const matches = result
-      // Common stock and ETFs only: the learner cannot trade the rest here, so
-      // offering them would just be a dead end.
-      .filter((r: Record<string, unknown>) =>
-        typeof r?.symbol === "string" && SYMBOL.test(r.symbol)
-      )
-      .slice(0, MAX_MATCHES)
-      .map((r: Record<string, unknown>) => ({
-        symbol: r.symbol as string,
-        description: typeof r.description === "string" ? r.description : "",
-      }));
+    // Finnhub's US search draws a blank on some multi-word company names
+    // ("coca cola") yet matches fine on a single word ("coca"). If the whole
+    // query found nothing, retry on its first word before giving up — so
+    // searching by name works, not just by exact ticker.
+    const firstWord = query.split(/\s+/)[0];
+    if (matches.length === 0 && firstWord.length > 0 && firstWord !== query) {
+      matches = await searchOnce(firstWord, key);
+    }
 
     return json({ matches }, 200);
   } catch (_) {
     return json({ error: "Could not reach the market data provider." }, 502);
   }
+}
+
+interface Match {
+  symbol: string;
+  description: string;
+}
+
+// One Finnhub lookup, filtered to tradable US tickers and capped. Throws on an
+// upstream failure so the caller returns 502 (and the client falls back to its
+// offline list) rather than passing an outage off as "no matches".
+async function searchOnce(q: string, key: string): Promise<Match[]> {
+  const res = await fetch(
+    `${FINNHUB}/search?q=${encodeURIComponent(q)}&exchange=US&token=${key}`,
+  );
+  if (!res.ok) throw new Error(`search ${res.status}`);
+
+  const body = await res.json();
+  const result = Array.isArray(body?.result) ? body.result : [];
+  return result
+    // Common stock and ETFs only: the learner cannot trade the rest here, so
+    // offering them would just be a dead end.
+    .filter((r: Record<string, unknown>) =>
+      typeof r?.symbol === "string" && SYMBOL.test(r.symbol)
+    )
+    .slice(0, MAX_MATCHES)
+    .map((r: Record<string, unknown>) => ({
+      symbol: r.symbol as string,
+      description: typeof r.description === "string" ? r.description : "",
+    }));
 }
 
 async function fetchQuote(symbol: string, key: string): Promise<Quote | null> {
