@@ -73,15 +73,26 @@ final Provider<List<String>> polledSymbolsProvider = Provider<List<String>>((
   return symbols.toList();
 });
 
+/// How often the feed is re-read while the Market tab is open.
+const Duration kPollInterval = Duration(seconds: 15);
+
 /// Polls the followed symbols on a gentle loop. `autoDispose` so it stops the
 /// moment the tab is left — no background polling, no wasted calls.
-final StreamProvider<List<Quote>> quotesProvider =
-    StreamProvider.autoDispose<List<Quote>>((Ref ref) async* {
+///
+/// Every emission carries the time it was fetched, because the loop cannot be
+/// assumed to have been running: the OS suspends timers while the app is in the
+/// background, so without a timestamp a price frozen since yesterday looks
+/// exactly like one from a moment ago. Invalidating this provider — which is
+/// what happens when the app returns to the foreground — restarts the loop and
+/// fetches immediately.
+final StreamProvider<MarketSnapshot> quotesProvider =
+    StreamProvider.autoDispose<MarketSnapshot>((Ref ref) async* {
       final repo = ref.watch(marketRepoProvider);
       final List<String> symbols = ref.watch(polledSymbolsProvider);
       while (true) {
-        yield await repo.quotes(symbols);
-        await Future<void>.delayed(const Duration(seconds: 15));
+        final List<Quote> quotes = await repo.quotes(symbols);
+        yield MarketSnapshot(quotes: quotes, fetchedAt: DateTime.now());
+        await Future<void>.delayed(kPollInterval);
       }
     });
 
@@ -96,10 +107,10 @@ final symbolSearchProvider = FutureProvider.autoDispose
 /// Latest price per symbol, for marking positions to market.
 final Provider<Map<String, double>> pricesProvider =
     Provider.autoDispose<Map<String, double>>((Ref ref) {
-      final List<Quote> quotes =
-          ref.watch(quotesProvider).value ?? const <Quote>[];
+      final MarketSnapshot? snapshot = ref.watch(quotesProvider).value;
       return <String, double>{
-        for (final Quote q in quotes) q.symbol: q.price,
+        for (final Quote q in snapshot?.quotes ?? const <Quote>[])
+          q.symbol: q.price,
       };
     });
 
@@ -276,7 +287,7 @@ final Provider<bool> feedIsSyntheticProvider = Provider.autoDispose<bool>((
   Ref ref,
 ) {
   final List<Quote> quotes =
-      ref.watch(quotesProvider).value ?? const <Quote>[];
+      ref.watch(quotesProvider).value?.quotes ?? const <Quote>[];
   return quotes.isNotEmpty && quotes.any((Quote q) => q.synthetic);
 });
 

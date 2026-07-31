@@ -78,6 +78,35 @@ class Quote {
   final bool synthetic;
 }
 
+/// A set of quotes and the moment they were fetched.
+///
+/// The timestamp is the point: a price with no age attached is indistinguishable
+/// from a price that stopped updating an hour ago while the phone was in a
+/// pocket. The UI shows how old this is, and says so when it is stale
+/// (CLAUDE.md rule 8 — data honesty).
+@immutable
+class MarketSnapshot {
+  const MarketSnapshot({required this.quotes, required this.fetchedAt});
+
+  const MarketSnapshot.empty()
+    : quotes = const <Quote>[],
+      fetchedAt = null;
+
+  final List<Quote> quotes;
+  final DateTime? fetchedAt;
+
+  /// Old enough that it should not be presented as current. Generous, because
+  /// the feed is delayed anyway and the poll runs every 15 seconds — anything
+  /// past a minute means the app was asleep or the feed stopped answering.
+  static const Duration staleAfter = Duration(minutes: 1);
+
+  bool isStale(DateTime now) =>
+      fetchedAt == null || now.difference(fetchedAt!) > staleAfter;
+
+  Duration? age(DateTime now) =>
+      fetchedAt == null ? null : now.difference(fetchedAt!);
+}
+
 /// One fake-money position: [shares] of [symbol] bought at an average
 /// [avgCost]. Shares only for now; option contracts are a later increment.
 @immutable

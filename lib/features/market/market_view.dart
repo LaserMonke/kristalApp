@@ -40,7 +40,7 @@ class MarketView extends ConsumerWidget {
       return const _LockedPlaceholder();
     }
 
-    final AsyncValue<List<Quote>> quotes = ref.watch(quotesProvider);
+    final AsyncValue<MarketSnapshot> quotes = ref.watch(quotesProvider);
     final bool synthetic = ref.watch(feedIsSyntheticProvider);
     final Map<String, double> prices = ref.watch(pricesProvider);
     final AsyncValue<Portfolio> portfolio = ref.watch(
@@ -63,6 +63,8 @@ class MarketView extends ConsumerWidget {
         const DisclaimerBanner(),
         const SizedBox(height: 10),
         _FeedLabel(synthetic: synthetic),
+        const SizedBox(height: 6),
+        const _FeedFreshness(),
         const SizedBox(height: 18),
 
         portfolio.when(
@@ -87,16 +89,16 @@ class MarketView extends ConsumerWidget {
           loading: () => const _CardLoading(),
           error: (Object e, StackTrace _) =>
               const _Note('Prices are unavailable right now.'),
-          data: (List<Quote> list) => Column(
+          data: (MarketSnapshot snapshot) => Column(
             children: <Widget>[
-              for (final Quote q in list)
+              for (final Quote q in snapshot.quotes)
                 _QuoteRow(
                   quote: q,
                   onTap: () => _openTradeSheet(context, q),
                   onRemove: () =>
                       ref.read(watchlistProvider.notifier).remove(q.symbol),
                 ),
-              if (list.isEmpty)
+              if (snapshot.quotes.isEmpty)
                 const _Note(
                   'Nothing on your watchlist. Search above to add a symbol.',
                 ),
@@ -395,6 +397,96 @@ class _FeedLabel extends StatelessWidget {
         ),
       ],
     );
+  }
+}
+
+/// How old the prices on screen are, and a way to refresh them by hand.
+///
+/// The feed refetches by itself when the app is reopened, but saying so is the
+/// point: a number with no age attached cannot be told apart from one that
+/// stopped updating while the phone was in a pocket, and the whole portfolio is
+/// marked against these prices (CLAUDE.md rule 8).
+class _FeedFreshness extends ConsumerStatefulWidget {
+  const _FeedFreshness();
+
+  @override
+  ConsumerState<_FeedFreshness> createState() => _FeedFreshnessState();
+}
+
+class _FeedFreshnessState extends ConsumerState<_FeedFreshness> {
+  Timer? _tick;
+
+  @override
+  void initState() {
+    super.initState();
+    // The age has to count up on its own; nothing else rebuilds this between
+    // polls, so "12s ago" would otherwise sit there while minutes passed.
+    _tick = Timer.periodic(const Duration(seconds: 5), (_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _tick?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final AsyncValue<MarketSnapshot> quotes = ref.watch(quotesProvider);
+    final MarketSnapshot? snapshot = quotes.value;
+    final DateTime now = DateTime.now();
+
+    final bool loading = quotes.isLoading && snapshot == null;
+    final bool stale = snapshot?.isStale(now) ?? false;
+    final Duration? age = snapshot?.age(now);
+
+    final String label = loading
+        ? 'Fetching prices…'
+        : age == null
+        ? 'No prices yet'
+        : stale
+        ? 'Prices are ${_ago(age)} old — refreshing'
+        : 'Updated ${_ago(age)} ago';
+
+    return Row(
+      children: <Widget>[
+        Icon(
+          stale ? Icons.warning_amber_rounded : Icons.update,
+          size: 14,
+          color: stale ? theme.pnl.loss : theme.colorScheme.onSurfaceVariant,
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            label,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: stale
+                  ? theme.pnl.loss
+                  : theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+        TextButton.icon(
+          onPressed: () => ref.invalidate(quotesProvider),
+          icon: const Icon(Icons.refresh, size: 16),
+          label: const Text('Refresh'),
+          style: TextButton.styleFrom(
+            visualDensity: VisualDensity.compact,
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _ago(Duration d) {
+    if (d.inSeconds < 60) return '${d.inSeconds}s';
+    if (d.inMinutes < 60) return '${d.inMinutes} min';
+    if (d.inHours < 24) return '${d.inHours} hr';
+    return '${d.inDays} d';
   }
 }
 
