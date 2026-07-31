@@ -1,0 +1,344 @@
+[
+  {
+    "job": {
+      "kind": "european",
+      "type": "call",
+      "inputs": {
+        "spot": 100.0,
+        "strike": 105.0,
+        "rate": 0.04,
+        "volatility": 0.25,
+        "time_to_expiry": 1.0,
+        "dividend_yield": 0.01
+      },
+      "settings": {
+        "paths": 5000,
+        "steps": 1,
+        "seed": 12345,
+        "antithetic": true
+      }
+    },
+    "expected": {
+      "price": 8.827243861763248,
+      "standard_error": 0.17614773642716033,
+      "paths": 2500
+    }
+  },
+  {
+    "job": {
+      "kind": "european",
+      "type": "put",
+      "inputs": {
+        "spot": 90.0,
+        "strike": 100.0,
+        "rate": 0.02,
+        "volatility": 0.4,
+        "time_to_expiry": 0.5,
+        "dividend_yield": 0.0
+      },
+      "settings": {
+        "paths": 4000,
+        "steps": 12,
+        "seed": 777,
+        "antithetic": false
+      }
+    },
+    "expected": {
+      "price": 15.785506276838692,
+      "standard_error": 0.24708991719584034,
+      "paths": 4000
+    }
+  },
+  {
+    "job": {
+      "kind": "barrier",
+      "option_type": "call",
+      "direction": "down",
+      "style": "knockOut",
+      "barrier": 85.0,
+      "continuity_correction": false,
+      "inputs": {
+        "spot": 100.0,
+        "strike": 100.0,
+        "rate": 0.05,
+        "volatility": 0.25,
+        "time_to_expiry": 1.0,
+        "dividend_yield": 0.0
+      },
+      "settings": {
+        "paths": 6000,
+        "steps": 50,
+        "seed": 31,
+        "antithetic": true
+      }
+    },
+    "expected": {
+      "price": 11.27445289947171,
+      "standard_error": 0.18007578509524444,
+      "paths": 3000
+    }
+  },
+  {
+    "job": {
+      "kind": "barrier",
+      "option_type": "put",
+      "direction": "up",
+      "style": "knockIn",
+      "barrier": 130.0,
+      "continuity_correction": true,
+      "inputs": {
+        "spot": 100.0,
+        "strike": 110.0,
+        "rate": 0.03,
+        "volatility": 0.3,
+        "time_to_expiry": 2.0,
+        "dividend_yield": 0.02
+      },
+      "settings": {
+        "paths": 5000,
+        "steps": 64,
+        "seed": 8888,
+        "antithetic": true
+      }
+    },
+    "expected": {
+      "price": 3.3630916837316844,
+      "standard_error": 0.12639823002178005,
+      "paths": 2500
+    }
+  },
+  {
+    "job": {
+      "kind": "asian",
+      "type": "call",
+      "average": "arithmetic",
+      "inputs": {
+        "spot": 100.0,
+        "strike": 100.0,
+        "rate": 0.05,
+        "volatility": 0.25,
+        "time_to_expiry": 1.0,
+        "dividend_yield": 0.0
+      },
+      "settings": {
+        "paths": 5000,
+        "steps": 40,
+        "seed": 41,
+        "antithetic": true
+      }
+    },
+    "expected": {
+      "price": 7.114457552434407,
+      "standard_error": 0.10667477011635165,
+      "paths": 2500
+    }
+  },
+  {
+    "job": {
+      "kind": "asian",
+      "type": "put",
+      "average": "geometric",
+      "inputs": {
+        "spot": 120.0,
+        "strike": 100.0,
+        "rate": 0.01,
+        "volatility": 0.35,
+        "time_to_expiry": 1.5,
+        "dividend_yield": 0.03
+      },
+      "settings": {
+        "paths": 3000,
+        "steps": 30,
+        "seed": 4242,
+        "antithetic": false
+      }
+    },
+    "expected": {
+      "price": 4.404707340843225,
+      "standard_error": 0.16198650025526537,
+      "paths": 3000
+    }
+  },
+  {
+    "job": {
+      "kind": "basket",
+      "type": "call",
+      "strike": 100.0,
+      "rate": 0.04,
+      "time_to_expiry": 0.75,
+      "average": "arithmetic",
+      "assets": [
+        {
+          "spot": 100.0,
+          "volatility": 0.2,
+          "weight": 0.5,
+          "dividend_yield": 0.0,
+          "name": "A"
+        },
+        {
+          "spot": 95.0,
+          "volatility": 0.3,
+          "weight": 0.3,
+          "dividend_yield": 0.02,
+          "name": "B"
+        },
+        {
+          "spot": 110.0,
+          "volatility": 0.25,
+          "weight": 0.2,
+          "dividend_yield": 0.01,
+          "name": "C"
+        }
+      ],
+      "correlation": [
+        [
+          1.0,
+          0.35,
+          0.35
+        ],
+        [
+          0.35,
+          1.0,
+          0.35
+        ],
+        [
+          0.35,
+          0.35,
+          1.0
+        ]
+      ],
+      "settings": {
+        "paths": 6000,
+        "steps": 1,
+        "seed": 53,
+        "antithetic": true
+      }
+    },
+    "expected": {
+      "price": 7.730143889314956,
+      "standard_error": 0.10259535917585696,
+      "paths": 3000
+    }
+  },
+  {
+    "job": {
+      "kind": "basket",
+      "type": "put",
+      "strike": 100.0,
+      "rate": 0.04,
+      "time_to_expiry": 0.75,
+      "average": "geometric",
+      "assets": [
+        {
+          "spot": 100.0,
+          "volatility": 0.2,
+          "weight": 0.5,
+          "dividend_yield": 0.0,
+          "name": "A"
+        },
+        {
+          "spot": 95.0,
+          "volatility": 0.3,
+          "weight": 0.3,
+          "dividend_yield": 0.02,
+          "name": "B"
+        },
+        {
+          "spot": 110.0,
+          "volatility": 0.25,
+          "weight": 0.2,
+          "dividend_yield": 0.01,
+          "name": "C"
+        }
+      ],
+      "correlation": [
+        [
+          1.0,
+          0.0,
+          -0.2
+        ],
+        [
+          0.0,
+          1.0,
+          0.1
+        ],
+        [
+          -0.2,
+          0.1,
+          1.0
+        ]
+      ],
+      "settings": {
+        "paths": 4000,
+        "steps": 1,
+        "seed": 54,
+        "antithetic": false
+      }
+    },
+    "expected": {
+      "price": 4.328020458580604,
+      "standard_error": 0.0985609561272571,
+      "paths": 4000
+    }
+  },
+  {
+    "job": {
+      "kind": "heston",
+      "type": "call",
+      "payoff": "european",
+      "params": {
+        "initial_variance": 0.04,
+        "long_run_variance": 0.04,
+        "mean_reversion": 1.5,
+        "vol_of_vol": 0.3,
+        "correlation": -0.5
+      },
+      "spot": 100.0,
+      "strike": 100.0,
+      "rate": 0.02,
+      "time_to_expiry": 1.0,
+      "dividend_yield": 0.0,
+      "settings": {
+        "paths": 4000,
+        "steps": 50,
+        "seed": 61,
+        "antithetic": true
+      }
+    },
+    "expected": {
+      "price": 8.45031536886102,
+      "standard_error": 0.13196535635748913,
+      "paths": 2000
+    }
+  },
+  {
+    "job": {
+      "kind": "heston",
+      "type": "put",
+      "payoff": "asianArithmetic",
+      "params": {
+        "initial_variance": 0.0625,
+        "long_run_variance": 0.09,
+        "mean_reversion": 2.0,
+        "vol_of_vol": 0.5,
+        "correlation": -0.7
+      },
+      "spot": 100.0,
+      "strike": 105.0,
+      "rate": 0.03,
+      "time_to_expiry": 1.5,
+      "dividend_yield": 0.015,
+      "settings": {
+        "paths": 3000,
+        "steps": 40,
+        "seed": 65,
+        "antithetic": false
+      }
+    },
+    "expected": {
+      "price": 9.630366447709344,
+      "standard_error": 0.22994298371112984,
+      "paths": 3000
+    }
+  }
+]
