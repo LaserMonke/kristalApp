@@ -6,39 +6,54 @@ Run in order. After each phase: flutter run on the iOS simulator, review, then g
 
 Stack: Flutter + Dart. One codebase → iOS + Android. Server: Supabase (added in Phase 6).
 
-────────────────────────────────────────────────────────────────────────────── PREREQUISITES (do once) ──────────────────────────────────────────────────────────────────────────────
+STATUS (last updated 2026-07-31): Phases 0–8 are DONE. Phase 9 is PARTLY done — the practice market shipped, the paywall did not (see Phase 9 below). Then PHASE 10.
 
-Install Flutter (includes Dart) from flutter.dev. Run flutter doctor and clear issues.
-Install Xcode (for the iOS simulator) and the VS Code Flutter + Dart extensions.
-Scaffold and confirm the iOS simulator works BEFORE building features: flutter create optionsschool cd optionsschool open -a Simulator # launches the iOS simulator flutter run # pick the iOS simulator; you should see the demo app
-Add client-only deps for now (no server yet): flutter pub add flutter_riverpod go_router fl_chart flutter_local_notifications
-shared_preferences git init && git add -A && git commit -m "scaffold" Put CLAUDE.md in the project root. (Supabase deps are added in Phase 6.)
+────────────────────────────────────────────────────────────────────────────── PREREQUISITES — DONE ──────────────────────────────────────────────────────────────────────────────
 
-════════════════════════════════════════════════════════════════════════════════ PART A — CLIENT (all local data; fully testable on the iOS simulator) ════════════════════════════════════════════════════════════════════════════════
+Flutter + Xcode + VS Code extensions installed, flutter doctor clear, project scaffolded and running on the iOS simulator. Keep the repo in ~/app (not Desktop/Documents) — iCloud extended attributes break iOS codesigning.
 
-PHASE 0 — Client shell + theme + local auth stub "Set up the OptionsSchool Flutter client per CLAUDE.md. Create a professional, clean trading-terminal look with full dark AND light ThemeData and a toggle, colorblind-safe gain/loss colors. Set up go_router with tabs: Learn, Practice, Leaderboard, Profile. Use Riverpod for state. IMPORTANT: put all data access behind repository INTERFACES (AuthRepo, ProgressRepo, ProfileRepo) and provide LOCAL implementations backed by shared_preferences / in-memory — NO server yet. Implement a local mock login (username + education level saved locally) so the app is usable offline. Show a one-time onboarding disclaimer ('educational only, not financial advice'). Goal: runs on the iOS simulator immediately."
+Dependencies (pubspec.yaml): flutter_riverpod, go_router, fl_chart, shared_preferences, flutter_local_notifications, timezone, flutter_timezone, supabase_flutter, flutter_dotenv, http. No in-app-purchase package yet — that arrives with the paywall.
 
-PHASE 1 — Lesson engine + card/reel UI + first lessons (local) "Build the data-driven lesson engine. Lessons are Dart models / JSON assets bundled with the app; the engine renders them. Present each lesson as vertically swipeable 'cards' (reel/deck style) via a vertical PageView, short and visual. Author the first lessons in original wording (don't copy book text): (1) What is an option — calls/puts, right vs obligation; (2) Payoff at expiry with a payoff diagram via CustomPainter; (3) Why use options — benefits AND honest risks (long options can expire worthless = total premium loss; short/naked can lose far more). State downside plainly per CLAUDE.md. Test on the iOS simulator."
+.env is gitignored, so a fresh clone or a machine that only pulled has NO credentials, and the build fails outright because .env is a declared asset. Copy .env.example to .env and fill in SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY. Blank values are supported — the app then runs fully on-device.
 
-PHASE 2 — Q&A after each lesson (local) "Add a Q&A engine after each lesson: multiple-choice and short questions defined as data per lesson, with immediate plain-language feedback for right/wrong. Save results via the local ProgressRepo. Gate the next lesson on completing the current Q&A. Test on the iOS simulator."
+════════════════════════════════════════════════════════════════════════════════ PART A — CLIENT (all local data; fully testable on the iOS simulator) — COMPLETE ════════════════════════════════════════════════════════════════════════════════
 
-PHASE 3 — Pricer core: BSM + Greeks (pure Dart) "Create a pure Dart pricing library (lib/pricing/, NO Flutter imports): Black-Scholes-Merton for European calls/puts plus Greeks (delta, gamma, vega, theta, rho). Document assumptions. Write unit tests validating against known textbook reference values. Add a reusable payoff- diagram widget (CustomPainter) plotting P/L vs underlying. Test on the iOS simulator."
+PHASE 0 — Client shell + theme + local auth stub — DONE (commit cc609ba)
+Shipped: trading-terminal light/dark ThemeData with a toggle, colorblind-safe gain/loss colours, go_router shell, Riverpod state, repository INTERFACES (AuthRepo, ProfileRepo, ProgressRepo, LessonRepo) with local shared_preferences/asset implementations, local mock login, one-time onboarding disclaimer.
+The nav has moved twice since. It is now Home · Learn · Sandbox · Market — "Practice" became "Sandbox" (4fb9265), Home was added (a0c15ba), Settings moved to a gear icon (1ab77b9, then reachable from every tab in 18e3954), and Ranks gave up its slot to Market in Phase 9.
 
-PHASE 4 — Interactive pricer inside lessons "Build an interactive pricer screen: sliders/inputs for spot, strike, volatility, time, and rate that update price, Greeks, and payoff diagram live. Add a strategy view composing legs (spreads, straddle, covered call, protective put) with combined payoff. Label output as an idealized simulation per CLAUDE.md. Test on the iOS simulator."
+PHASE 1 — Lesson engine + card/reel UI + first lessons (local) — DONE (commits 672b02d, 709fdca)
+Shipped: data-driven engine reading assets/lessons/lessons.json, vertical PageView card/reel player with deck-style swipe, interactive cards, CustomPainter payoff diagrams. Nine lessons now: What is an option? · Payoff at expiry · Why use options — and what can go wrong · The Black-Scholes-Merton price · The Greeks · Options strategies · Options that watch the path · Volatility is not a constant · Structured products: taking the wrapper off.
 
-PHASE 5 — Points, streaks, levels, certificate (local) "Add the engagement system, persisted LOCALLY via repositories for now: points for lessons/ Q&A, daily streaks (Duolingo/Snapchat style) with a streak-freeze grace, and a level-up scheme culminating in a certificate with a nicer badge icon per stage. Add opt-in local notifications (flutter_local_notifications) for streak/new-content reminders — reasonable, easy to disable, no profit-promise wording and custom to the user and their needs. Test on the iOS simulator."
+PHASE 2 — Q&A after each lesson (local) — DONE (commits 334e02f, 05d1a04, c464a76)
+Shipped: multiple-choice + short-answer questions as data per lesson, immediate plain-language feedback, results saved via ProgressRepo, next lesson gated on the current Q&A. Fixes since: MCQ answer-position bias, double-tap races, stale gate accessor, submit button pinned above the keyboard.
+
+PHASE 3 — Pricer core: BSM + Greeks (pure Dart) — DONE (commit 37b631c)
+Shipped: lib/pricing/ with no Flutter imports — black_scholes.dart (European calls/puts + delta, gamma, vega, theta, rho), payoff.dart, priced_leg.dart; assumptions documented; unit tests against textbook reference values. Reusable payoff-diagram widget at lib/core/widgets/payoff_diagram.dart.
+
+PHASE 4 — Interactive pricer inside lessons — DONE (commits 37b631c, 4fb9265, f2c2860)
+Shipped: Sandbox tab with a single-option pricer (spot/strike/vol/time/rate sliders updating price, Greeks and payoff live) and a strategy view composing legs (spreads, straddle, covered call, protective put). Payoff graph at the top; a step-by-step tutorial walks first-time users through it. Output labelled an idealized simulation.
+
+PHASE 5 — Points, streaks, levels, certificate (local) — DONE (commits b838848, 715cc3d, a0c15ba)
+Shipped: lib/engagement/ (points, streak with freeze grace, levels), certificate screen with per-stage badge icons, Home tab with standing, next lesson and certificate progress. Daily reminder on by default via flutter_local_notifications, easy to disable, wired for iOS and Android, no profit-promise wording.
 
 ════════════════════════════════════════════════════════════════════════════════ PART B — SERVER (swap local repos for Supabase; needs the backend from DEPLOY.md) ════════════════════════════════════════════════════════════════════════════════
 
-PHASE 6 — Wire up Supabase (client ↔ server) "Add the server backend. First follow DEPLOY.md to create the Supabase project, tables, and RLS policies. Then: flutter pub add supabase_flutter flutter_dotenv, load SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY from .env, and initialize Supabase in main(). Provide SUPABASE implementations of the existing AuthRepo / ProfileRepo / ProgressRepo interfaces (real username/password auth capturing education level; profiles + progress synced to Postgres with RLS). Keep the local implementations as an offline fallback. The UI must not change — only the repository implementation swaps. Test sign-up/login and progress sync, then run on the iOS simulator. All up to date for the authentification and saftey regulations."
+PHASE 6 — Wire up Supabase (client ↔ server) — DONE (commit 3cab868)
+Shipped: supabase_flutter + flutter_dotenv, credentials from .env, Supabase initialised in main(). Supabase implementations of AuthRepo / ProfileRepo / ProgressRepo in lib/data/supabase/, schema and RLS in supabase/migrations/20260730120000_phase6_init.sql. Local implementations kept as the offline fallback; the UI did not change. Tests in test/supabase/.
 
-PHASE 7 — Leaderboard (real users + labeled bots) "Add a leaderboard backed by Supabase across real users, with weekly and all-time views and the user's rank. If bot entries pad it early on, label them clearly as bots — never as real people. Test on the iOS simulator."
+PHASE 7 — Leaderboard (real users + labeled bots) — DONE (commits 6cbae99, 2c1473d, d14a00e, 374c5b5)
+Shipped: Supabase-backed leaderboard (lib/features/leaderboard/, supabase_leaderboard_repo.dart, leaderboard_providers.dart) with weekly/all-time views, a standing card and rank rows. Schema in supabase/migrations/20260730130000_phase7_leaderboard.sql — leaderboard_bots, leaderboard_page(period, limit_count), leaderboard_standing(period) — reconciling an existing leaderboard, with an off switch for bots. Bots are labelled as bots. 374c5b5 fixed a real hole: the board was readable without signing in.
 
-PHASE 8 — Advanced pricer (Monte Carlo, Heston, exotics) "Extend the pure Dart pricing library: Monte Carlo for path-dependent and multi-asset payoffs (basket; barrier KO/KI) and the Heston stochastic-vol model (semi-analytic vanillas, MC exotics). Add structured products as compositions and lessons on these new types of options. Unit-test against reference values; document assumptions. Run heavy Monte Carlo on a Dart Isolate via compute() with a loading state; for very large runs, call the Supabase Edge Function described in DEPLOY.md. Test on the simulator."
+PHASE 8 — Advanced pricer (Monte Carlo, Heston, exotics) — DONE (commits 8f560ac, d92d875, 0bc1646, d01443e, 734d208, 8044380, ef2197a)
+Shipped in six parts: Monte Carlo core with barrier KO/KI and basket options (monte_carlo.dart, barrier.dart, basket.dart, random.dart); Heston stochastic vol (heston.dart, quadrature.dart, complex.dart); structured products as compositions (structured.dart); isolates with serialisable jobs (pricing_job.dart, lib/services/advanced_pricer.dart) plus a price-heavy Edge Function for very large runs, cross-checked and noted in DEPLOY.md; an Advanced pricer tab; and three lessons on the advanced instruments.
 
-PHASE 9 — Paywall + fake-money practice market "Add an in-app-purchase paywall (in_app_purchase or RevenueCat) unlocking the advanced pricer and a fake-money real-time practice options market. Fetch market data through a Supabase Edge Function so the data API key(d9cqmi9r01qh8vpj6no0d9cqmi9r01qh8vpj6nog) never ships in the app (see DEPLOY.md); label delayed data. Track simulated P&L. Label the whole feature a learning simulation with idealized models — no real trading, no profit claims. Test on the iOS simulator."
+PHASE 9 — Paywall + fake-money practice market — PARTLY DONE (commit 5636420)
+Shipped: the Market tab — a fake-money practice options market (lib/features/market/market_view.dart, lib/data/models/market.dart, market_repo.dart, portfolio_repo.dart, supabase_market_repo.dart, lib/providers/market_providers.dart), simulated P&L, a simulation distribution chart for the advanced pricer, and supabase/functions/market-data-proxy/index.ts so the data API key stays server-side. Market took Ranks' slot in the bottom nav.
+NOT done — the paywall. There is no in_app_purchase / RevenueCat dependency, and entitlement is hard-wired ON (market_providers.dart:10, market_view.dart:17, sandbox_screen.dart:87 all mark the spot). DEPLOY.md calls the remainder "Phase 9b — Paywall".
+"Add the in-app-purchase paywall (in_app_purchase or RevenueCat) unlocking the advanced pricer and the practice market. Replace the hard-wired entitlement provider with the real purchase state. Be clear about what payment unlocks. Keep the learning core free per CLAUDE.md."
 
-PHASE 10 — Personalization, polish, release prep "Personalize by education level: lesson order/depth, Q&A difficulty, which advanced topics surface for people with higher education, and notification content. Polish loading/empty/error states and accessibility (Semantics labels, captions); confirm disclaimers at onboarding and in Settings. Prepare release: app icons/splash, flutter build appbundle and flutter build ipa, privacy policy link make it so that it fits all of apples and android's regulations and saftey needs so it can be ready to publish. Full publishing + infra steps are in DEPLOY.md."
+PHASE 10 — Personalization, polish, release prep — NEXT AFTER 9b "Personalize by education level: lesson order/depth, Q&A difficulty, which advanced topics surface for people with higher education, and notification content. Polish loading/empty/error states and accessibility (Semantics labels, captions); confirm disclaimers at onboarding and in Settings. Prepare release: app icons/splash, flutter build appbundle and flutter build ipa, privacy policy link — make it fit Apple's and Google's regulations and safety requirements so it is ready to publish. Full publishing + infra steps are in DEPLOY.md."
 
 ────────────────────────────────────────────────────────────────────────────── Tips
 
@@ -47,3 +62,6 @@ Keep the repository interfaces clean — that's what makes the local→Supabase 
 If Claude Code overreaches, tell it to stop and split the task. One phase per fresh session.
 After each phase: flutter run on the iOS simulator, then git commit; revert if it breaks.
 Get the options content reviewed by someone with real derivatives knowledge before release.
+NEVER paste an API key into this file or any other tracked file. One was committed here in the
+Phase 9 text and is in git history — rotate it. Keys belong in .env (gitignored) or, for paid
+data APIs, only in the Edge Function's server-side secrets.
