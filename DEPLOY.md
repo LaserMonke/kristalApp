@@ -219,14 +219,41 @@ DONE in Phase 6 — this section is now a description of what is wired, not a to
    the app and would otherwise make the project free compute. Requests carry only a
    contract's numbers — no id, no username, nothing stored, and the success log deliberately
    omits the request body.
-9. Still to do: deploy the market-data-proxy Edge Function with its secret before Phase 9,
-   and publish the privacy policy (Phase 10) — data now leaves the device and usernames plus
-   point totals are visible to other learners on the leaderboard, so the policy is a release
-   requirement. Settings → "Data we collect" discloses both.
-   Worth deciding before release: whether learners can opt out of appearing on the
-   leaderboard. Not built, because it was not asked for — but the audience may include
-   under-18 users (CLAUDE.md rule 6), and "my username is visible to strangers" is the kind
-   of default that deserves a deliberate decision rather than an inherited one.
+9. Phase 9 (part 1 — practice market) is BUILT. The `market-data-proxy` Edge Function is
+   deployed and its secret is set (`supabase secrets set FINNHUB_API_KEY=…`, provider:
+   Finnhub `/quote`). It proxies an allow-listed set of symbols, attaches the "delayed /
+   learning simulation only" label SERVER-SIDE, and is the ONLY place the Finnhub key exists
+   — never the app binary (rule 8). The client (`MarketRepo` → `SupabaseMarketRepo`) calls it
+   and falls back to a labelled synthetic walk (`LocalMarketRepo`) when the function is
+   unreachable, so the Market tab (Sandbox → Market) works offline too. The fake-money
+   portfolio is device-local (`PortfolioRepo`); fills are idealised — last price, no spread,
+   no fees — and labelled as such. Shares only for now; option-contract trading (priced with
+   the Phase 8 BSM engine) is the natural next increment.
+
+   PHASE 9b — PAYWALL (deferred, still to do). The practice market and the advanced pricer are
+   the intended paid unlock, but the paywall was split into its own step. It is wired for a
+   near one-line drop-in: everything already gates on `marketUnlockedProvider`
+   (`lib/providers/market_providers.dart`), currently hard-wired `true`. To add it:
+     a. Choose the store layer — `in_app_purchase` (official; you validate receipts) or
+        `purchases_flutter`/RevenueCat (handles receipts, restore, entitlements). RevenueCat
+        is the lighter path for a solo project.
+     b. Create the product(s) in App Store Connect + Play Console (a non-consumable unlock or a
+        subscription). Cannot be done from code; needs the developer accounts.
+     c. Add an `EntitlementRepo` (interface + store impl + a local dev stub that just flips a
+        bool) wired in `repository_providers.dart` like the rest, and make
+        `marketUnlockedProvider` read it. Point the Advanced pricer tab at the same gate.
+     d. Build a `PaywallScreen` shown when locked (`MarketView` already renders a
+        `_LockedPlaceholder` when the gate is off); include Restore Purchases; state exactly
+        what unlocks; NO profit-promise copy (rule 3).
+     e. Minors + purchases (rule 6) and no purchase pressure (rule 9) need a real review before
+        release. Core learning (lessons + Q&A + leaderboard) stays free.
+10. Still to do: publish the privacy policy (Phase 10) — data now leaves the device and
+    usernames plus point totals are visible to other learners on the leaderboard, so the
+    policy is a release requirement. Settings → "Data we collect" discloses both.
+    Worth deciding before release: whether learners can opt out of appearing on the
+    leaderboard. Not built, because it was not asked for — but the audience may include
+    under-18 users (CLAUDE.md rule 6), and "my username is visible to strangers" is the kind
+    of default that deserves a deliberate decision rather than an inherited one.
 
 ════════════════════════════════════════════════════════════════════════════════
 5. SHIPPING TEST & RELEASE BUILDS

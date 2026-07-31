@@ -90,15 +90,8 @@ class _StatTile extends StatelessWidget {
       child: Semantics(
         label: semanticLabel,
         excludeSemantics: true,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            color: theme.colorScheme.surfaceContainerHighest,
-            border: Border.all(
-              color: theme.colorScheme.outline.withValues(alpha: 0.6),
-            ),
-          ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
           child: Column(
             children: <Widget>[
               Icon(icon, size: 18, color: theme.colorScheme.primary),

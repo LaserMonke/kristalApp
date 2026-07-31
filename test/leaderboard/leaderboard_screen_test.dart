@@ -42,7 +42,7 @@ void main() {
           progressRepoProvider.overrideWithValue(_EmptyProgressRepo()),
           authControllerProvider.overrideWith(() => _StubAuthController(me)),
         ],
-        child: const MaterialApp(home: LeaderboardScreen()),
+        child: const MaterialApp(home: Scaffold(body: LeaderboardView())),
       ),
     );
     await tester.pumpAndSettle();

@@ -13,6 +13,7 @@ import '../../providers/pricer_providers.dart';
 import '../../services/advanced_pricer.dart';
 import 'widgets/market_inputs_panel.dart';
 import 'widgets/pricer_slider.dart';
+import 'widgets/simulation_distribution_chart.dart';
 import 'widgets/simulation_result_card.dart';
 import 'widgets/structured_product_panel.dart';
 
@@ -48,15 +49,18 @@ class AdvancedPricerView extends ConsumerWidget {
           const SizedBox(height: 12),
           const StructuredProductPanel(),
         ] else ...<Widget>[
+          // Results first: the run button and its outcome sit at the top, with
+          // the contract and effort controls to tweak below. Changing any of
+          // those clears the run, so the outcome up here never looks stale.
+          const _RunButton(),
+          const SizedBox(height: 16),
+          const _RunOutcome(),
+          const SizedBox(height: 20),
           const MarketInputsPanel(),
           const SizedBox(height: 12),
           _ContractPanel(instrument: instrument),
           const SizedBox(height: 12),
           const _EffortPanel(),
-          const SizedBox(height: 16),
-          const _RunButton(),
-          const SizedBox(height: 16),
-          const _RunOutcome(),
         ],
 
         const SizedBox(height: 20),
@@ -309,13 +313,6 @@ class _ContractPanel extends ConsumerWidget {
       onSelectionChanged: (Set<AsianAverage> s) =>
           change((AdvancedSettings v) => v.copyWith(asianAverage: s.first)),
     ),
-    _Inline(
-      settings.asianAverage == AsianAverage.arithmetic
-          ? 'The ordinary average, and what real contracts use. It has no '
-                'formula, which is exactly why it must be simulated.'
-          : 'Rarely traded, but it does have an exact formula — which makes it '
-                'the reference this engine is tested against.',
-    ),
   ];
 
   List<Widget> _basketControls(
@@ -344,15 +341,6 @@ class _ContractPanel extends ConsumerWidget {
       valueLabel: settings.basketCorrelation.toStringAsFixed(2),
       onChanged: (double v) =>
           change((AdvancedSettings s) => s.copyWith(basketCorrelation: v)),
-    ),
-    _Inline(
-      settings.basketCorrelation > 0.9
-          ? 'Near 1, the assets move as one and diversification does nothing — '
-                'the basket is about as volatile as a single share, and the '
-                'option costs accordingly.'
-          : 'Lower correlation steadies the blend, so the option is cheaper. '
-                'That discount is real, and it depends on an estimate that '
-                'tends to rise towards 1 in a crash.',
     ),
   ];
 
@@ -418,18 +406,6 @@ class _ContractPanel extends ConsumerWidget {
         valueLabel: p.correlation.toStringAsFixed(2),
         onChanged: (double v) => setParams(p.copyWith(correlation: v)),
       ),
-      _Inline(
-        p.correlation < -0.2
-            ? 'Negative correlation means prices fall as volatility rises — '
-                  'the pattern equity markets show. It fattens the left tail '
-                  'and makes downside protection expensive.'
-            : p.correlation > 0.2
-            ? 'Positive correlation is unusual for shares. It tilts the smile '
-                  'the other way, making upside options the expensive ones.'
-            : 'With no correlation the smile is symmetric: both tails are '
-                  'fatter than Black-Scholes assumes, neither more than the '
-                  'other.',
-      ),
       if (!p.satisfiesFeller)
         _Inline(
           'These values break the Feller condition, so volatility can reach '
@@ -493,17 +469,6 @@ class _EffortPanel extends ConsumerWidget {
                 (AdvancedSettings s) => s.copyWith(steps: v.round()),
               ),
             ),
-            const SizedBox(height: 4),
-            Text(
-              'More paths shrink the error bar — but only as the square root, '
-              'so four times the work halves it and no more. More steps are a '
-              'different fix: they reduce the error that comes from checking '
-              'the price at intervals rather than continuously.',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-                height: 1.45,
-              ),
-            ),
             if (job != null) ...<Widget>[
               const SizedBox(height: 10),
               Text(
@@ -559,7 +524,6 @@ class _RunOutcome extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final ThemeData theme = Theme.of(context);
     final AsyncValue<PricingRun?> run = ref.watch(advancedRunProvider);
 
     return run.when(
@@ -588,16 +552,18 @@ class _RunOutcome extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
             SimulationResultCard(run: value, currencySymbol: r'$'),
-            const SizedBox(height: 8),
-            Text(
-              'Re-running without changing anything gives the same answer: the '
-              'random numbers are seeded, so any change you see is yours and '
-              'not the dice.',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-                height: 1.45,
+            // The sampling distribution only means something when there was
+            // sampling: a settled, zero-error outcome (a dead knock-out, say)
+            // has no bell to draw.
+            if (value.result.standardError > 0) ...<Widget>[
+              const SizedBox(height: 12),
+              SimulationDistributionChart(
+                price: value.result.price,
+                standardError: value.result.standardError,
+                reference: value.result.analyticReference,
+                currencySymbol: r'$',
               ),
-            ),
+            ],
           ],
         );
       },

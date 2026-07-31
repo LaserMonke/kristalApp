@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/widgets/settings_button.dart';
-import '../../core/widgets/theme_toggle_button.dart';
 import '../../data/models/leaderboard.dart';
 import '../../providers/leaderboard_providers.dart';
+import '../../providers/market_providers.dart';
 import 'widgets/leaderboard_row.dart';
 import 'widgets/standing_card.dart';
 
@@ -17,8 +16,10 @@ import 'widgets/standing_card.dart';
 ///     screen says that rather than implying it follows the phone's clock.
 ///   * Points are computed by the database, not reported by the app, so a rank
 ///     cannot be inflated by a modified client.
-class LeaderboardScreen extends ConsumerWidget {
-  const LeaderboardScreen({super.key});
+/// The Ranks content, without a Scaffold — it lives as a tab inside the Learn
+/// screen (Phase 9 restructure), which supplies the app bar.
+class LeaderboardView extends ConsumerWidget {
+  const LeaderboardView({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -27,49 +28,42 @@ class LeaderboardScreen extends ConsumerWidget {
       leaderboardProvider(period),
     );
 
-    return Scaffold(
-      appBar: AppBar(
-        leading: const SettingsButton(),
-        actions: const <Widget>[ThemeToggleButton(), SizedBox(width: 4)],
-      ),
-      body: Column(
-        children: <Widget>[
-          _PeriodSelector(
-            period: period,
-            onChanged: (LeaderboardPeriod next) => ref
-                .read(leaderboardPeriodProvider.notifier)
-                .select(next),
-          ),
-          Expanded(
-            child: RefreshIndicator(
-              onRefresh: () async {
-                ref.invalidate(leaderboardProvider(period));
-                try {
-                  await ref.read(leaderboardProvider(period).future);
-                } catch (_) {
-                  // Swallowed only so a pull-to-refresh over a dead network
-                  // ends its spinner. The error state below does the telling.
-                }
-              },
-              child: board.when(
-                loading: () => const _Centered(
-                  child: SizedBox(
-                    height: 26,
-                    width: 26,
-                    child: CircularProgressIndicator(strokeWidth: 2.5),
-                  ),
+    return Column(
+      children: <Widget>[
+        _PeriodSelector(
+          period: period,
+          onChanged: (LeaderboardPeriod next) =>
+              ref.read(leaderboardPeriodProvider.notifier).select(next),
+        ),
+        Expanded(
+          child: RefreshIndicator(
+            onRefresh: () async {
+              ref.invalidate(leaderboardProvider(period));
+              try {
+                await ref.read(leaderboardProvider(period).future);
+              } catch (_) {
+                // Swallowed only so a pull-to-refresh over a dead network
+                // ends its spinner. The error state below does the telling.
+              }
+            },
+            child: board.when(
+              loading: () => const _Centered(
+                child: SizedBox(
+                  height: 26,
+                  width: 26,
+                  child: CircularProgressIndicator(strokeWidth: 2.5),
                 ),
-                error: (Object error, _) => _Message(
-                  icon: Icons.cloud_off_outlined,
-                  text: leaderboardErrorMessage(error),
-                  onRetry: () => ref.invalidate(leaderboardProvider(period)),
-                ),
-                data: (LeaderboardBoard data) => _Board(board: data),
               ),
+              error: (Object error, _) => _Message(
+                icon: Icons.cloud_off_outlined,
+                text: leaderboardErrorMessage(error),
+                onRetry: () => ref.invalidate(leaderboardProvider(period)),
+              ),
+              data: (LeaderboardBoard data) => _Board(board: data),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -83,13 +77,18 @@ class _Board extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final ThemeData theme = Theme.of(context);
     final String? currentUserId = ref.watch(currentUserIdProvider);
+    final int bonus = ref.watch(marketBonusPointsProvider);
     final String? note = leaderboardEmptyMessage(board);
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
       children: <Widget>[
         if (board.standing != null)
-          StandingCard(standing: board.standing!, period: board.period),
+          StandingCard(
+            standing: board.standing!,
+            period: board.period,
+            bonusPoints: bonus,
+          ),
         if (note != null) ...<Widget>[
           const SizedBox(height: 12),
           _Note(note),
@@ -122,7 +121,7 @@ class _Board extends ConsumerWidget {
           ),
         ],
         const SizedBox(height: 18),
-        _Footnote(board: board),
+        _Footnote(board: board, bonusPoints: bonus),
       ],
     );
   }
@@ -159,9 +158,10 @@ class _PeriodSelector extends StatelessWidget {
 /// week actually means — a leaderboard that hides its rules invites the
 /// suspicion that it has none.
 class _Footnote extends StatelessWidget {
-  const _Footnote({required this.board});
+  const _Footnote({required this.board, this.bonusPoints = 0});
 
   final LeaderboardBoard board;
+  final int bonusPoints;
 
   @override
   Widget build(BuildContext context) {
@@ -174,6 +174,9 @@ class _Footnote extends StatelessWidget {
       else
         'All time counts every point you have earned.',
       'Points are worked out on the server from your lesson and Q&A records.',
+      if (bonusPoints > 0)
+        'Your practice-market gains add $bonusPoints points to your own total '
+            'on this device; other learners are ranked on lesson points.',
       'Equal scores share a rank.',
       if (board.hasBots)
         'Entries marked BOT are practice placeholders, not real people.',

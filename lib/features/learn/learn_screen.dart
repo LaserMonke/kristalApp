@@ -10,10 +10,41 @@ import '../../core/widgets/theme_toggle_button.dart';
 import '../../data/models/app_user.dart';
 import '../../providers/auth_controller.dart';
 import '../../providers/lesson_providers.dart';
+import '../leaderboard/leaderboard_screen.dart';
 
-/// The Learn tab — the learning path, driven entirely by lesson data.
-class LearnScreen extends ConsumerWidget {
+/// The Learn section — the lesson path and the Ranks board, as two tabs.
+///
+/// Ranks moved in here (Phase 9 restructure) so the fourth bottom-nav slot
+/// could become the practice Market.
+class LearnScreen extends StatelessWidget {
   const LearnScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          leading: const SettingsButton(),
+          actions: const <Widget>[ThemeToggleButton(), SizedBox(width: 4)],
+          bottom: const TabBar(
+            tabs: <Widget>[
+              Tab(text: 'Lessons'),
+              Tab(text: 'Ranks'),
+            ],
+          ),
+        ),
+        body: const TabBarView(
+          children: <Widget>[_LessonsView(), LeaderboardView()],
+        ),
+      ),
+    );
+  }
+}
+
+/// The learning path, driven entirely by lesson data.
+class _LessonsView extends ConsumerWidget {
+  const _LessonsView();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -21,12 +52,7 @@ class LearnScreen extends ConsumerWidget {
     final AppUser? user = ref.watch(currentUserProvider);
     final AsyncValue<List<LessonNode>> path = ref.watch(lessonPathProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        leading: const SettingsButton(),
-        actions: <Widget>[const ThemeToggleButton(), const SizedBox(width: 4)],
-      ),
-      body: ListView(
+    return ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
         children: <Widget>[
           // The greeting lives on Home; this tab leads with the curriculum.
@@ -78,7 +104,6 @@ class LearnScreen extends ConsumerWidget {
             ),
           ),
         ],
-      ),
     );
   }
 }

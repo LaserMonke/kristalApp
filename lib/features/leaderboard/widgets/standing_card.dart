@@ -8,20 +8,29 @@ class StandingCard extends StatelessWidget {
   const StandingCard({
     required this.standing,
     required this.period,
+    this.bonusPoints = 0,
     super.key,
   });
 
   final LeaderboardStanding standing;
   final LeaderboardPeriod period;
 
+  /// Extra points from the learner's practice-market performance, added to
+  /// their total on this device (Phase 9). Zero when the portfolio is flat or
+  /// down — market losses never subtract lesson points.
+  final int bonusPoints;
+
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
+    final int total = standing.points + bonusPoints;
 
     return Semantics(
       label:
           'Your standing: rank ${standing.rank} of ${standing.totalPlayers} '
-          'on the board, ${standing.points} points, ${period.label}',
+          'on the board, $total points'
+          '${bonusPoints > 0 ? ' including $bonusPoints from your practice portfolio' : ''}, '
+          '${period.label}',
       excludeSemantics: true,
       child: Card(
         child: Padding(
@@ -74,10 +83,14 @@ class StandingCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    '${standing.points} pts',
-                    style: theme.textTheme.titleLarge,
-                  ),
+                  Text('$total pts', style: theme.textTheme.titleLarge),
+                  if (bonusPoints > 0)
+                    Text(
+                      '${standing.points} + $bonusPoints practice',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
                 ],
               ),
             ],

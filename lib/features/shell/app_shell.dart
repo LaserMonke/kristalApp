@@ -49,7 +49,7 @@ const List<_Destination> _destinations = <_Destination>[
   _Destination('Home', Icons.home_outlined, Icons.home),
   _Destination('Learn', Icons.school_outlined, Icons.school),
   _Destination('Sandbox', Icons.tune_outlined, Icons.tune),
-  _Destination('Ranks', Icons.leaderboard_outlined, Icons.leaderboard),
+  _Destination('Market', Icons.show_chart_outlined, Icons.show_chart),
 ];
 
 class _Destination {

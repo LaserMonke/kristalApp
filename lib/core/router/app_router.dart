@@ -5,9 +5,9 @@ import 'package:go_router/go_router.dart';
 import '../../data/models/app_user.dart';
 import '../../features/auth/sign_in_screen.dart';
 import '../../features/home/home_screen.dart';
-import '../../features/leaderboard/leaderboard_screen.dart';
 import '../../features/learn/learn_screen.dart';
 import '../../features/learn/lesson_player_screen.dart';
+import '../../features/market/market_screen.dart';
 import '../../features/onboarding/disclaimer_screen.dart';
 import '../../features/profile/certificate_screen.dart';
 import '../../features/profile/profile_screen.dart';
@@ -25,7 +25,7 @@ abstract final class Routes {
   static const String home = '/home';
   static const String learn = '/learn';
   static const String sandbox = '/sandbox';
-  static const String leaderboard = '/ranks';
+  static const String market = '/market';
   static const String profile = '/profile';
 
   /// The card/reel player, pushed over the tab shell so a lesson gets the
@@ -137,7 +137,7 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
           _branch(Routes.home, const HomeScreen()),
           _branch(Routes.learn, const LearnScreen()),
           _branch(Routes.sandbox, const SandboxScreen()),
-          _branch(Routes.leaderboard, const LeaderboardScreen()),
+          _branch(Routes.market, const MarketScreen()),
         ],
       ),
     ],

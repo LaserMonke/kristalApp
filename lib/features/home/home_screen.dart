@@ -31,12 +31,17 @@ class HomeScreen extends ConsumerWidget {
         actions: const <Widget>[ThemeToggleButton(), SizedBox(width: 4)],
       ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 28),
         children: <Widget>[
+          const _HomeHeader(),
+          const SizedBox(height: 20),
           const EngagementStrip(),
-          const SizedBox(height: 24),
-          Text('Up next', style: theme.textTheme.titleMedium),
-          const SizedBox(height: 8),
+          const SizedBox(height: 28),
+          const _SectionHeader(
+            icon: Icons.play_circle_outline,
+            label: 'Up next',
+          ),
+          const SizedBox(height: 10),
           path.when(
             loading: () => const _CardLoading(),
             error: (Object error, StackTrace _) => const _CardNote(
@@ -44,9 +49,12 @@ class HomeScreen extends ConsumerWidget {
             ),
             data: (List<LessonNode> nodes) => _NextLessonCard(nodes: nodes),
           ),
-          const SizedBox(height: 24),
-          Text('Certificate', style: theme.textTheme.titleMedium),
-          const SizedBox(height: 8),
+          const SizedBox(height: 28),
+          const _SectionHeader(
+            icon: Icons.workspace_premium_outlined,
+            label: 'Certificate',
+          ),
+          const SizedBox(height: 10),
           certificate.when(
             loading: () => const _CardLoading(),
             error: (Object error, StackTrace _) =>
@@ -54,7 +62,12 @@ class HomeScreen extends ConsumerWidget {
             data: (CertificateStatus status) =>
                 _CertificateProgressCard(status: status),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 28),
+          Divider(
+            height: 1,
+            color: theme.colorScheme.outline.withValues(alpha: 0.25),
+          ),
+          const SizedBox(height: 16),
           Text(
             Disclaimers.educationalOnly,
             textAlign: TextAlign.center,
@@ -64,6 +77,51 @@ class HomeScreen extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// The brand header at the top of the tab, in place of the old personal
+/// greeting — just the app's identity, kept quiet.
+class _HomeHeader extends StatelessWidget {
+  const _HomeHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+
+    return Text(
+      'OptionsSchool',
+      style: theme.textTheme.headlineSmall?.copyWith(
+        fontWeight: FontWeight.w700,
+      ),
+    );
+  }
+}
+
+/// A consistent section heading — a muted icon beside the label — used for the
+/// tab's stacked sections so they read as a set rather than loose text.
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+
+    return Row(
+      children: <Widget>[
+        Icon(icon, size: 18, color: theme.colorScheme.onSurfaceVariant),
+        const SizedBox(width: 8),
+        Text(
+          label,
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
     );
   }
 }

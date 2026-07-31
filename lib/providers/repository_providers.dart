@@ -6,15 +6,20 @@ import '../data/local/asset_lesson_repo.dart';
 import '../data/local/disclaimer_store.dart';
 import '../data/local/local_auth_repo.dart';
 import '../data/local/local_leaderboard_repo.dart';
+import '../data/local/local_market_repo.dart';
+import '../data/local/local_portfolio_repo.dart';
 import '../data/local/local_profile_repo.dart';
 import '../data/local/local_progress_repo.dart';
 import '../data/repositories/auth_repo.dart';
 import '../data/repositories/leaderboard_repo.dart';
 import '../data/repositories/lesson_repo.dart';
+import '../data/repositories/market_repo.dart';
+import '../data/repositories/portfolio_repo.dart';
 import '../data/repositories/profile_repo.dart';
 import '../data/repositories/progress_repo.dart';
 import '../data/supabase/supabase_auth_repo.dart';
 import '../data/supabase/supabase_leaderboard_repo.dart';
+import '../data/supabase/supabase_market_repo.dart';
 import '../data/supabase/supabase_profile_repo.dart';
 import '../data/supabase/supabase_progress_repo.dart';
 
@@ -119,6 +124,25 @@ final Provider<LeaderboardRepo> leaderboardRepoProvider =
         progress: ref.watch(progressRepoProvider),
       );
     });
+
+/// Delayed quotes for the practice market. With a backend, reads go through the
+/// `market-data-proxy` Edge Function (Finnhub key stays server-side, rule 8);
+/// without one, the synthetic walk keeps the tab usable offline.
+final Provider<MarketRepo> marketRepoProvider = Provider<MarketRepo>((Ref ref) {
+  final LocalMarketRepo offline = LocalMarketRepo();
+
+  final sb.SupabaseClient? client = ref.watch(supabaseClientProvider);
+  if (client == null) return offline;
+
+  return SupabaseMarketRepo(client: client, offline: offline);
+});
+
+/// The fake-money practice portfolio — device-local for now.
+final Provider<PortfolioRepo> portfolioRepoProvider = Provider<PortfolioRepo>((
+  Ref ref,
+) {
+  return LocalPortfolioRepo(ref.watch(sharedPreferencesProvider));
+});
 
 /// Lesson content. Bundled as an asset for now; a Supabase-backed
 /// implementation would let content ship without an app-store release.

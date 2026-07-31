@@ -215,44 +215,25 @@ void main() {
     );
   });
 
-  testWidgets('the basket tab explains what correlation is doing', (
+  testWidgets('the basket tab shows its correlation controls', (
     WidgetTester tester,
   ) async {
-    final ProviderContainer container = await openAdvanced(tester);
+    await openAdvanced(tester);
     await tester.tap(find.text('Basket'));
     await tester.pumpAndSettle();
 
     expect(find.text('Assets in the basket'), findsOneWidget);
     expect(find.text('Correlation between them'), findsOneWidget);
-    expect(find.textContaining('towards 1 in a crash'), findsOneWidget);
-
-    // Pushed to 1, it says diversification has stopped working.
-    container
-        .read(advancedSettingsProvider.notifier)
-        .update((AdvancedSettings s) => s.copyWith(basketCorrelation: 1));
-    await tester.pumpAndSettle();
-    expect(find.textContaining('move as one'), findsOneWidget);
   });
 
-  testWidgets('the Heston tab explains the sign of the correlation', (
+  testWidgets('the Heston tab shows its parameters', (
     WidgetTester tester,
   ) async {
-    final ProviderContainer container = await openAdvanced(tester);
+    await openAdvanced(tester);
     await tester.tap(find.text('Heston'));
     await tester.pumpAndSettle();
 
-    // The equity-like default is strongly negative.
-    expect(
-      find.textContaining('prices fall as volatility rises'),
-      findsOneWidget,
-    );
-
-    container.read(advancedSettingsProvider.notifier).update(
-          (AdvancedSettings s) =>
-              s.copyWith(heston: s.heston.copyWith(correlation: 0.7)),
-        );
-    await tester.pumpAndSettle();
-    expect(find.textContaining('unusual for shares'), findsOneWidget);
+    expect(find.text('Price / volatility correlation'), findsOneWidget);
   });
 
   testWidgets('the Heston vol-of-vol slider stops at the documented floor', (
