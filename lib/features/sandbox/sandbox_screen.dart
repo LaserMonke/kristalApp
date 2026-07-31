@@ -5,6 +5,7 @@ import '../../core/widgets/settings_button.dart';
 import '../../core/widgets/theme_toggle_button.dart';
 import '../../providers/lesson_providers.dart';
 import '../../providers/sandbox_tutorial_controller.dart';
+import 'advanced_pricer_view.dart';
 import 'single_option_pricer_view.dart';
 import 'strategy_pricer_view.dart';
 import 'widgets/sandbox_tutorial.dart';
@@ -42,7 +43,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> {
     final bool unlocked = strategiesUnlocked.value ?? false;
 
     return DefaultTabController(
-      length: 2,
+      length: 3,
       child: Scaffold(
         appBar: AppBar(
           leading: const SettingsButton(),
@@ -56,6 +57,8 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> {
             const SizedBox(width: 4),
           ],
           bottom: TabBar(
+            isScrollable: true,
+            tabAlignment: TabAlignment.start,
             tabs: <Widget>[
               const Tab(text: 'Single option'),
               Tab(
@@ -70,6 +73,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> {
                   ],
                 ),
               ),
+              const Tab(text: 'Advanced'),
             ],
           ),
         ),
@@ -77,6 +81,11 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> {
           children: <Widget>[
             const SingleOptionPricerView(),
             unlocked ? const StrategyPricerView() : const StrategyLockedPanel(),
+            // Phase 8's exotics. Not gated behind the Strategies lesson: a
+            // learner who wants to look at what a barrier option is should be
+            // able to, and the tab explains each instrument in plain words
+            // before showing a number. Phase 9 puts the paywall here.
+            const AdvancedPricerView(),
           ],
         ),
       ),
