@@ -44,6 +44,7 @@ dependencies:
   supabase_flutter: ^2.16.0
   flutter_dotenv: ^6.0.1
   http: ^1.6.0
+  audioplayers: ^6.8.1
 
 dev_dependencies:
   flutter_test:
@@ -76,6 +77,9 @@ flutter:
   # editing the JSON below, not the engine.
   assets:
     - assets/lessons/
+    # The intro chime, synthesised for this app (see DEPLOY.md) — not sampled
+    # from anywhere.
+    - assets/audio/
     # Supabase URL + publishable key (flutter_dotenv reads it as an asset).
     # Gitignored; see .env.example. Safe to bundle ONLY because RLS is on —
     # the service_role key never goes in here.

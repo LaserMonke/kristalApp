@@ -14,6 +14,7 @@ import '../../features/profile/profile_screen.dart';
 import '../../features/quiz/quiz_screen.dart';
 import '../../features/sandbox/sandbox_screen.dart';
 import '../../features/shell/app_shell.dart';
+import '../../features/splash/intro_screen.dart';
 import '../../providers/auth_controller.dart';
 import '../../providers/onboarding_controller.dart';
 
@@ -54,6 +55,7 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
   final ValueNotifier<int> refresh = ValueNotifier<int>(0);
   ref.listen(authControllerProvider, (_, _) => refresh.value++);
   ref.listen(onboardingControllerProvider, (_, _) => refresh.value++);
+  ref.listen(introCompleteProvider, (_, _) => refresh.value++);
   ref.onDispose(refresh.dispose);
 
   return GoRouter(
@@ -66,8 +68,11 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
       final String here = state.matchedLocation;
 
       // Hold on the splash until both persisted values have loaded, so we
-      // never flash the sign-in screen at an already-signed-in learner.
-      if (accepted.isLoading || auth.isLoading) {
+      // never flash the sign-in screen at an already-signed-in learner — and
+      // until the opening sequence has finished, so it is never cut off
+      // halfway. A tap skips the intro, which flips the same flag.
+      final bool introDone = ref.read(introCompleteProvider);
+      if (accepted.isLoading || auth.isLoading || !introDone) {
         return here == Routes.splash ? null : Routes.splash;
       }
 
@@ -92,7 +97,7 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
     routes: <RouteBase>[
       GoRoute(
         path: Routes.splash,
-        builder: (_, _) => const _SplashScreen(),
+        builder: (_, _) => const IntroScreen(),
       ),
       GoRoute(
         path: Routes.disclaimer,
@@ -150,19 +155,3 @@ StatefulShellBranch _branch(String path, Widget child) {
   );
 }
 
-class _SplashScreen extends StatelessWidget {
-  const _SplashScreen();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(
-        child: SizedBox(
-          height: 28,
-          width: 28,
-          child: CircularProgressIndicator(strokeWidth: 2.5),
-        ),
-      ),
-    );
-  }
-}
