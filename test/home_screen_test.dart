@@ -143,6 +143,13 @@ void main() {
       },
     );
 
+    // The hero fills the top of the tab, so the certificate card sits below
+    // the fold on a test-sized surface and the ListView has not built it yet.
+    await tester.scrollUntilVisible(
+      find.text('0 of 2 lessons finished'),
+      120,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('0 of 2 lessons finished'), findsOneWidget);
 
     await tester.tap(find.text('0 of 2 lessons finished'));

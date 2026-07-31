@@ -9,7 +9,7 @@ import '../../core/widgets/settings_button.dart';
 import '../../core/widgets/theme_toggle_button.dart';
 import '../../providers/engagement_providers.dart';
 import '../../providers/lesson_providers.dart';
-import 'widgets/engagement_strip.dart';
+import 'widgets/home_hero.dart';
 
 /// The landing tab: who you are, where you stand (streak, points, level),
 /// what to do next, and how far the certificate is. Everything here is a
@@ -33,10 +33,8 @@ class HomeScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 14, 16, 28),
         children: <Widget>[
-          const _HomeHeader(),
-          const SizedBox(height: 20),
-          const EngagementStrip(),
-          const SizedBox(height: 28),
+          const HomeHero(),
+          const SizedBox(height: 24),
           const _SectionHeader(
             icon: Icons.play_circle_outline,
             label: 'Up next',
@@ -76,24 +74,6 @@ class HomeScreen extends ConsumerWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// The brand header at the top of the tab, in place of the old personal
-/// greeting — just the app's identity, kept quiet.
-class _HomeHeader extends StatelessWidget {
-  const _HomeHeader();
-
-  @override
-  Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-
-    return Text(
-      'OptionsSchool',
-      style: theme.textTheme.headlineSmall?.copyWith(
-        fontWeight: FontWeight.w700,
       ),
     );
   }
