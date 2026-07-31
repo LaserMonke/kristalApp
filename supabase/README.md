@@ -1,11 +1,49 @@
 # Applying the schema
 
-Two files, and **order matters** — Phase 7 builds on the tables Phase 6 creates:
+Three files, and **order matters** — each builds on the last:
 
 | # | File | Creates |
 |---|------|---------|
 | 1 | `migrations/20260730120000_phase6_init.sql` | `profiles`, `lesson_progress`, `streaks`, RLS policies, sign-up trigger, `username_available()` |
 | 2 | `migrations/20260730130000_phase7_leaderboard.sql` | `leaderboard_bots`, `leaderboard_page()`, `leaderboard_standing()` |
+| 3 | `migrations/20260801090000_phase7_lockdown.sql` | **Security fix.** Closes an exposure in file 2 — see below. Apply it. |
+
+## File 3 is not optional
+
+File 2 intended the leaderboard functions to require a signed-in caller and
+wrote `revoke all on function ... from public` for each. That does nothing on a
+Supabase project.
+
+Supabase ships with `alter default privileges in schema public grant all on
+functions to anon, authenticated, service_role`, so every new function in
+`public` gets an **explicit** grant to `anon` when it is created. Revoking from
+the pseudo-role `PUBLIC` does not remove an explicit grant to a named role, so
+`anon` kept its EXECUTE and the revoke was theatre.
+
+The effect, confirmed against a live project: anyone holding the publishable key
+— which ships in every copy of the app — could call `leaderboard_page` **without
+signing in** and read every learner's username, points and auth user id.
+`leaderboard_scores`, commented as internal, was open the same way.
+
+RLS was never protecting these. `SECURITY DEFINER` bypasses RLS deliberately;
+that is the whole reason those functions exist. The grant was the only control,
+and it had not been applied.
+
+File 3 revokes from `anon` **by name**, adds an `auth.uid()` check inside each
+function so a stray grant cannot re-expose them, and stops returning other
+learners' user ids entirely — the client only ever needed its own, to highlight
+"you" in the list.
+
+**If you write another function in `public`, assume `anon` can call it** until
+you have revoked from `anon` by name and verified it. Verification, with only
+the publishable key:
+
+    curl -s -X POST "$URL/rest/v1/rpc/leaderboard_page" \
+      -H "apikey: $KEY" -H "Content-Type: application/json" \
+      -d '{"period":"all_time"}'
+
+Before file 3 this returned every learner. After it, it must return a `42501`
+permission error.
 
 Both are idempotent: re-running them is safe and is the normal way to pick up a change.
 

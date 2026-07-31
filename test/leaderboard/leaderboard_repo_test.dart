@@ -123,6 +123,64 @@ void main() {
         ),
       );
     });
+
+    /// The server refuses callers without a session (42501). It has to check
+    /// that itself: these are SECURITY DEFINER functions, so RLS does not
+    /// apply to them, and the grants alone turned out not to be enough — see
+    /// `supabase/migrations/20260801090000_phase7_lockdown.sql`.
+    test('a refused unauthenticated call asks the learner to sign in', () async {
+      final SupabaseLeaderboardRepo repo = _repo(
+        (http.BaseRequest request) => _json(<String, dynamic>{
+          'code': '42501',
+          'message': 'Standings are only available to signed-in learners.',
+        }, status: 403),
+      );
+
+      await expectLater(
+        repo.load(period: LeaderboardPeriod.allTime),
+        throwsA(
+          isA<LeaderboardException>().having(
+            (LeaderboardException e) => e.message,
+            'message',
+            contains('Sign in'),
+          ),
+        ),
+      );
+    });
+
+    /// Only the caller's own id comes back now; every other row's is null.
+    /// The row for "me" must still be identifiable, and nobody else's must be.
+    test('withheld user ids do not break the "this is you" highlight', () async {
+      final SupabaseLeaderboardRepo repo = _repo(
+        (http.BaseRequest request) => _json(<dynamic>[
+          <String, dynamic>{
+            'rank': 1,
+            'user_id': null,
+            'username': 'someone-else',
+            'points': 90,
+            'is_bot': false,
+          },
+          <String, dynamic>{
+            'rank': 2,
+            'user_id': 'me-123',
+            'username': 'me',
+            'points': 40,
+            'is_bot': false,
+          },
+        ]),
+      );
+
+      final LeaderboardBoard board = await repo.load(
+        period: LeaderboardPeriod.allTime,
+      );
+
+      expect(board.entries, hasLength(2));
+      expect(board.entries.first.userId, isNull);
+      expect(board.entries.first.isMe('me-123'), isFalse);
+      expect(board.entries.last.isMe('me-123'), isTrue);
+      // A withheld id must never accidentally match a null current user.
+      expect(board.entries.first.isMe(null), isFalse);
+    });
   });
 
   group('local leaderboard (no server)', () {

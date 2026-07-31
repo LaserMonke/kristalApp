@@ -12,6 +12,12 @@ import 'supabase_tables.dart';
 /// display name, a point total and an is_bot flag — never a profile or progress
 /// row — so the RLS lockdown from Phase 6 stays intact.
 ///
+/// They also require a session. RLS cannot protect them (SECURITY DEFINER
+/// bypasses it by design, which is the point), so the server checks
+/// `auth.uid()` itself and refuses an anonymous caller with `42501` — see
+/// `supabase/migrations/20260801090000_phase7_lockdown.sql` for why the grants
+/// alone turned out not to be enough.
+///
 /// Not cached offline, deliberately: a stale ranking presented as current would
 /// be a lie about other people's scores. With no connection the screen says it
 /// cannot reach the server (CLAUDE.md rule 8).
@@ -62,6 +68,14 @@ class SupabaseLeaderboardRepo implements LeaderboardRepo {
         // The function is missing: the Phase 7 migration has not been applied.
         throw const LeaderboardException(
           'Standings aren’t set up on this backend yet.',
+        );
+      }
+      if (error is sb.PostgrestException && error.code == '42501') {
+        // The server refused an unauthenticated caller. In normal use the
+        // learner is signed in, so this means the session has lapsed rather
+        // than that anything is broken.
+        throw const LeaderboardException(
+          'Sign in to see how you compare with other learners.',
         );
       }
       throw const LeaderboardException('Couldn’t load standings.');

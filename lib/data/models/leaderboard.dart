@@ -38,7 +38,12 @@ class LeaderboardEntry {
   /// forbids presenting a bot score as a real person.
   final bool isBot;
 
-  /// Null for bots and for entries whose id the server withheld.
+  /// The caller's OWN id, and null for every other row.
+  ///
+  /// The server deliberately withholds other learners' ids: highlighting
+  /// "you" in the list is the only thing the client ever needed one for, so
+  /// sending the rest would be handing out stable identifiers for no purpose
+  /// (CLAUDE.md rule 6). Null for bots, which have no user at all.
   final String? userId;
 
   bool isMe(String? currentUserId) =>
