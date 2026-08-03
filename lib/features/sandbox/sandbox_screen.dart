@@ -14,7 +14,7 @@ import 'widgets/strategy_locked_panel.dart';
 /// The Sandbox tab — the Phase 4 interactive pricer. "Single option" prices
 /// one call or put live; "Strategy" composes named multi-leg strategies and
 /// shows the combined payoff, once the Strategies lesson has unlocked it.
-/// Phase 9 adds the fake-money practice market behind these.
+/// "Advanced" is Phase 8's exotics. All three are free.
 class SandboxScreen extends ConsumerStatefulWidget {
   const SandboxScreen({super.key});
 
@@ -84,7 +84,11 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> {
             // Phase 8's exotics. Not gated behind the Strategies lesson: a
             // learner who wants to look at what a barrier option is should be
             // able to, and the tab explains each instrument in plain words
-            // before showing a number. Phase 9 puts the paywall here.
+            // before showing a number.
+            //
+            // Not behind the paywall either. This tab is the clearest evidence
+            // that the teaching is real, and it serves the app's stated main
+            // goal directly; the practice market is the paid feature instead.
             const AdvancedPricerView(),
           ],
         ),

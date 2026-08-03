@@ -5,12 +5,14 @@ import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 import '../data/local/asset_lesson_repo.dart';
 import '../data/local/disclaimer_store.dart';
 import '../data/local/local_auth_repo.dart';
+import '../data/local/local_entitlement_repo.dart';
 import '../data/local/local_leaderboard_repo.dart';
 import '../data/local/local_market_repo.dart';
 import '../data/local/local_portfolio_repo.dart';
 import '../data/local/local_profile_repo.dart';
 import '../data/local/local_progress_repo.dart';
 import '../data/repositories/auth_repo.dart';
+import '../data/repositories/entitlement_repo.dart';
 import '../data/repositories/leaderboard_repo.dart';
 import '../data/repositories/lesson_repo.dart';
 import '../data/repositories/market_repo.dart';
@@ -149,3 +151,20 @@ final Provider<PortfolioRepo> portfolioRepoProvider = Provider<PortfolioRepo>((
 final Provider<LessonRepo> lessonRepoProvider = Provider<LessonRepo>(
   (Ref ref) => AssetLessonRepo(),
 );
+
+/// The practice-market unlock — the app's only paid feature.
+///
+/// Always the local stub today: `purchases_flutter` is not a dependency yet,
+/// because the App Store and Play products it would talk to do not exist
+/// (DEPLOY.md, "Phase 9b"). When they do, the RevenueCat implementation is
+/// chosen here on whether the keys are present, exactly as
+/// [marketRepoProvider] chooses on whether Supabase is configured — and
+/// nothing above this line changes.
+final Provider<EntitlementRepo> entitlementRepoProvider =
+    Provider<EntitlementRepo>((Ref ref) {
+      final LocalEntitlementRepo repo = LocalEntitlementRepo(
+        ref.watch(sharedPreferencesProvider),
+      );
+      ref.onDispose(repo.dispose);
+      return repo;
+    });

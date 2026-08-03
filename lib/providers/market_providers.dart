@@ -4,16 +4,23 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../data/models/entitlement.dart';
 import '../data/models/market.dart';
+import 'entitlement_providers.dart';
 import 'repository_providers.dart';
 
 /// Whether the paid practice market is unlocked.
 ///
-/// Hard-wired ON while the paywall is a separate, later step (DEPLOY.md,
-/// "Phase 9b — Paywall"). When that lands, this provider reads the real
-/// entitlement instead — and nothing else in the market feature has to change,
-/// because everything already gates on it.
-final Provider<bool> marketUnlockedProvider = Provider<bool>((Ref ref) => true);
+/// Asynchronous because the answer comes from the store. The loading state is
+/// deliberately preserved rather than collapsed to `false`: defaulting to
+/// locked would flash the paywall at someone who has already paid, every time
+/// they open the tab.
+final Provider<AsyncValue<bool>> marketUnlockedProvider =
+    Provider<AsyncValue<bool>>((Ref ref) {
+      return ref
+          .watch(entitlementControllerProvider)
+          .whenData((Entitlement entitlement) => entitlement.unlocked);
+    });
 
 /// The symbols this learner follows. Starts at [kDefaultWatchlist] and is
 /// theirs to change — searching for a ticker and trading it adds it here.

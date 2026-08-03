@@ -230,23 +230,53 @@ DONE in Phase 6 — this section is now a description of what is wired, not a to
    no fees — and labelled as such. Shares only for now; option-contract trading (priced with
    the Phase 8 BSM engine) is the natural next increment.
 
-   PHASE 9b — PAYWALL (deferred, still to do). The practice market and the advanced pricer are
-   the intended paid unlock, but the paywall was split into its own step. It is wired for a
-   near one-line drop-in: everything already gates on `marketUnlockedProvider`
-   (`lib/providers/market_providers.dart`), currently hard-wired `true`. To add it:
-     a. Choose the store layer — `in_app_purchase` (official; you validate receipts) or
-        `purchases_flutter`/RevenueCat (handles receipts, restore, entitlements). RevenueCat
-        is the lighter path for a solo project.
-     b. Create the product(s) in App Store Connect + Play Console (a non-consumable unlock or a
-        subscription). Cannot be done from code; needs the developer accounts.
-     c. Add an `EntitlementRepo` (interface + store impl + a local dev stub that just flips a
-        bool) wired in `repository_providers.dart` like the rest, and make
-        `marketUnlockedProvider` read it. Point the Advanced pricer tab at the same gate.
-     d. Build a `PaywallScreen` shown when locked (`MarketView` already renders a
-        `_LockedPlaceholder` when the gate is off); include Restore Purchases; state exactly
-        what unlocks; NO profit-promise copy (rule 3).
-     e. Minors + purchases (rule 6) and no purchase pressure (rule 9) need a real review before
-        release. Core learning (lessons + Q&A + leaderboard) stays free.
+   PHASE 9b — PAYWALL. The app side is BUILT; the store side is not, and cannot be from code.
+
+   Decisions, settled 2026-08-03 and baked into the code — changing any of them is a code
+   change, and changing the entitlement id after launch orphans existing purchasers:
+     - Paid feature: the PRACTICE MARKET ONLY. The advanced pricer stays free.
+     - Product: a one-time non-consumable at roughly $5. Not a subscription.
+     - Entitlement identifier: `practice_market`. Offering `default`, package type Lifetime.
+     - The unlock is tied to the signed-in Supabase account, not the device.
+     - Store layer: RevenueCat (`purchases_flutter`).
+
+   Built: `EntitlementRepo` (lib/data/repositories/) with `LocalEntitlementRepo` as the
+   no-store stub, `entitlementControllerProvider` (lib/providers/entitlement_providers.dart),
+   `marketUnlockedProvider` now an `AsyncValue<bool>` off real state, and `PaywallView`
+   (lib/features/market/) with Restore Purchase, an Ask-to-Buy pending state, and no
+   hardcoded price. Tests: test/market/paywall_test.dart.
+
+   The stub starts UNLOCKED on purpose. A build with no store cannot verify a purchase, so
+   locking would leave a tab nobody could open; a shipped build carries RevenueCat keys and
+   is handed the store-backed repo instead. That choice lives in `entitlementRepoProvider`.
+
+   Still to do, in order:
+     a. Apple Developer Program ($99/yr) — enrol as Individual, then sign the Paid Applications
+        Agreement and complete banking + tax in App Store Connect → Business. IAP does not
+        function until that agreement is active. NOTE: iOS builds need macOS; this repo's
+        owner is on Windows, so budget for a Mac or a cloud-Mac CI (Codemagic) before paying.
+     b. Google Play Console ($25 one-time) — plus the payments/merchant profile. Personal
+        accounts also need 12 testers opted in for 14 consecutive days on a closed test before
+        production access. That is usually the longest lead time; start it first.
+     c. Create the non-consumable in both stores. Suggested id, same on both:
+        `com.optionsschool.optionsschool.practice_market`.
+     d. RevenueCat project: add both apps (bundle id / package name are both
+        `com.optionsschool.optionsschool`), upload Apple's In-App Purchase Key (.p8) and
+        Google's service-account JSON, wire both stores' server notifications, then create the
+        products, the `practice_market` entitlement and the Lifetime package.
+     e. Add `purchases_flutter` and a `RevenueCatEntitlementRepo` behind the existing
+        interface; pick it in `entitlementRepoProvider` on whether the keys are present, the
+        way `marketRepoProvider` picks on Supabase. Public SDK keys go in `.env`
+        (`REVENUECAT_APPLE_KEY` / `REVENUECAT_GOOGLE_KEY`) — the SECRET key never ships.
+     f. Add the terms-of-use and privacy-policy links to `PaywallView`. Deliberately absent
+        rather than stubbed, because the URLs do not exist yet (Phase 10). RevenueCat is a
+        third-party processor and must be named in that policy.
+     g. Sandbox testing needs real devices — an App Store Connect Sandbox Tester on iOS, a Play
+        licence tester on an internal-testing build on Android. The iOS simulator with a
+        StoreKit config file will drive the UI but will not reliably reach RevenueCat.
+     h. Minors + purchases (rule 6) and no purchase pressure (rule 9) still need a real review
+        before release. The store rating is 16+, which clears COPPA but not GDPR-K everywhere
+        (EU consent age varies 13–16 by member state). Core learning stays free.
 10. Still to do: publish the privacy policy (Phase 10) — data now leaves the device and
     usernames plus point totals are visible to other learners on the leaderboard, so the
     policy is a release requirement. Settings → "Data we collect" discloses both.

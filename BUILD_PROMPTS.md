@@ -6,7 +6,7 @@ Run in order. After each phase: flutter run on the iOS simulator, review, then g
 
 Stack: Flutter + Dart. One codebase → iOS + Android. Server: Supabase (added in Phase 6).
 
-STATUS (last updated 2026-07-31): Phases 0–8 are DONE. Phase 9 is PARTLY done — the practice market shipped, the paywall did not (see Phase 9 below). Then PHASE 10.
+STATUS (last updated 2026-08-03): Phases 0–8 are DONE. Phase 9 is PARTLY done — the practice market shipped, and the paywall's app side now exists but cannot talk to a real store yet (see Phase 9 below). Then PHASE 10.
 
 ────────────────────────────────────────────────────────────────────────────── PREREQUISITES — DONE ──────────────────────────────────────────────────────────────────────────────
 
@@ -50,8 +50,9 @@ Shipped in six parts: Monte Carlo core with barrier KO/KI and basket options (mo
 
 PHASE 9 — Paywall + fake-money practice market — PARTLY DONE (commit 5636420)
 Shipped: the Market tab — a fake-money practice options market (lib/features/market/market_view.dart, lib/data/models/market.dart, market_repo.dart, portfolio_repo.dart, supabase_market_repo.dart, lib/providers/market_providers.dart), simulated P&L, a simulation distribution chart for the advanced pricer, and supabase/functions/market-data-proxy/index.ts so the data API key stays server-side. Market took Ranks' slot in the bottom nav.
-NOT done — the paywall. There is no in_app_purchase / RevenueCat dependency, and entitlement is hard-wired ON (market_providers.dart:10, market_view.dart:17, sandbox_screen.dart:87 all mark the spot). DEPLOY.md calls the remainder "Phase 9b — Paywall".
-"Add the in-app-purchase paywall (in_app_purchase or RevenueCat) unlocking the advanced pricer and the practice market. Replace the hard-wired entitlement provider with the real purchase state. Be clear about what payment unlocks. Keep the learning core free per CLAUDE.md."
+PHASE 9b — the paywall's app side — DONE. Decided first: the paid feature is the PRACTICE MARKET ONLY (the advanced pricer stays free — it is the best evidence the teaching is real), the unlock is a one-time non-consumable at ~$5, tied to the signed-in account rather than the device, entitlement id `practice_market`, store layer RevenueCat.
+Shipped: `EntitlementRepo` (interface) + `LocalEntitlementRepo` (the no-store stub) + `entitlementControllerProvider`, `marketUnlockedProvider` now an AsyncValue read from real state, and `PaywallView` replacing the old `_LockedPlaceholder` — with restore, a pending/Ask-to-Buy state, and no hardcoded price. 15 tests in test/market/paywall_test.dart.
+STILL TO DO before this can charge anyone: the Apple ($99/yr, needs a Mac or a cloud-Mac CI for the iOS build) and Google Play ($25) developer accounts, the non-consumable product in each store, the RevenueCat project, then `purchases_flutter` + a `RevenueCatEntitlementRepo` behind the same interface (chosen in `entitlementRepoProvider` on whether the keys are present, exactly as marketRepoProvider chooses on Supabase). Also the terms-of-use and privacy-policy links on the paywall, which need live URLs (Phase 10). Note Google's 12-testers-for-14-days rule before a personal account gets production access — start that early.
 
 PHASE 10 — Personalization, polish, release prep — NEXT AFTER 9b "Personalize by education level: lesson order/depth, Q&A difficulty, which advanced topics surface for people with higher education, and notification content. Polish loading/empty/error states and accessibility (Semantics labels, captions); confirm disclaimers at onboarding and in Settings. Prepare release: app icons/splash, flutter build appbundle and flutter build ipa, privacy policy link — make it fit Apple's and Google's regulations and safety requirements so it is ready to publish. Full publishing + infra steps are in DEPLOY.md."
 

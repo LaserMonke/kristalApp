@@ -9,6 +9,7 @@ import '../../core/widgets/disclaimer_text.dart';
 import '../../data/models/market.dart';
 import '../../providers/market_providers.dart';
 import '../../providers/repository_providers.dart';
+import 'paywall_view.dart';
 
 /// The Phase 9 fake-money practice market (shares).
 ///
@@ -17,9 +18,9 @@ import '../../providers/repository_providers.dart';
 /// number is ever presented as a live, tradable quote (CLAUDE.md rules 4 & 8).
 /// Fills are idealised: last price, no spread, no fees — stated plainly.
 ///
-/// The whole tab is gated on [marketUnlockedProvider]. That is hard-wired open
-/// while the paywall is a separate step (DEPLOY.md "Phase 9b"); when it lands,
-/// only that provider changes.
+/// The whole tab is gated on [marketUnlockedProvider] — the app's one paid
+/// feature. Locked shows [PaywallView] in this slot; the tab itself never
+/// disappears from the nav.
 class MarketView extends ConsumerWidget {
   const MarketView({super.key});
 
@@ -36,9 +37,12 @@ class MarketView extends ConsumerWidget {
       if (p != null) _reconcile(context, ref, p);
     });
 
-    if (!ref.watch(marketUnlockedProvider)) {
-      return const _LockedPlaceholder();
-    }
+    // Waiting on the store is its own state. Falling back to "locked" would
+    // flash the paywall at a learner who has already paid, every single time
+    // they open this tab.
+    final AsyncValue<bool> unlocked = ref.watch(marketUnlockedProvider);
+    if (unlocked.isLoading) return const _CardLoading();
+    if (unlocked.value != true) return const PaywallView();
 
     final AsyncValue<MarketSnapshot> quotes = ref.watch(quotesProvider);
     final bool synthetic = ref.watch(feedIsSyntheticProvider);
@@ -1482,17 +1486,6 @@ String _shortDate(DateTime d) {
     'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
   ];
   return '${months[d.month - 1]} ${d.day}';
-}
-
-class _LockedPlaceholder extends StatelessWidget {
-  const _LockedPlaceholder();
-
-  @override
-  Widget build(BuildContext context) {
-    // Only shown once the paywall step (DEPLOY.md "Phase 9b") flips the
-    // entitlement provider off for non-subscribers. Until then, unreachable.
-    return const _Note('The practice market is a paid feature.');
-  }
 }
 
 class _SectionLabel extends StatelessWidget {
