@@ -90,9 +90,16 @@ final Provider<List<StrategyLeg>> singleOptionLegsProvider =
     Provider<List<StrategyLeg>>((Ref ref) {
       final MarketEnvironment env = ref.watch(marketEnvironmentProvider);
       final SingleOptionState option = ref.watch(singleOptionProvider);
+      // Price the ENTRY premium at-the-money (spot = strike), not at the live
+      // spot. If it re-priced with the Spot slider, the premium would rise in
+      // lock-step with the underlying and the position would sit forever at
+      // its own break-even — the marker could never cross into profit. Fixing
+      // it turns the Spot slider into "where the underlying finishes", so the
+      // learner can drag it past break-even and watch the payoff go green.
+      final MarketEnvironment entry = env.copyWith(spot: option.strike);
       return <StrategyLeg>[
         pricedLeg(
-          env,
+          entry,
           kind: option.type == OptionType.call ? LegKind.call : LegKind.put,
           side: LegSide.long,
           strike: option.strike,

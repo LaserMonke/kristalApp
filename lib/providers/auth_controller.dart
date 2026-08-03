@@ -32,7 +32,10 @@ class AuthController extends AsyncNotifier<AppUser?> {
     required String password,
     required EducationLevel educationLevel,
   }) async {
-    state = const AsyncValue<AppUser?>.loading();
+    // Deliberately NO transient `loading` here: the sign-in screen shows its
+    // own progress spinner, and flipping the controller to loading would trip
+    // the router's startup gate (`auth.isLoading`) and bounce this screen to
+    // the intro mid-submit. The guard sets data on success, error on failure.
     state = await AsyncValue.guard<AppUser?>(
       () => _repo.signUp(
         username: username,
@@ -46,7 +49,7 @@ class AuthController extends AsyncNotifier<AppUser?> {
     required String username,
     required String password,
   }) async {
-    state = const AsyncValue<AppUser?>.loading();
+    // No transient `loading` — see the note in [signUp].
     state = await AsyncValue.guard<AppUser?>(
       () => _repo.signIn(username: username, password: password),
     );

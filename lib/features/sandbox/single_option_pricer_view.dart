@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -29,8 +31,33 @@ class SingleOptionPricerView extends ConsumerWidget {
     );
     final BsmQuote quote = ref.watch(singleOptionQuoteProvider);
 
-    final double spotMin = (env.spot * 0.5).clamp(1, env.spot);
-    final double spotMax = env.spot * 1.5;
+    // The plotted range must include the STRIKE and the break-even, not just
+    // the spot. Centring on the spot alone means that as soon as the spot is
+    // dragged away from the strike, the profitable side of the option falls off
+    // the edge and the whole visible curve reads as a flat loss.
+    // Entry premium is the at-the-money price (spot = strike), matching
+    // singleOptionLegsProvider — so the plotted break-even agrees with the
+    // drawn curve, and neither moves as the Spot slider does.
+    final double premium = bsmQuote(
+      option.type,
+      BsmInputs(
+        spot: option.strike,
+        strike: option.strike,
+        rate: env.rate,
+        volatility: env.volatility,
+        timeToExpiry: env.timeToExpiry,
+      ),
+    ).price;
+    final double breakEven = option.type == OptionType.call
+        ? option.strike + premium
+        : option.strike - premium;
+    final double focusLo =
+        math.min(env.spot, math.min(option.strike, breakEven));
+    final double focusHi =
+        math.max(env.spot, math.max(option.strike, breakEven));
+    final double margin = math.max((focusHi - focusLo) * 0.4, env.spot * 0.3);
+    final double spotMin = (focusLo - margin).clamp(1, focusLo);
+    final double spotMax = focusHi + margin;
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
@@ -44,7 +71,8 @@ class SingleOptionPricerView extends ConsumerWidget {
                 Text('Payoff at expiry', style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 4),
                 Text(
-                  'If bought today at the price below and held to expiry.',
+                  'Bought at the money, held to expiry. Drag Spot to move '
+                  'where the underlying finishes.',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),

@@ -197,7 +197,13 @@ class SupabaseAuthRepo implements AuthRepo {
       case sb.AuthChangeEvent.userUpdated:
         final sb.User? authUser = authState.session?.user;
         if (authUser == null) {
-          _emit(null);
+          // A null session here is startup with nobody signed in — emit that
+          // ONCE. It must never undo a sign-in that just happened: the
+          // `initialSession` event can arrive asynchronously, after an
+          // interactive sign-in has already emitted a user, and downgrading
+          // back to null is exactly the "have to sign in twice" bug. Only an
+          // explicit `signedOut` ends an established session.
+          if (_currentUser == null) _emit(null);
           return;
         }
         // Sign-in/sign-up already emitted a fully resolved user; re-resolving

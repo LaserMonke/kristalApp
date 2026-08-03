@@ -129,7 +129,32 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
       GoRoute(
         path: Routes.profile,
         parentNavigatorKey: _rootKey,
-        builder: (_, _) => const ProfileScreen(),
+        // Settings opens from the gear in the top-LEFT, so it slides in from
+        // the left — the reverse of the platform-default right-to-left push.
+        pageBuilder: (BuildContext context, GoRouterState state) =>
+            CustomTransitionPage<void>(
+              key: state.pageKey,
+              child: const ProfileScreen(),
+              transitionsBuilder:
+                  (
+                    BuildContext context,
+                    Animation<double> animation,
+                    Animation<double> secondaryAnimation,
+                    Widget child,
+                  ) => SlideTransition(
+                    position:
+                        Tween<Offset>(
+                          begin: const Offset(-1, 0),
+                          end: Offset.zero,
+                        ).animate(
+                          CurvedAnimation(
+                            parent: animation,
+                            curve: Curves.easeOutCubic,
+                          ),
+                        ),
+                    child: child,
+                  ),
+            ),
       ),
       StatefulShellRoute.indexedStack(
         builder:
