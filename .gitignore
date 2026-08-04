@@ -52,3 +52,9 @@ app.*.map.json
 
 # Supabase CLI local scratch state (project link, temp files)
 supabase/.temp/
+
+# Android release signing — passwords and the upload key itself.
+# Committing either of these hands out the ability to sign as you.
+android/key.properties
+*.jks
+*.keystore

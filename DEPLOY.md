@@ -297,6 +297,47 @@ DONE in Phase 6 — this section is now a description of what is wired, not a to
 - Pre-submit checklist: disclaimers visible at onboarding + Settings; privacy policy URL live;
   delayed-data labels present; no profit-promise copy anywhere; content reviewed by an expert.
 
+### 5a. Android release signing
+`android/app/build.gradle.kts` signs release builds with a real keystore when
+`android/key.properties` exists, and falls back to DEBUG keys with a loud warning when it
+does not — so a teammate without the keystore can still `flutter run --release`, but nobody
+ships a debug-signed bundle by accident. Play rejects debug-signed uploads outright.
+
+One-time setup on the machine that builds releases:
+
+    keytool -genkey -v -keystore upload-keystore.jks -storetype JKS \
+      -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+
+`keytool` ships with the JDK. On this Windows machine that is Android Studio's bundled JDK,
+which is NOT on PATH — either use the full path
+(`"C:\Program Files\Android\Android Studio\jbr\bin\keytool.exe"`) or set JAVA_HOME first.
+
+Then move `upload-keystore.jks` OUTSIDE the repo, copy `android/key.properties.example` to
+`android/key.properties`, and fill in the four values. Both `key.properties` and `*.jks` are
+gitignored; committing either hands out the ability to sign as you.
+
+BACK THE KEYSTORE UP, somewhere that is not this laptop. Play binds the upload key to the
+listing. Losing it means requesting an upload-key reset from Google, which takes days.
+Enrol in Play App Signing (the default for new apps) so Google holds the app signing key and
+your upload key stays replaceable.
+
+### 5b. Windows build prerequisite
+`flutter build appbundle` fails on Windows with "Building with plugins requires symlink
+support" until Developer Mode is on: `start ms-settings:developers`. This blocks building
+ANY release bundle from this machine, so do it before anything else.
+
+### 5c. Account deletion — REQUIRED by Play, NOT BUILT
+Play requires any app that lets users create an account to offer BOTH an in-app way to
+delete it AND a publicly reachable web URL for deletion requests. `AuthRepo` currently has
+`signUp`/`signIn`/`signOut`/`restoreSession` and no delete; Settings offers "Reset learning
+progress" (wipes progress, keeps the account) and "Sign out". Neither is deletion.
+
+What it needs: a `deleteAccount()` on `AuthRepo`, a SECURITY DEFINER Postgres function that
+deletes the caller's `auth.users` row so the existing FK cascades clear profile/progress/
+streak rows, a confirming destructive-action dialog in `profile_screen.dart` that is honest
+that it cannot be undone, and a public deletion-request page. Note the account cannot be
+recovered afterwards and there is no email on file to verify a change of mind.
+
 ════════════════════════════════════════════════════════════════════════════════
 RECOMMENDED PATH (tl;dr)
 ════════════════════════════════════════════════════════════════════════════════

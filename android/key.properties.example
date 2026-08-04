@@ -1,0 +1,20 @@
+# Copy to android/key.properties and fill in. That file is gitignored —
+# it holds the passwords to your Play upload key and must never be committed.
+#
+# Generate the keystore first (run this from the repo root, one time only):
+#
+#   keytool -genkey -v -keystore upload-keystore.jks -storetype JKS \
+#     -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+#
+# It will prompt for a password and for name/organisation details. Then move
+# upload-keystore.jks somewhere OUTSIDE the repo and point storeFile at it.
+#
+# BACK THE KEYSTORE UP. Google ties it to your listing; losing it means
+# requesting an upload-key reset from Play support, which takes days.
+
+storePassword=<the password you chose above>
+keyPassword=<the same password, unless you set a separate key password>
+keyAlias=upload
+# Absolute path is safest. On Windows use forward slashes:
+#   storeFile=C:/Users/areka/keys/upload-keystore.jks
+storeFile=<absolute path to upload-keystore.jks>

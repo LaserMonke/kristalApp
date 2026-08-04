@@ -1,8 +1,25 @@
+import java.io.FileInputStream
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
+
+// Release signing credentials, kept OUT of git (see .gitignore). Create
+// android/key.properties from key.properties.example on the machine that
+// builds releases; see DEPLOY.md §5a for the keytool command.
+//
+// Losing this keystore is unrecoverable: Play ties the upload key to the
+// listing, and recovering means asking Google to reset it. Back it up.
+val keystorePropertiesFile = rootProject.file("key.properties")
+val keystoreProperties = Properties().apply {
+    if (keystorePropertiesFile.exists()) {
+        FileInputStream(keystorePropertiesFile).use { load(it) }
+    }
+}
+val hasReleaseKeystore = keystorePropertiesFile.exists()
 
 android {
     namespace = "com.optionsschool.optionsschool"
@@ -27,11 +44,36 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        if (hasReleaseKeystore) {
+            create("release") {
+                keyAlias = keystoreProperties["keyAlias"] as String
+                keyPassword = keystoreProperties["keyPassword"] as String
+                storeFile = file(keystoreProperties["storeFile"] as String)
+                storePassword = keystoreProperties["storePassword"] as String
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            // With a keystore present we sign for real. Without one we fall
+            // back to debug keys so that a teammate who does not hold the
+            // keystore can still run `flutter run --release` locally.
+            //
+            // The fallback is LOUD on purpose: a debug-signed bundle is
+            // rejected by Play, and the previous silent fallback is exactly
+            // how that goes unnoticed until the upload fails.
+            if (hasReleaseKeystore) {
+                signingConfig = signingConfigs.getByName("release")
+            } else {
+                signingConfig = signingConfigs.getByName("debug")
+                logger.warn(
+                    "WARNING: android/key.properties not found — signing the " +
+                        "release build with DEBUG keys. This build is fine for " +
+                        "local testing and WILL BE REJECTED by Google Play.",
+                )
+            }
         }
     }
 }
