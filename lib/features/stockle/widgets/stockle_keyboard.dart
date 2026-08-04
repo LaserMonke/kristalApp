@@ -52,20 +52,29 @@ class StockleKeyboard extends StatelessWidget {
             ),
           ),
         const SizedBox(height: 6),
+        // Expanded, not free-sizing: the app theme gives every button a
+        // minimum size of Size.fromHeight(52), whose width is infinity so
+        // buttons run full-width down a Column. A Row hands its children
+        // unbounded width, and an infinite minimum against an unbounded
+        // constraint is a layout assertion that takes the whole screen blank.
+        // Splitting the row in two also happens to be the layout we want.
         Row(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            _WideKey(
-              label: 'Delete',
-              icon: Icons.backspace_outlined,
-              onTap: canDelete ? onBackspace : null,
+            Expanded(
+              child: _WideKey(
+                label: 'Delete',
+                icon: Icons.backspace_outlined,
+                onTap: canDelete ? onBackspace : null,
+              ),
             ),
             const SizedBox(width: 10),
-            _WideKey(
-              label: 'Guess',
-              icon: Icons.check_circle_outline,
-              filled: true,
-              onTap: canSubmit ? onSubmit : null,
+            Expanded(
+              child: _WideKey(
+                label: 'Guess',
+                icon: Icons.check_circle_outline,
+                filled: true,
+                onTap: canSubmit ? onSubmit : null,
+              ),
             ),
           ],
         ),
