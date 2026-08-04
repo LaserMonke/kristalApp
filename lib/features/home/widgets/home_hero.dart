@@ -158,11 +158,17 @@ class _Mark extends StatelessWidget {
                   color: theme.colorScheme.primary,
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  'OptionsSchool',
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                    letterSpacing: 0.2,
+                Padding(
+                  // Inside a disc, so keep the wordmark clear of the curve and
+                  // let it wrap onto two centred lines rather than overflow.
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Text(
+                    'Stock Options Academy',
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                      letterSpacing: 0.2,
+                    ),
                   ),
                 ),
               ],

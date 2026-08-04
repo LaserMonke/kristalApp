@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 /// wording here, not at the call sites.
 abstract final class Disclaimers {
   static const String educationalOnly =
-      'OptionsSchool is educational only. Nothing here is financial, '
+      'Stock Options Academy is educational only. Nothing here is financial, '
       'investment, tax or legal advice, and nothing is a recommendation to buy '
       'or sell any security.';
 

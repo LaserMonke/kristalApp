@@ -18,7 +18,7 @@ class OptionsSchoolApp extends ConsumerWidget {
 
     return ResumeRefresher(
       child: MaterialApp.router(
-        title: 'OptionsSchool',
+        title: 'Stock Options Academy',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light,
         darkTheme: AppTheme.dark,

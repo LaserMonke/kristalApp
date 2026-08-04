@@ -107,7 +107,7 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
         behavior: HitTestBehavior.opaque,
         onTap: _skip,
         child: Semantics(
-          label: 'OptionsSchool is opening.',
+          label: 'Stock Options Academy is opening.',
           child: Center(
             child: AnimatedBuilder(
               animation: _controller,
@@ -146,11 +146,17 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
                   const SizedBox(height: 22),
                   Opacity(
                     opacity: textIn.value.clamp(0.0, 1.0),
-                    child: Text(
-                      'OptionsSchool',
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.5,
+                    child: Padding(
+                      // The wordmark is long enough to reach the screen edge on
+                      // a narrow phone; pad so it wraps cleanly instead.
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Text(
+                        'Stock Options Academy',
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.5,
+                        ),
                       ),
                     ),
                   ),

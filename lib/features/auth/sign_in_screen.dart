@@ -96,7 +96,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'OptionsSchool',
+                      'Stock Options Academy',
                       style: theme.textTheme.headlineMedium,
                     ),
                     const SizedBox(height: 6),

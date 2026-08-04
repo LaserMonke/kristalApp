@@ -91,7 +91,10 @@ void main() {
         'cannot be reset', (tester) async {
       await pumpSignIn(tester, cloud: true);
 
-      expect(find.textContaining('saved to the OptionsSchool server'), findsOneWidget);
+      expect(
+        find.textContaining('saved to the Stock Options Academy server'),
+        findsOneWidget,
+      );
       // No email on file means no reset link; promising one would be a lie.
       expect(find.textContaining('cannot be reset'), findsOneWidget);
       expect(find.textContaining('this device only'), findsNothing);

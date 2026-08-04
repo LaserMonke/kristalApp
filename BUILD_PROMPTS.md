@@ -1,4 +1,4 @@
-OptionsSchool — Build Prompts for Claude Code (Flutter, client-first)
+Stock Options Academy — Build Prompts for Claude Code (Flutter, client-first)
 
 Strategy: build a WORKING CLIENT first, runnable on the iOS simulator from Phase 0 using LOCAL/mock data — so you can see and test the app immediately. All data access goes through repository interfaces with a local implementation now; the SERVER (Supabase) is swapped in later (Phase 6) without rewriting the UI. Server/infra deployment lives in DEPLOY.md.
 

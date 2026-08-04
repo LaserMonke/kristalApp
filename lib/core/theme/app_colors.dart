@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Semantic colours for OptionsSchool.
+/// Semantic colours for Stock Options Academy.
 ///
 /// Gain/loss colours are drawn from the Okabe–Ito colourblind-safe palette
 /// (blue vs. vermillion) instead of the conventional red/green pair, which is

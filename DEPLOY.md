@@ -1,4 +1,4 @@
-# OptionsSchool — Server & Deployment Guide
+# Stock Options Academy — Server & Deployment Guide
 
 Covers the SERVER/INFRASTRUCTURE side: Supabase (your baseline backend) and, for when you
 outgrow it, the classic cloud architecture (load balancer, databases, dedicated compute).

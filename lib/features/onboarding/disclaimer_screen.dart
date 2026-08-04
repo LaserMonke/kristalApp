@@ -43,7 +43,7 @@ class _DisclaimerScreenState extends ConsumerState<DisclaimerScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'OptionsSchool teaches how options work — the '
+                        'Stock Options Academy teaches how options work — the '
                         'mechanics, the payoffs, and the risks.',
                         style: theme.textTheme.bodyLarge?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,

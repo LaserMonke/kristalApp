@@ -1,4 +1,4 @@
-# OptionsSchool
+# Stock Options Academy
 
 A Flutter app that teaches how options and derivatives work — lessons, a Q&A after each
 lesson, interactive pricers, and a fake-money practice market.

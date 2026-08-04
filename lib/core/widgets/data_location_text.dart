@@ -14,7 +14,8 @@ abstract final class DataLocation {
       'Accounts are stored on this device only — nothing is uploaded.';
 
   static const String accountsCloud =
-      'Your account and progress are saved to the OptionsSchool server so they '
+      'Your account and progress are saved to the Stock Options Academy server '
+      'so they '
       'follow you to a new device. We hold no email address, so a forgotten '
       'password cannot be reset — keep it somewhere safe.';
 

@@ -111,7 +111,8 @@ class _EarnedCertificate extends ConsumerWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                'completed the OptionsSchool core curriculum: what options '
+                'completed the Stock Options Academy core curriculum: what '
+                'options '
                 'are, payoffs at expiry, uses and risks, Black-Scholes '
                 'pricing, the Greeks, and option strategies — including the '
                 'Q&A for every lesson.',
@@ -131,7 +132,8 @@ class _EarnedCertificate extends ConsumerWidget {
         const SizedBox(height: 16),
         Text(
           'This certificate recognises completed study inside the '
-          'OptionsSchool app. It is not a professional qualification or '
+          'Stock Options Academy app. It is not a professional qualification '
+          'or '
           'licence, says nothing about trading skill, and is not financial '
           'advice.',
           textAlign: TextAlign.center,

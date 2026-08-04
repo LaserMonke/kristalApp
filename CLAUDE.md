@@ -1,4 +1,4 @@
-# CLAUDE.md — OptionsSchool (working title)
+# CLAUDE.md — Stock Options Academy
 
 Project constitution. Claude Code reads this automatically every session. Follow it unless
 I explicitly override it in a message.

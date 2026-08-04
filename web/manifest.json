@@ -1,11 +1,11 @@
 {
-    "name": "optionsschool",
-    "short_name": "optionsschool",
+    "name": "Stock Options Academy",
+    "short_name": "Options Academy",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "Stock Options Academy — an educational app teaching how options and derivatives work.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

@@ -56,7 +56,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('OptionsSchool'), findsOneWidget);
+    expect(find.text('Stock Options Academy'), findsOneWidget);
     expect(find.widgetWithText(FilledButton, 'Create account'), findsOneWidget);
   });
 }

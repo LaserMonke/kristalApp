@@ -10,7 +10,7 @@
          would fail silently. -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <application
-        android:label="optionsschool"
+        android:label="Stock Options Academy"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
