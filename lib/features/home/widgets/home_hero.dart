@@ -52,7 +52,11 @@ class HomeHero extends ConsumerWidget {
             final double diameter = disc.clamp(_minDisc, _maxDisc);
 
             return SizedBox(
-              height: diameter + 108,
+              // Enough room that the orbiting stats clear the progress ring on
+              // every side. At the old +108 the level badge sat exactly on the
+              // ring's bottom, so once certificate progress filled that far the
+              // bright arc rendered straight through the symbol.
+              height: diameter + 156,
               child: Stack(
                 alignment: Alignment.center,
                 children: <Widget>[
