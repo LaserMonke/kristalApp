@@ -45,6 +45,8 @@ dependencies:
   flutter_dotenv: ^6.0.1
   http: ^1.6.0
   audioplayers: ^6.8.1
+  printing: ^5.15.0
+  pdf: ^3.13.0
 
 dev_dependencies:
   flutter_test:
@@ -80,6 +82,10 @@ flutter:
     # The intro chime, synthesised for this app (see DEPLOY.md) — not sampled
     # from anywhere.
     - assets/audio/
+    # Embedded in the printed certificate so a learner's name renders whatever
+    # alphabet it is written in — the PDF built-in fonts are ASCII only.
+    # Roboto, Apache-2.0; licence sits beside it.
+    - assets/fonts/
     # Supabase URL + publishable key (flutter_dotenv reads it as an asset).
     # Gitignored; see .env.example. Safe to bundle ONLY because RLS is on —
     # the service_role key never goes in here.

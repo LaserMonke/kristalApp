@@ -1,4 +1,7 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
+import 'package:printing/printing.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -8,6 +11,8 @@ import '../../data/models/app_user.dart';
 import '../../providers/auth_controller.dart';
 import '../../providers/engagement_providers.dart';
 import '../../providers/lesson_providers.dart';
+import 'certificate_pdf.dart';
+import 'widgets/certificate_seal.dart';
 
 /// The completion certificate — the top of the engagement ladder.
 ///
@@ -60,82 +65,116 @@ class _EarnedCertificate extends ConsumerWidget {
     return '${d.day} ${_months[d.month - 1]} ${d.year}';
   }
 
+  /// A stable reference for one learner's award.
+  ///
+  /// Derived from the account and the date rather than random, so reprinting
+  /// gives the same number. It identifies a record in this app and certifies
+  /// nothing on its own — there is no registry behind it, which is why the
+  /// printed page says so.
+  String _certificateId(AppUser? user) {
+    final DateTime d = earnedOn ?? DateTime.now();
+    final int hash = Object.hash(user?.id ?? 'learner', d.year, d.month, d.day);
+    final String body = (hash & 0xFFFFFF).toRadixString(36).toUpperCase();
+    return 'SOA-${d.year}-${body.padLeft(5, '0')}';
+  }
+
+  static const List<String> _topics = <String>[
+    'what options are',
+    'payoffs at expiry',
+    'uses and honest risks',
+    'Black-Scholes-Merton pricing',
+    'the Greeks',
+    'option strategies',
+  ];
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ThemeData theme = Theme.of(context);
     final AppUser? user = ref.watch(currentUserProvider);
+    final String name = user?.username ?? 'Learner';
+    final String id = _certificateId(user);
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
       children: <Widget>[
-        Container(
-          padding: const EdgeInsets.fromLTRB(24, 32, 24, 28),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            color: theme.colorScheme.surfaceContainerHighest,
-            border: Border.all(color: theme.colorScheme.primary, width: 2),
+        CertificateFrame(
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(20, 26, 20, 22),
+            color: theme.colorScheme.surface,
+            child: Column(
+              children: <Widget>[
+                Text(
+                  'STOCK OPTIONS ACADEMY',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    letterSpacing: 3,
+                    fontWeight: FontWeight.w700,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  'Certificate of Completion',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(width: 96, height: 1.5, color: CertificateGold.mid),
+                const SizedBox(height: 20),
+                Text(
+                  'This is to certify that',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  name,
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  'has completed every lesson and its assessment in the '
+                  'Stock Options Academy curriculum, covering what options '
+                  'are, payoffs at expiry, uses and honest risks, '
+                  'Black-Scholes-Merton pricing, the Greeks, and option '
+                  'strategies.',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
+                ),
+                const SizedBox(height: 18),
+                const CertificateSeal(size: 84),
+                const SizedBox(height: 14),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: <Widget>[
+                    _Endorsement(label: 'Awarded', value: _date),
+                    _Endorsement(label: 'Certificate ID', value: id),
+                  ],
+                ),
+              ],
+            ),
           ),
-          child: Column(
-            children: <Widget>[
-              Container(
-                height: 72,
-                width: 72,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: theme.colorScheme.primary.withValues(alpha: 0.14),
-                  border: Border.all(color: theme.colorScheme.primary),
-                ),
-                child: Icon(
-                  Icons.workspace_premium_outlined,
-                  size: 38,
-                  color: theme.colorScheme.primary,
-                ),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                'CERTIFICATE OF COMPLETION',
-                textAlign: TextAlign.center,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  letterSpacing: 2,
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                user?.username ?? 'Learner',
-                textAlign: TextAlign.center,
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'completed the Stock Options Academy core curriculum: what '
-                'options '
-                'are, payoffs at expiry, uses and risks, Black-Scholes '
-                'pricing, the Greeks, and option strategies — including the '
-                'Q&A for every lesson.',
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                _date,
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
-          ),
+        ),
+        const SizedBox(height: 20),
+        FilledButton.icon(
+          onPressed: () => _print(context, name: name, id: id),
+          icon: const Icon(Icons.print_outlined),
+          label: const Text('Print or save as PDF'),
         ),
         const SizedBox(height: 16),
         Text(
-          'This certificate recognises completed study inside the '
-          'Stock Options Academy app. It is not a professional qualification '
-          'or '
-          'licence, says nothing about trading skill, and is not financial '
-          'advice.',
+          // The same sentence the printed page carries, so what a learner
+          // reads here is exactly what anyone they show it to will read.
+          '$certificateDisclaimer This same wording is printed on the '
+          'certificate itself.',
           textAlign: TextAlign.center,
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
@@ -143,6 +182,73 @@ class _EarnedCertificate extends ConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+
+  /// Hands a vector PDF to the OS print sheet, which also covers "save as PDF"
+  /// and AirDrop on iOS — one action, every sensible destination.
+  Future<void> _print(
+    BuildContext context, {
+    required String name,
+    required String id,
+  }) async {
+    try {
+      await Printing.layoutPdf(
+        name: 'Stock Options Academy certificate — $name',
+        onLayout: (_) async => Uint8List.fromList(
+          await buildCertificatePdf(
+            learnerName: name,
+            awardedOn: _date,
+            certificateId: id,
+            topics: _topics,
+          ),
+        ),
+      );
+    } catch (_) {
+      // No printing service on this platform, or the sheet was dismissed with
+      // an error. Nothing is lost — the certificate is still on screen.
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Printing is not available on this device.'),
+        ),
+      );
+    }
+  }
+}
+
+/// A value over a gold rule, the way a certificate signs itself off.
+class _Endorsement extends StatelessWidget {
+  const _Endorsement({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    return SizedBox(
+      width: 132,
+      child: Column(
+        children: <Widget>[
+          Text(
+            value,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.labelMedium,
+          ),
+          const SizedBox(height: 4),
+          Container(height: 1, color: CertificateGold.mid),
+          const SizedBox(height: 4),
+          Text(
+            label.toUpperCase(),
+            style: theme.textTheme.labelSmall?.copyWith(
+              letterSpacing: 1.2,
+              fontSize: 9,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
