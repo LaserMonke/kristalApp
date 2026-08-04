@@ -209,6 +209,64 @@ void main() {
     });
   });
 
+  group('the hint', () {
+    final StockleTicker answer = const StockleTicker(
+      symbol: 'TSLA',
+      name: 'Tesla',
+      sector: 'Consumer Discretionary',
+    );
+
+    StockleState afterGuesses(int n) => StockleState(
+      answer: answer,
+      dayNumber: 1,
+      guesses: List<StockleGuess>.generate(
+        n,
+        (int i) => StockleGuess(
+          symbol: 'AAPL',
+          marks: List<LetterMark>.filled(tickerLength, LetterMark.absent),
+        ),
+      ),
+    );
+
+    test('is locked before the third guess', () {
+      for (int n = 0; n < guessesBeforeHint; n++) {
+        expect(afterGuesses(n).hint, isNull, reason: 'unlocked after $n');
+      }
+    });
+
+    test('unlocks on the third guess and stays unlocked', () {
+      expect(afterGuesses(guessesBeforeHint).hint, isNotNull);
+      expect(afterGuesses(guessesBeforeHint + 1).hint, isNotNull);
+    });
+
+    test('names the sector and the company initial, not a letter', () {
+      final StockleHint hint = afterGuesses(guessesBeforeHint).hint!;
+      expect(hint.sector, 'Consumer Discretionary');
+      // T of "Tesla" — the company name. It happens to match the ticker's
+      // first letter here; what matters is that it is derived from the name.
+      expect(hint.nameInitial, 'T');
+    });
+
+    test('disappears once the game is over, win or lose', () {
+      final StockleState lost = afterGuesses(maxGuesses);
+      expect(lost.isLost, isTrue);
+      expect(lost.hint, isNull);
+
+      final StockleState won = StockleState(
+        answer: answer,
+        dayNumber: 1,
+        guesses: List<StockleGuess>.generate(
+          guessesBeforeHint + 1,
+          (int i) => StockleGuess(
+            symbol: 'TSLA',
+            marks: List<LetterMark>.filled(tickerLength, LetterMark.exact),
+          ),
+        ),
+      );
+      expect(won.hint, isNull);
+    });
+  });
+
   group('points', () {
     final StockleTicker answer = const StockleTicker(
       symbol: 'TSLA',

@@ -13,6 +13,13 @@ library;
 const int tickerLength = 4;
 const int maxGuesses = 6;
 
+/// How many guesses a player spends before a hint becomes available.
+///
+/// Three of six: late enough that the hint rescues a stuck player rather than
+/// short-cutting the puzzle, early enough that there are still guesses left to
+/// spend on what it tells them.
+const int guessesBeforeHint = 3;
+
 /// What a single letter position earned.
 enum LetterMark {
   /// Right letter, right position.
@@ -191,6 +198,22 @@ extension GuessRejectionMessage on GuessRejection {
   };
 }
 
+/// The clue offered once [guessesBeforeHint] guesses have been spent.
+///
+/// It points at the COMPANY, never at the letters. Revealing a position would
+/// turn the remaining rows into fill-in-the-blank and skip the reasoning that
+/// is the whole game; naming the sector and the company's initial instead makes
+/// the player join a business to its ticker, which is the thing Stockle is
+/// there to teach.
+class StockleHint {
+  const StockleHint({required this.sector, required this.nameInitial});
+
+  final String sector;
+
+  /// First letter of the company's name — not of the ticker.
+  final String nameInitial;
+}
+
 /// A guess that has been scored.
 class StockleGuess {
   const StockleGuess({required this.symbol, required this.marks});
@@ -223,6 +246,20 @@ class StockleState {
   bool get isOver => isWon || isLost;
 
   int get guessesUsed => guesses.length;
+
+  /// The clue, or null while it is still locked.
+  ///
+  /// Null once the game is over too, because the result panel names the company
+  /// outright and a hint alongside it would just be noise. Taking the hint
+  /// costs nothing: [stocklePoints] never sees it, so a stuck player is helped
+  /// rather than charged for asking (CLAUDE.md rule 9).
+  StockleHint? get hint {
+    if (isOver || guesses.length < guessesBeforeHint) return null;
+    return StockleHint(
+      sector: answer.sector,
+      nameInitial: answer.name.isEmpty ? '?' : answer.name[0].toUpperCase(),
+    );
+  }
 
   /// Best-known verdict per letter across every guess so far, for colouring an
   /// on-screen keyboard. Exact beats present beats absent, so a letter never

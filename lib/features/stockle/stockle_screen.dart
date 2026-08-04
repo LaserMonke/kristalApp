@@ -5,6 +5,7 @@ import '../../core/widgets/disclaimer_text.dart';
 import '../../games/stockle/stockle_engine.dart';
 import '../../providers/stockle_providers.dart';
 import 'widgets/stockle_grid.dart';
+import 'widgets/stockle_hint.dart';
 import 'widgets/stockle_keyboard.dart';
 import 'widgets/stockle_result.dart';
 
@@ -21,6 +22,11 @@ class StockleScreen extends ConsumerStatefulWidget {
 
 class _StockleScreenState extends ConsumerState<StockleScreen> {
   String _typed = '';
+
+  /// Whether the player has asked to see today's hint. Not persisted: it costs
+  /// nothing to tap again, and a hint the player never wanted should not
+  /// reappear on its own after a restart.
+  bool _hintRevealed = false;
 
   void _onLetter(String letter) {
     if (_typed.length >= tickerLength) return;
@@ -108,6 +114,18 @@ class _StockleScreenState extends ConsumerState<StockleScreen> {
                         ),
                         const SizedBox(height: 16),
                         StockleGrid(game: game, typed: _typed),
+                        if (!game.isOver) ...<Widget>[
+                          const SizedBox(height: 14),
+                          ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 320),
+                            child: StockleHintPanel(
+                              game: game,
+                              revealed: _hintRevealed,
+                              onReveal: () =>
+                                  setState(() => _hintRevealed = true),
+                            ),
+                          ),
+                        ],
                         if (game.isOver) ...<Widget>[
                           const SizedBox(height: 20),
                           StockleResult(game: game),
@@ -167,6 +185,9 @@ class _StockleScreenState extends ConsumerState<StockleScreen> {
                 'half-filled tile means the letter is in the ticker but '
                 'somewhere else. An empty tile means the letter is not in it '
                 'at all.\n\n'
+                'After $guessesBeforeHint guesses a hint unlocks: the '
+                'company’s sector and the first letter of its name. It is '
+                'there if you want it, and taking it costs no points.\n\n'
                 'Solve it and you earn points, the same as getting a lesson '
                 'question right. Miss it and you lose nothing.\n\n'
                 'The puzzle changes at midnight UTC, and everyone gets the '

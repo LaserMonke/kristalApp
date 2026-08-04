@@ -154,6 +154,59 @@ void main() {
     expect(container.read(stockleProvider)!.isOver, isTrue);
   });
 
+  testWidgets('a hint waits for the third guess, then waits to be asked', (
+    tester,
+  ) async {
+    // Six tickers so there are always three wrong ones to spend, whichever is
+    // today's answer.
+    dictionary = StockleDictionary(
+      asOf: '2026-08-04',
+      tickers: const <StockleTicker>[
+        StockleTicker(symbol: 'AAPL', name: 'Apple', sector: 'Technology'),
+        StockleTicker(symbol: 'MSFT', name: 'Microsoft', sector: 'Technology'),
+        StockleTicker(symbol: 'TSLA', name: 'Tesla', sector: 'Consumer'),
+        StockleTicker(symbol: 'NFLX', name: 'Netflix', sector: 'Media'),
+        StockleTicker(symbol: 'GILD', name: 'Gilead', sector: 'Health Care'),
+        StockleTicker(symbol: 'COST', name: 'Costco', sector: 'Staples'),
+      ],
+    );
+
+    final container = await pump(tester);
+    final StockleTicker answer = container.read(stockleProvider)!.answer;
+
+    expect(find.textContaining('A hint unlocks'), findsOneWidget);
+
+    final List<String> wrong = dictionary.tickers
+        .where((StockleTicker t) => t.symbol != answer.symbol)
+        .map((StockleTicker t) => t.symbol)
+        .take(guessesBeforeHint)
+        .toList();
+
+    for (final String symbol in wrong) {
+      await type(tester, symbol);
+      await tester.tap(find.widgetWithText(FilledButton, 'Guess'));
+      await tester.pumpAndSettle();
+    }
+
+    // Unlocked — but silent until the player asks, so a puzzle nobody wanted
+    // narrowed stays unspoiled.
+    expect(find.textContaining(answer.sector), findsNothing);
+
+    final Finder reveal = find.widgetWithText(TextButton, 'Show a hint');
+    await tester.ensureVisible(reveal);
+    await tester.pumpAndSettle();
+    await tester.tap(reveal);
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining(answer.sector), findsOneWidget);
+    expect(
+      find.textContaining('starts with ${answer.name[0]}'),
+      findsOneWidget,
+    );
+    // Never a letter of the ticker itself.
+    expect(find.textContaining(answer.symbol), findsNothing);
+  });
+
   testWidgets('the keyboard disappears once the day is done', (tester) async {
     final container = await pump(tester);
     final String answer = container.read(stockleProvider)!.answer.symbol;
