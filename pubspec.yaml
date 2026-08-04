@@ -86,6 +86,9 @@ flutter:
     # alphabet it is written in — the PDF built-in fonts are ASCII only.
     # Roboto, Apache-2.0; licence sits beside it.
     - assets/fonts/
+    # Stockle's playable ticker set. Data, not code — and it carries its own
+    # as_of date because index membership drifts (CLAUDE.md rule 8).
+    - assets/games/
     # Supabase URL + publishable key (flutter_dotenv reads it as an asset).
     # Gitignored; see .env.example. Safe to bundle ONLY because RLS is on —
     # the service_role key never goes in here.

@@ -72,6 +72,38 @@ String signUpErrorMessage(Object error) {
   return 'Couldn’t create the account right now. Please try again.';
 }
 
+/// Message for a failure while deleting an account.
+///
+/// The wording has to be unambiguous that NOTHING was deleted. A learner who
+/// reads a vague failure and assumes it half-worked has no way to check: we
+/// hold no email, so we cannot write to them, and a still-live account looks
+/// identical to one that failed to delete.
+String deleteAccountErrorMessage(Object error) {
+  if (isOfflineError(error)) {
+    return 'Can’t reach the server, so your account was NOT deleted. '
+        'Check your connection and try again.';
+  }
+
+  if (error is sb.AuthApiException || error is sb.PostgrestException) {
+    final String? code = error is sb.AuthApiException
+        ? error.code
+        : (error as sb.PostgrestException).code;
+    if (code == 'over_request_rate_limit') {
+      return 'Too many attempts. Your account was NOT deleted — wait a minute '
+          'and try again.';
+    }
+    if (code == '28000') {
+      // The server refused because the JWT carried no user. Re-authenticating
+      // is the only fix.
+      return 'Your session has expired, so your account was NOT deleted. '
+          'Sign in again and retry.';
+    }
+  }
+
+  return 'Couldn’t delete the account right now. Nothing was deleted — '
+      'please try again.';
+}
+
 /// True for the failures that mean "no usable network", as opposed to a real
 /// rejection by the server. Drives the offline fallback in the repositories.
 bool isOfflineError(Object error) {

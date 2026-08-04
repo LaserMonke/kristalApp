@@ -174,6 +174,34 @@ class SupabaseAuthRepo implements AuthRepo {
     }
   }
 
+  /// Deleting an account, unlike signing out, FAILS LOUDLY.
+  ///
+  /// `delete_own_account()` takes no arguments — the server reads the caller's
+  /// id from the JWT, so this cannot be aimed at another account. The profile,
+  /// progress and streak rows cascade from the auth.users delete.
+  ///
+  /// If the server call throws we rethrow and leave the session alone. A
+  /// learner who is told "deleted" while their data is still on the server has
+  /// no way to find out otherwise: there is no email on file, so we cannot
+  /// write to them, and they cannot sign in to check.
+  @override
+  Future<void> deleteAccount() async {
+    if (_currentUser == null) {
+      throw const AuthException('You are not signed in.');
+    }
+
+    try {
+      await _client.rpc<void>('delete_own_account');
+    } catch (error) {
+      throw AuthException(deleteAccountErrorMessage(error));
+    }
+
+    // The account is gone, so the session cannot be revoked server-side any
+    // more. signOut() is best-effort by design and never throws, which is what
+    // we want here — the delete already succeeded.
+    await signOut();
+  }
+
   /// Keeps [currentUser] in step after a profile edit written by
   /// [SupabaseProfileRepo]. Not part of [AuthRepo] — the controller already has
   /// the updated user; this only stops the cached copy going stale.

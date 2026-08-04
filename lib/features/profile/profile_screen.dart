@@ -96,6 +96,16 @@ class ProfileScreen extends ConsumerWidget {
             icon: const Icon(Icons.logout),
             label: const Text('Sign out'),
           ),
+          const SizedBox(height: 10),
+          OutlinedButton.icon(
+            onPressed: () => _confirmDeleteAccount(context, ref),
+            icon: const Icon(Icons.person_remove_outlined),
+            label: const Text('Delete account'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: theme.colorScheme.error,
+              side: BorderSide(color: theme.colorScheme.error),
+            ),
+          ),
           const SizedBox(height: 20),
           Text(
             Disclaimers.educationalOnly,
@@ -151,6 +161,35 @@ class ProfileScreen extends ConsumerWidget {
     ref.invalidate(streakControllerProvider);
   }
 
+  /// Permanent, unrecoverable, and required by Google Play to exist in-app.
+  ///
+  /// Asks the learner to type their username rather than tap "Delete". With no
+  /// email on file there is no recovery and no way for us to verify a change of
+  /// mind, so a mis-tap has to be impossible rather than merely unlikely.
+  Future<void> _confirmDeleteAccount(BuildContext context, WidgetRef ref) async {
+    final AppUser? user = ref.read(currentUserProvider);
+    if (user == null) return;
+
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) => _DeleteAccountDialog(user.username),
+    );
+    if (confirmed != true) return;
+
+    try {
+      await ref.read(authControllerProvider.notifier).deleteAccount();
+    } on AuthException catch (error) {
+      // Still signed in, account still there. Say so — the message from the
+      // repo is explicit that nothing was deleted.
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.message)));
+      }
+    }
+    // On success the router sends them to sign-in, because the session ended.
+  }
+
   void _showDisclaimers(BuildContext context) {
     showModalBottomSheet<void>(
       context: context,
@@ -181,6 +220,83 @@ class ProfileScreen extends ConsumerWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Type-to-confirm dialog for account deletion.
+///
+/// Stateful because the Delete button stays disabled until the typed username
+/// matches — the friction is the point.
+class _DeleteAccountDialog extends StatefulWidget {
+  const _DeleteAccountDialog(this.username);
+
+  final String username;
+
+  @override
+  State<_DeleteAccountDialog> createState() => _DeleteAccountDialogState();
+}
+
+class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
+  final TextEditingController _typed = TextEditingController();
+
+  @override
+  void dispose() {
+    _typed.dispose();
+    super.dispose();
+  }
+
+  bool get _matches =>
+      _typed.text.trim().toLowerCase() == widget.username.toLowerCase();
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+
+    return AlertDialog(
+      title: const Text('Delete your account?'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Text(
+            'This deletes your account and everything attached to it — your '
+            'lessons, Q&A scores, points, streak and leaderboard entry — on '
+            'this device and on the server.\n\n'
+            'It cannot be undone. Because we hold no email address for you, we '
+            'cannot restore the account or verify it was you afterwards.',
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Type ${widget.username} to confirm.',
+            style: theme.textTheme.labelLarge,
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _typed,
+            autocorrect: false,
+            enableSuggestions: false,
+            decoration: const InputDecoration(border: OutlineInputBorder()),
+            onChanged: (_) => setState(() {}),
+          ),
+        ],
+      ),
+      actions: <Widget>[
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(false),
+          child: const Text('Keep my account'),
+        ),
+        FilledButton(
+          onPressed: _matches
+              ? () => Navigator.of(context).pop(true)
+              : null,
+          style: FilledButton.styleFrom(
+            backgroundColor: theme.colorScheme.error,
+            foregroundColor: theme.colorScheme.onError,
+          ),
+          child: const Text('Delete for ever'),
+        ),
+      ],
     );
   }
 }

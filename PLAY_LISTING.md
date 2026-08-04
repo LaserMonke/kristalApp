@@ -58,9 +58,10 @@ parties for advertising. No data is used for tracking across apps or websites.**
 - **"Is any collected data shared with other users?"** → **Yes.** Username and
   point total appear on the leaderboard. This is easy to skip and it is exactly
   the kind of omission that gets an app pulled.
-- **"Can users request data deletion?"** → see the blocker below. Until in-app
-  deletion exists, the honest answer is that deletion is by email request only,
-  and Google increasingly expects better.
+- **"Can users request data deletion?"** → **Yes, both ways.** In-app at
+  Profile → Delete account (type-to-confirm, deletes account + all data
+  immediately), and by email request for anyone locked out. Declare the
+  deletion URL as well — Play wants a web route, not only the in-app one.
 
 ---
 
@@ -109,9 +110,10 @@ Either way the URL must be live **before** you submit, and it must stay live.
 
 ## Still blocking, tracked elsewhere
 
-- **Account deletion** — Play requires apps with account creation to offer
-  in-app deletion *and* a public web deletion-request URL. Not built. See
-  DEPLOY.md.
+- **Web deletion URL** — in-app deletion is now built (Profile → Delete
+  account). Play also wants a publicly reachable page describing how to request
+  deletion without installing the app; PRIVACY.md §5 covers the wording, so
+  hosting the policy satisfies it.
 - **Developer Mode** on the Windows build machine, or no bundle can be built at
   all.
 - **Release keystore** — the Gradle config now supports one; the key itself does

@@ -326,17 +326,30 @@ your upload key stays replaceable.
 support" until Developer Mode is on: `start ms-settings:developers`. This blocks building
 ANY release bundle from this machine, so do it before anything else.
 
-### 5c. Account deletion — REQUIRED by Play, NOT BUILT
+### 5c. Account deletion — BUILT
 Play requires any app that lets users create an account to offer BOTH an in-app way to
-delete it AND a publicly reachable web URL for deletion requests. `AuthRepo` currently has
-`signUp`/`signIn`/`signOut`/`restoreSession` and no delete; Settings offers "Reset learning
-progress" (wipes progress, keeps the account) and "Sign out". Neither is deletion.
+delete it AND a publicly reachable web URL for deletion requests. Both are covered.
 
-What it needs: a `deleteAccount()` on `AuthRepo`, a SECURITY DEFINER Postgres function that
-deletes the caller's `auth.users` row so the existing FK cascades clear profile/progress/
-streak rows, a confirming destructive-action dialog in `profile_screen.dart` that is honest
-that it cannot be undone, and a public deletion-request page. Note the account cannot be
-recovered afterwards and there is no email on file to verify a change of mind.
+In-app: Profile → "Delete account". It asks the learner to TYPE THEIR USERNAME rather than
+tap a button — with no email on file there is no recovery and no way to verify a change of
+mind afterwards, so a mis-tap has to be impossible rather than merely unlikely.
+
+Server: `public.delete_own_account()` in
+`supabase/migrations/20260804160000_account_deletion.sql`. SECURITY DEFINER with an empty
+search_path, takes NO arguments (identity comes from `auth.uid()`, so a modified client
+cannot aim it at another account), granted to `authenticated` and revoked from `anon`. It
+deletes the `auth.users` row; profiles, lesson_progress and streaks cascade from it.
+
+Unlike sign-out, deletion FAILS LOUDLY. A learner told "deleted" when the server never heard
+the request cannot discover the truth — we hold no email, and a live account looks identical
+to a failed delete. `deleteAccountErrorMessage` therefore states in every branch that
+nothing was removed. Tests: `test/supabase/account_deletion_test.dart`.
+
+Web URL: PRIVACY.md §5 documents the email route for anyone locked out, so hosting the
+policy satisfies the web half.
+
+APPLY THE MIGRATION (`supabase db push`) before shipping a build that shows the button —
+without it the RPC 404s and every delete fails.
 
 ════════════════════════════════════════════════════════════════════════════════
 RECOMMENDED PATH (tl;dr)

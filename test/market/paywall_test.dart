@@ -415,4 +415,7 @@ class _FakeAuthRepo implements AuthRepo {
 
   @override
   Future<void> signOut() async {}
+
+  @override
+  Future<void> deleteAccount() => throw UnimplementedError();
 }

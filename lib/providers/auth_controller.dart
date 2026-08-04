@@ -60,6 +60,17 @@ class AuthController extends AsyncNotifier<AppUser?> {
     state = const AsyncValue<AppUser?>.data(null);
   }
 
+  /// Deletes the account permanently, then ends the session.
+  ///
+  /// Rethrows [AuthException] so the caller can tell the learner the account
+  /// still exists. State is only cleared once the delete has actually
+  /// succeeded — a failed delete must leave them signed in and unchanged,
+  /// rather than looking like it worked.
+  Future<void> deleteAccount() async {
+    await _repo.deleteAccount();
+    state = const AsyncValue<AppUser?>.data(null);
+  }
+
   Future<void> updateProfile({
     String? username,
     EducationLevel? educationLevel,

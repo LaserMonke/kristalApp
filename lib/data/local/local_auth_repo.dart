@@ -110,6 +110,31 @@ class LocalAuthRepo implements AuthRepo {
     _controller.add(null);
   }
 
+  @override
+  Future<void> deleteAccount() async {
+    final AppUser? user = _currentUser;
+    if (user == null) {
+      throw const AuthException('You are not signed in.');
+    }
+
+    final Map<String, dynamic> accounts = _readAccounts();
+    // Match on id, not on the username key: a profile edit can have moved the
+    // record to a different key since sign-in.
+    final String? key = accounts.keys.cast<String?>().firstWhere(
+      (String? k) => (accounts[k] as Map<String, dynamic>)['id'] == user.id,
+      orElse: () => null,
+    );
+
+    if (key != null) {
+      accounts.remove(key);
+      await _writeAccounts(accounts);
+    }
+
+    // The credential record is gone; end the session too so the app cannot
+    // keep showing a signed-in user that no longer exists.
+    await signOut();
+  }
+
   /// Persist an updated profile back into the account record.
   Future<void> persistProfile(AppUser user) async {
     final Map<String, dynamic> accounts = _readAccounts();

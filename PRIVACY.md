@@ -3,17 +3,26 @@
 **Last updated: 4 August 2026**
 
 <!--
-  PLACEHOLDERS TO FILL BEFORE PUBLISHING — search for «» and replace:
-    «CONTACT_EMAIL»   the address on your Play listing; must be monitored
-    «LEGAL_ENTITY»    who operates the app (your name, or a company if formed)
-    «JURISDICTION»    the country whose law governs (usually where you live)
-  This draft describes what the code in this repository actually does as of
-  the date above. It is NOT legal advice. Have someone qualified read it
-  before you publish, especially the GDPR and under-18 sections.
+  CONFIRM BEFORE PUBLISHING — three values were filled in on assumption:
+
+    Operator      Asheesh Chanda — named because the Play developer account is
+                  in his name, and the policy must describe the same legal
+                  person as the account that publishes the app. That also means
+                  he carries the legal responsibility for what is written here,
+                  so he should read it rather than only lend his name.
+    Contact       okaysigma31@gmail.com — becomes PUBLIC on the listing and is
+                  the deletion-request address below, so it has to be monitored.
+                  Consider a dedicated address instead of a personal one.
+    Jurisdiction  Singapore — inferred from the en-SG locale and +0800 commit
+                  timestamps, NOT confirmed. Change it if that is wrong.
+
+  This describes what the code in this repository actually does as of the date
+  above. It is NOT legal advice. Have someone qualified read it before you
+  publish, especially the GDPR and under-18 sections.
 -->
 
 Stock Options Academy is an educational app that teaches how stock options and
-derivatives work. It is operated by «LEGAL_ENTITY».
+derivatives work. It is operated by Asheesh Chanda.
 
 This policy explains what we collect, why, who else sees it, and what you can
 do about it. We have tried to write it in plain language rather than the usual
@@ -125,22 +134,28 @@ revoke the notification permission in your device settings.
 ## 5. Your choices and your rights
 
 - **See what we hold.** Settings → "Data we collect" describes it. To request a
-  copy, email «CONTACT_EMAIL».
+  copy, email okaysigma31@gmail.com.
 - **Reset your progress.** Settings → "Reset learning progress" wipes your
   lessons, scores, points and streak, on this device and on our server. It
   cannot be undone.
-- **Delete your account entirely.** Email «CONTACT_EMAIL» from a message that
-  identifies your username, and we will delete the account and everything
-  attached to it within 30 days. <!-- REPLACE THIS with the in-app control and
-  the public deletion-request URL once built; Play requires both. -->
+- **Delete your account entirely.** In the app: **Profile → Delete account**.
+  You will be asked to type your username to confirm. This removes your
+  account, your lessons, your Q&A scores, your points, your streak and your
+  leaderboard entry, from this device and from our server, immediately and
+  permanently. It cannot be undone, and because we hold no email address we
+  cannot restore it or verify a change of mind afterwards.
+
+  If you cannot reach the app — you have lost your password, or uninstalled it
+  — email okaysigma31@gmail.com with your username and we will delete the
+  account within 30 days.
 - **Correct your details.** Your education level can be changed in Settings.
-- **Leave the leaderboard.** Email «CONTACT_EMAIL» and we will remove you from
+- **Leave the leaderboard.** Email okaysigma31@gmail.com and we will remove you from
   it.
 
 Depending on where you live — in particular in the UK, the EU, and parts of the
 US — you may have additional legal rights to access, correct, export, restrict
 or erase your data, and to complain to a data protection regulator. Contact us
-at «CONTACT_EMAIL» and we will honour those requests.
+at okaysigma31@gmail.com and we will honour those requests.
 
 Our legal basis for processing, where the GDPR applies, is the performance of
 our agreement with you (running the account you asked us to create) and our
@@ -165,7 +180,7 @@ birth, and we cannot verify it. If you are under 16 (or under the age of
 consent where you live, which is between 13 and 16 across the EU), please do
 not create an account without a parent or guardian's involvement. If you
 believe someone under that age has created an account, contact
-«CONTACT_EMAIL» and we will remove it.
+okaysigma31@gmail.com and we will remove it.
 
 Options trading is not a suitable pursuit for children, and this app does not
 promote it to anyone. It teaches how the instruments work — including how they
@@ -206,6 +221,6 @@ always reflects the current version.
 
 ## 11. Contact
 
-Questions, requests, or complaints: **«CONTACT_EMAIL»**
+Questions, requests, or complaints: **okaysigma31@gmail.com**
 
-This policy is governed by the law of «JURISDICTION».
+This policy is governed by the law of Singapore.

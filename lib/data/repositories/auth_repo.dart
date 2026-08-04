@@ -28,6 +28,18 @@ abstract interface class AuthRepo {
   });
 
   Future<void> signOut();
+
+  /// Permanently deletes the signed-in account and everything attached to it,
+  /// then ends the session.
+  ///
+  /// Required by Google Play for any app that offers account creation. Unlike
+  /// [signOut] this MUST fail loudly: telling a learner their account is gone
+  /// when the server never heard the request is the one outcome worse than an
+  /// error message, because we hold no email and cannot follow up.
+  ///
+  /// There is no undo and no recovery — with no address on file we cannot even
+  /// verify a change of mind. Callers must confirm before calling.
+  Future<void> deleteAccount();
 }
 
 /// Auth failure with a message safe to show a learner verbatim.
