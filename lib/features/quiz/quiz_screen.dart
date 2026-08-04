@@ -168,23 +168,31 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
     }
   }
 
-  /// The lesson that follows this one, once this Q&A has unlocked it.
+  /// The next lesson in the path — simply the one after this, whether or not
+  /// it has been finished before.
   ///
-  /// Null when this was the last lesson, or while the path is still loading —
-  /// in which case the results screen falls back to sending the learner back
-  /// to the path rather than offering a button that goes nowhere.
+  /// Deliberately not "the next UNFINISHED lesson": someone revisiting a Q&A
+  /// on a course they have completed still expects the button to carry them
+  /// onward, and skipping ahead to nothing is a worse answer than offering
+  /// the lesson that literally comes next.
+  ///
+  /// Null only when this was the last lesson, or the path has not loaded — in
+  /// which case the results screen falls back to the path rather than showing
+  /// a button that goes nowhere.
+  /// Watched, not read: this is reached from [build], and a `read` that has to
+  /// flush the path there notifies its other listeners mid-build — which throws
+  /// "setState() called during build" the moment anything else watches the
+  /// path. Watching also means the button appears by itself once the path
+  /// resolves, rather than staying absent until some other rebuild.
   LessonNode? get _nextLesson {
-    final List<LessonNode>? path = ref.read(lessonPathProvider).value;
+    final List<LessonNode>? path = ref.watch(lessonPathProvider).value;
     if (path == null) return null;
 
     final int here = path.indexWhere(
       (LessonNode n) => n.lesson.id == widget.lessonId,
     );
-    if (here < 0) return null;
-    for (final LessonNode node in path.skip(here + 1)) {
-      if (!node.isFinished) return node;
-    }
-    return null;
+    if (here < 0 || here + 1 >= path.length) return null;
+    return path[here + 1];
   }
 
   /// Straight into the next lesson, replacing this screen so the back gesture
