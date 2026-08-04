@@ -5,10 +5,12 @@ import '../../../core/widgets/level_badge_icons.dart';
 import '../../../engagement/levels.dart';
 import '../../../engagement/streak.dart';
 import '../../../providers/engagement_providers.dart';
+import '../../../providers/lesson_providers.dart';
+import 'lesson_mark.dart';
 
-/// The Home tab's centrepiece: the app's mark in the middle, with streak,
-/// points and level orbiting it, and the ring around the mark reading as
-/// certificate progress.
+/// The Home tab's centrepiece: a mark for the lesson in hand in the middle,
+/// with streak, points and level orbiting it, and the ring around the mark
+/// reading as certificate progress.
 ///
 /// The ring is decoration for a number stated in words further down the tab —
 /// it never carries meaning on its own, so nothing is lost if it cannot be
@@ -36,6 +38,13 @@ class HomeHero extends ConsumerWidget {
     final DateTime now = DateTime.now();
     final int days = streak.displayCurrent(now);
 
+    // The mark follows whatever lesson is next, so the hero is about where
+    // the learner actually is rather than a fixed logo. Falls back to the
+    // app's own mark before the path loads and once it is finished.
+    final LessonMark mark = markForLesson(
+      ref.watch(currentLessonProvider)?.lesson.id,
+    );
+
     final CertificateStatus? status = certificate.value;
     final double fraction = status == null || status.totalLessons == 0
         ? 0
@@ -60,7 +69,11 @@ class HomeHero extends ConsumerWidget {
               child: Stack(
                 alignment: Alignment.center,
                 children: <Widget>[
-                  _Mark(diameter: diameter, fraction: fraction),
+                  _Mark(
+                    diameter: diameter,
+                    fraction: fraction,
+                    mark: mark,
+                  ),
                   Align(
                     alignment: Alignment.topLeft,
                     child: _OrbitStat(
@@ -113,12 +126,18 @@ class HomeHero extends ConsumerWidget {
   }
 }
 
-/// The disc at the centre: the app's mark, wrapped in a progress ring.
+/// The disc at the centre: the mark for the lesson in hand, wrapped in a
+/// progress ring.
 class _Mark extends StatelessWidget {
-  const _Mark({required this.diameter, required this.fraction});
+  const _Mark({
+    required this.diameter,
+    required this.fraction,
+    required this.mark,
+  });
 
   final double diameter;
   final double fraction;
+  final LessonMark mark;
 
   @override
   Widget build(BuildContext context) {
@@ -152,10 +171,18 @@ class _Mark extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
-                Icon(
-                  Icons.candlestick_chart_outlined,
-                  size: diameter * 0.34,
-                  color: theme.colorScheme.primary,
+                // Crossfaded rather than cut, because the mark changes under
+                // the learner's eyes the moment they finish a lesson and come
+                // back to Home.
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 350),
+                  child: LessonMarkView(
+                    // Without a key the switcher sees the same widget type and
+                    // swaps the symbol in place, with no fade.
+                    key: ValueKey<String>(mark.label),
+                    mark: mark,
+                    size: diameter * 0.34,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Padding(

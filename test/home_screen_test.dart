@@ -12,8 +12,11 @@ import 'package:optionsschool/data/repositories/lesson_repo.dart';
 import 'package:optionsschool/data/repositories/progress_repo.dart';
 import 'package:optionsschool/engagement/streak.dart';
 import 'package:optionsschool/features/home/home_screen.dart';
+import 'package:optionsschool/features/home/widgets/lesson_mark.dart';
 import 'package:optionsschool/providers/auth_controller.dart';
+import 'package:optionsschool/providers/lesson_providers.dart';
 import 'package:optionsschool/providers/repository_providers.dart';
+import 'package:riverpod/misc.dart' show Override;
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// The Home tab is a dashboard, so what it must get right is telling the
@@ -24,6 +27,7 @@ void main() {
   Future<void> pumpHome(
     WidgetTester tester, {
     Map<String, LessonProgress> progress = const <String, LessonProgress>{},
+    List<Override> overrides = const <Override>[],
   }) async {
     final GoRouter router = GoRouter(
       routes: <RouteBase>[
@@ -57,6 +61,7 @@ void main() {
             _MemoryProgressRepo(Map<String, LessonProgress>.of(progress)),
           ),
           currentUserProvider.overrideWithValue(_learner),
+          ...overrides,
         ],
         child: MaterialApp.router(routerConfig: router),
       ),
@@ -181,7 +186,52 @@ void main() {
     expect(find.text('Earned — open to view it'), findsOneWidget);
     expect(find.byType(FilledButton), findsNothing);
   });
+
+  testWidgets('the hero mark stands for the lesson in hand', (
+    WidgetTester tester,
+  ) async {
+    await pumpHome(
+      tester,
+      overrides: <Override>[
+        currentLessonProvider.overrideWithValue(
+          LessonNode(
+            lesson: _greeks,
+            progress: const LessonProgress(lessonId: 'the-greeks'),
+            isUnlocked: true,
+          ),
+        ),
+      ],
+    );
+
+    // Delta, because the lesson is about the Greeks — not the app's own
+    // candlestick.
+    expect(find.text('Δ'), findsOneWidget);
+    expect(find.byIcon(kDefaultMark.icon!), findsNothing);
+  });
+
+  testWidgets('the hero falls back to the app mark with no lesson in hand', (
+    WidgetTester tester,
+  ) async {
+    // What a learner who has finished the whole path sees.
+    await pumpHome(
+      tester,
+      overrides: <Override>[
+        currentLessonProvider.overrideWithValue(null),
+      ],
+    );
+
+    expect(find.byIcon(kDefaultMark.icon!), findsOneWidget);
+  });
 }
+
+/// Stands in for the bundled Greeks lesson; only its id reaches the mark.
+final Lesson _greeks = Lesson(
+  id: 'the-greeks',
+  order: 5,
+  title: 'The Greeks',
+  summary: 'How the price moves',
+  cards: const <LessonCard>[TitleCard(title: 'Greeks', subtitle: 'Delta')],
+);
 
 final Lesson _one = Lesson(
   id: 'one',

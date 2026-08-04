@@ -124,6 +124,22 @@ final FutureProvider<List<LessonNode>> lessonPathProvider =
       return path;
     });
 
+/// The lesson the learner is on: the first unlocked one they have not
+/// finished. Null once the whole path is done, or before it loads.
+///
+/// Derived from [lessonPathProvider] so the Home hero and the "Up next" card
+/// beneath it can never point at different lessons.
+final Provider<LessonNode?> currentLessonProvider = Provider<LessonNode?>((
+  Ref ref,
+) {
+  final List<LessonNode>? path = ref.watch(lessonPathProvider).value;
+  if (path == null) return null;
+  for (final LessonNode node in path) {
+    if (!node.isFinished && node.isUnlocked) return node;
+  }
+  return null;
+});
+
 /// Whether the "options-strategies" lesson is done — the gate the Sandbox's
 /// Strategy tab checks before it lets a learner past the preset picker.
 ///
