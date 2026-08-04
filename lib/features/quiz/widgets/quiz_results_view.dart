@@ -5,6 +5,7 @@ import '../../../core/widgets/disclaimer_text.dart';
 import '../../../core/widgets/level_badge_icons.dart';
 import '../../../data/models/quiz.dart';
 import '../../../engagement/levels.dart';
+import '../../../providers/lesson_providers.dart';
 
 /// The end of a Q&A run.
 ///
@@ -23,6 +24,8 @@ class QuizResultsView extends StatelessWidget {
     required this.onRetry,
     required this.onReviewLesson,
     required this.onDone,
+    this.nextLesson,
+    this.onStartNext,
     super.key,
   });
 
@@ -46,6 +49,11 @@ class QuizResultsView extends StatelessWidget {
   final VoidCallback onRetry;
   final VoidCallback onReviewLesson;
   final VoidCallback onDone;
+
+  /// The lesson this Q&A just unlocked, when there is one. Null on the last
+  /// lesson of the path, or before the path has loaded.
+  final LessonNode? nextLesson;
+  final void Function(LessonNode)? onStartNext;
 
   /// Below this, the material has probably not landed yet.
   static const double reviewThreshold = 0.6;
@@ -122,8 +130,29 @@ class QuizResultsView extends StatelessWidget {
             correct: session.verdictFor(session.questions[i].id) ?? false,
           ),
         const SizedBox(height: 24),
-        FilledButton(onPressed: onDone, child: const Text('Back to the path')),
-        const SizedBox(height: 10),
+        // Finishing a Q&A is the moment a learner is most likely to keep
+        // going, so the primary action carries them straight on rather than
+        // dropping them back on the path to find their own way. Naming the
+        // lesson makes it a decision rather than a reflex.
+        if (nextLesson != null && onStartNext != null) ...<Widget>[
+          FilledButton.icon(
+            onPressed: () => onStartNext!(nextLesson!),
+            icon: const Icon(Icons.arrow_forward, size: 18),
+            label: Text('Next: ${nextLesson!.lesson.title}'),
+          ),
+          const SizedBox(height: 10),
+          TextButton(
+            onPressed: onDone,
+            child: const Text('Back to the path'),
+          ),
+          const SizedBox(height: 10),
+        ] else ...<Widget>[
+          FilledButton(
+            onPressed: onDone,
+            child: const Text('Back to the path'),
+          ),
+          const SizedBox(height: 10),
+        ],
         if (_shouldReview)
           OutlinedButton(
             onPressed: onReviewLesson,

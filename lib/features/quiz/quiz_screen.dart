@@ -168,6 +168,30 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
     }
   }
 
+  /// The lesson that follows this one, once this Q&A has unlocked it.
+  ///
+  /// Null when this was the last lesson, or while the path is still loading —
+  /// in which case the results screen falls back to sending the learner back
+  /// to the path rather than offering a button that goes nowhere.
+  LessonNode? get _nextLesson {
+    final List<LessonNode>? path = ref.read(lessonPathProvider).value;
+    if (path == null) return null;
+
+    final int here = path.indexWhere(
+      (LessonNode n) => n.lesson.id == widget.lessonId,
+    );
+    if (here < 0) return null;
+    for (final LessonNode node in path.skip(here + 1)) {
+      if (!node.isFinished) return node;
+    }
+    return null;
+  }
+
+  /// Straight into the next lesson, replacing this screen so the back gesture
+  /// does not land the learner on a Q&A they have already finished.
+  void _startNext(LessonNode next) =>
+      context.pushReplacement(Routes.lessonPath(next.lesson.id));
+
   @override
   Widget build(BuildContext context) {
     final AsyncValue<Lesson?> lesson = ref.watch(
@@ -225,6 +249,8 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
               onRetry: () => _retry(lesson),
               onReviewLesson: _reviewLesson,
               onDone: _close,
+              nextLesson: _nextLesson,
+              onStartNext: _startNext,
             ),
           ),
         ),
