@@ -11,6 +11,8 @@
 /// compute themselves will expose.
 library;
 
+import 'dart:math' as math;
+
 /// One graded question.
 ///
 /// Sealed so the renderer's switch is exhaustive: a new question type won't
@@ -77,6 +79,25 @@ class MultipleChoiceQuestion extends QuizQuestion {
 
   bool isCorrectChoice(int index) =>
       index >= 0 && index < choices.length && choices[index].isCorrect;
+
+  /// The same question with its choices in a different order.
+  ///
+  /// Grading, feedback and the results recap all read through this list —
+  /// [isCorrectChoice] by index into it, [correctChoice] by flag — so
+  /// reordering here is enough to reorder everything downstream, with nothing
+  /// to keep in sync.
+  MultipleChoiceQuestion shuffleChoices(math.Random rng) {
+    final List<QuizChoice> reordered = List<QuizChoice>.of(choices)
+      ..shuffle(rng);
+    return MultipleChoiceQuestion(
+      id: id,
+      prompt: prompt,
+      setup: setup,
+      teachingNote: teachingNote,
+      minDepth: minDepth,
+      choices: reordered,
+    );
+  }
 
   /// The answer that should have been given, for the results recap.
   QuizChoice get correctChoice =>
@@ -228,6 +249,31 @@ class QuizSession {
     required this.questions,
     this.verdicts = const <String, bool>{},
   });
+
+  /// A session with every multiple-choice question's answers reordered.
+  ///
+  /// Authored order is not a reliable source of variety — it drifts toward
+  /// whatever the author typed first, and three lessons here ended up with the
+  /// correct answer in position A for every single question. A learner who
+  /// notices that stops reading the options and starts pattern-matching, which
+  /// is the opposite of the point.
+  ///
+  /// The seed is explicit so the order is stable for the life of a session —
+  /// the question view and the results recap must agree — while a retake gets
+  /// a fresh seed, so a second attempt cannot be passed from memory of where
+  /// the right answer sat.
+  factory QuizSession.shuffled({
+    required List<QuizQuestion> questions,
+    required int seed,
+  }) {
+    final math.Random rng = math.Random(seed);
+    return QuizSession(
+      questions: <QuizQuestion>[
+        for (final QuizQuestion q in questions)
+          if (q is MultipleChoiceQuestion) q.shuffleChoices(rng) else q,
+      ],
+    );
+  }
 
   final List<QuizQuestion> questions;
 

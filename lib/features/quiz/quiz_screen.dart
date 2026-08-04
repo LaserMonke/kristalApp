@@ -63,8 +63,18 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
   }
 
   void _ensureSession(Lesson lesson) {
-    _session ??= QuizSession(questions: lesson.questions);
+    _session ??= _newSession(lesson);
   }
+
+  /// A fresh run, with the multiple-choice answers reordered.
+  ///
+  /// Seeded from the clock so each attempt differs, and captured once per
+  /// session so the order holds steady while the learner works through it —
+  /// the question view and the results recap have to agree.
+  QuizSession _newSession(Lesson lesson) => QuizSession.shuffled(
+    questions: lesson.questions,
+    seed: DateTime.now().microsecondsSinceEpoch,
+  );
 
   void _onAnswer(QuizQuestion question, {required bool correct}) {
     setState(() {
@@ -139,7 +149,7 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
   void _retry(Lesson lesson) {
     _answer.clear();
     setState(() {
-      _session = QuizSession(questions: lesson.questions);
+      _session = _newSession(lesson);
       _index = 0;
       _finished = false;
       _saving = false;
