@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/feedback/haptics.dart';
+import '../../core/widgets/confetti_overlay.dart';
 import '../../core/router/app_router.dart';
 import '../../data/models/lesson.dart';
 import '../../data/models/quiz.dart';
@@ -129,6 +130,10 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
       _reachedLevel = levelAfter.rank > levelBefore.rank ? levelAfter : null;
       _streakDays = streak.displayCurrent(DateTime.now());
     });
+
+    // A level-up is worth feeling as well as seeing — and it is the one place
+    // in the app where the confetti fires, so the two belong together.
+    if (_reachedLevel != null) ref.read(hapticsProvider).warn();
   }
 
   void _retry(Lesson lesson) {
@@ -195,16 +200,22 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
           onClose: _close,
         ),
         Expanded(
-          child: QuizResultsView(
-            lessonTitle: lesson.title,
-            session: _session!,
-            attempts: _attempts,
-            pointsGained: _pointsGained,
-            reachedLevel: _reachedLevel,
-            streakDays: _streakDays,
-            onRetry: () => _retry(lesson),
-            onReviewLesson: _reviewLesson,
-            onDone: _close,
+          // Confetti only for a level-up, which is rare by design — six
+          // thresholds across the whole path. Firing it for every finished
+          // Q&A would make it mean nothing.
+          child: ConfettiOverlay(
+            play: _reachedLevel != null,
+            child: QuizResultsView(
+              lessonTitle: lesson.title,
+              session: _session!,
+              attempts: _attempts,
+              pointsGained: _pointsGained,
+              reachedLevel: _reachedLevel,
+              streakDays: _streakDays,
+              onRetry: () => _retry(lesson),
+              onReviewLesson: _reviewLesson,
+              onDone: _close,
+            ),
           ),
         ),
       ],
