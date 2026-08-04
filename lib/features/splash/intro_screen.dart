@@ -170,6 +170,31 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
                       ),
                     ),
                   ),
+                  const SizedBox(height: 20),
+                  Opacity(
+                    // Dimmer and later than the tagline: a credit, not a
+                    // headline.
+                    opacity: (textIn.value * 0.55).clamp(0.0, 1.0),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Semantics(
+                        // The middots read as punctuation noise aloud, so give
+                        // a screen reader a sentence instead.
+                        label:
+                            'Made by Arek Chanda, Karan Desai and '
+                            'Paarth Bhargava.',
+                        excludeSemantics: true,
+                        child: Text(
+                          'Arek Chanda · Karan Desai · Paarth Bhargava',
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                            letterSpacing: 0.2,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
