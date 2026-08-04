@@ -47,8 +47,11 @@ const Map<String, LessonMark> _marks = <String, LessonMark>{
     Icons.balance_outlined,
     label: 'Weighing uses against risks',
   ),
+  // Not Icons.functions: it draws a summation sign, and an uppercase Σ two
+  // lessons away from the σ standing for volatility reads as the same symbol
+  // twice.
   'black-scholes-price': LessonMark.icon(
-    Icons.functions,
+    Icons.calculate_outlined,
     label: 'A pricing formula',
   ),
   // The lesson is literally about Greek letters, so it gets one.
