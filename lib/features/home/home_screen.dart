@@ -7,8 +7,10 @@ import '../../core/theme/app_colors.dart';
 import '../../core/widgets/disclaimer_text.dart';
 import '../../core/widgets/settings_button.dart';
 import '../../core/widgets/theme_toggle_button.dart';
+import '../../games/stockle/stockle_engine.dart';
 import '../../providers/engagement_providers.dart';
 import '../../providers/lesson_providers.dart';
+import '../../providers/stockle_providers.dart';
 import 'widgets/home_hero.dart';
 
 /// The landing tab: who you are, where you stand (streak, points, level),
@@ -49,6 +51,13 @@ class HomeScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 28),
           const _SectionHeader(
+            icon: Icons.grid_view_outlined,
+            label: 'Daily game',
+          ),
+          const SizedBox(height: 10),
+          const _StockleCard(),
+          const SizedBox(height: 28),
+          const _SectionHeader(
             icon: Icons.workspace_premium_outlined,
             label: 'Certificate',
           ),
@@ -74,6 +83,77 @@ class HomeScreen extends ConsumerWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Entry point to Stockle, showing whether today's puzzle is still waiting.
+///
+/// States the streak but never nags about it: no countdown, no "don't lose
+/// your streak" (CLAUDE.md rule 9 — streaks encourage, they do not guilt).
+class _StockleCard extends ConsumerWidget {
+  const _StockleCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final ThemeData theme = Theme.of(context);
+    final StockleState? game = ref.watch(stockleProvider);
+    final StockleStats stats = ref.watch(stockleStatsProvider);
+
+    final bool doneToday = game?.isOver ?? false;
+    final String subtitle = doneToday
+        ? (game!.isWon
+              ? 'Solved in ${game.guessesUsed} — back tomorrow'
+              : 'Today’s answer was ${game.answer.symbol}')
+        : 'Guess today’s NASDAQ-100 ticker in $maxGuesses tries';
+
+    return Card(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () => context.push(Routes.stockle),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: <Widget>[
+              Icon(
+                doneToday ? Icons.check_circle_outline : Icons.grid_view,
+                size: 28,
+                color: theme.colorScheme.primary,
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Row(
+                      children: <Widget>[
+                        Text('Stockle', style: theme.textTheme.titleMedium),
+                        if (stats.streak > 0) ...<Widget>[
+                          const SizedBox(width: 8),
+                          Text(
+                            '${stats.streak}-day streak',
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right),
+            ],
+          ),
+        ),
       ),
     );
   }

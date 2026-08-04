@@ -15,6 +15,7 @@ import '../../features/quiz/quiz_screen.dart';
 import '../../features/sandbox/sandbox_screen.dart';
 import '../../features/shell/app_shell.dart';
 import '../../features/splash/intro_screen.dart';
+import '../../features/stockle/stockle_screen.dart';
 import '../../providers/auth_controller.dart';
 import '../../providers/onboarding_controller.dart';
 
@@ -39,6 +40,10 @@ abstract final class Routes {
 
   /// The completion certificate (or the checklist on the way to it).
   static const String certificate = '/certificate';
+
+  /// The daily ticker game. Full-screen over the shell rather than a fifth
+  /// tab: it is a once-a-day visit, not a place to live.
+  static const String stockle = '/stockle';
 
   static String lessonPath(String lessonId) => '/lesson/$lessonId';
 
@@ -125,6 +130,11 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
         path: Routes.certificate,
         parentNavigatorKey: _rootKey,
         builder: (_, _) => const CertificateScreen(),
+      ),
+      GoRoute(
+        path: Routes.stockle,
+        parentNavigatorKey: _rootKey,
+        builder: (_, _) => const StockleScreen(),
       ),
       GoRoute(
         path: Routes.profile,

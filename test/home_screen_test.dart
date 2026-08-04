@@ -157,6 +157,10 @@ void main() {
     );
     expect(find.text('0 of 2 lessons finished'), findsOneWidget);
 
+    // scrollUntilVisible builds the row but can leave it clipped at the edge,
+    // where a tap misses. ensureVisible settles it fully on screen first.
+    await tester.ensureVisible(find.text('0 of 2 lessons finished'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('0 of 2 lessons finished'));
     await tester.pumpAndSettle();
     expect(find.text('the certificate'), findsOneWidget);
@@ -182,7 +186,18 @@ void main() {
       },
     );
 
+    // "Up next" is near the top and already built.
     expect(find.text('Every lesson is finished'), findsOneWidget);
+
+    // The certificate section sits below the hero, the "Up next" card and the
+    // daily-game card, so on a test-sized surface the ListView has not built
+    // it until we scroll down to it.
+    await tester.scrollUntilVisible(
+      find.text('Earned — open to view it'),
+      120,
+      scrollable: find.byType(Scrollable).first,
+    );
+
     expect(find.text('Earned — open to view it'), findsOneWidget);
     expect(find.byType(FilledButton), findsNothing);
   });
