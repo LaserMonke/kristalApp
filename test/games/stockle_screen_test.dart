@@ -128,7 +128,16 @@ void main() {
     await tester.tap(find.widgetWithText(FilledButton, 'Guess'));
     await tester.pumpAndSettle();
 
-    // The reward: the company, not just a win message.
+    // A correct solve pops a little celebration naming the company.
+    expect(find.text('Correct!'), findsOneWidget);
+    expect(
+      find.text(container.read(stockleProvider)!.answer.name),
+      findsWidgets,
+    );
+    await tester.tap(find.widgetWithText(FilledButton, 'Nice'));
+    await tester.pumpAndSettle();
+
+    // The reward underneath: the company overview, not just a win message.
     expect(find.textContaining('Solved in 1'), findsOneWidget);
     expect(
       find.text(container.read(stockleProvider)!.answer.name),

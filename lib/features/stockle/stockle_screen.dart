@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/theme/app_colors.dart';
 import '../../core/widgets/disclaimer_text.dart';
 import '../../games/stockle/stockle_engine.dart';
 import '../../providers/stockle_providers.dart';
@@ -22,6 +23,9 @@ class StockleScreen extends ConsumerStatefulWidget {
 
 class _StockleScreenState extends ConsumerState<StockleScreen> {
   String _typed = '';
+
+  /// Ensures the win popup shows once per solve, not again on every rebuild.
+  bool _celebrated = false;
 
   /// Whether the player has asked to see today's hint. Not persisted: it costs
   /// nothing to tap again, and a hint the player never wanted should not
@@ -70,6 +74,23 @@ class _StockleScreenState extends ConsumerState<StockleScreen> {
       stockleDictionaryProvider,
     );
     final StockleState? game = ref.watch(stockleProvider);
+
+    // Celebrate the moment of solving — but only a live transition from
+    // playing to won, never reopening a puzzle that was already solved earlier
+    // (prev is non-null and not-yet-won only during actual play).
+    ref.listen<StockleState?>(stockleProvider, (
+      StockleState? prev,
+      StockleState? next,
+    ) {
+      final bool justWon =
+          prev != null && !prev.isWon && (next?.isWon ?? false);
+      if (justWon && !_celebrated) {
+        _celebrated = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _showWinPopup(next!);
+        });
+      }
+    });
 
     return Scaffold(
       appBar: AppBar(
@@ -152,6 +173,72 @@ class _StockleScreenState extends ConsumerState<StockleScreen> {
           );
         },
       ),
+    );
+  }
+
+  /// A little celebration on a correct solve, naming the company behind the
+  /// ticker — the thing the game is there to teach. The full overview (live
+  /// price and all) still sits on the result card underneath.
+  Future<void> _showWinPopup(StockleState game) async {
+    final StockleTicker ticker = game.answer;
+    final int points = stocklePoints(game);
+    final String guessWord = game.guessesUsed == 1 ? 'guess' : 'guesses';
+
+    await showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        final ThemeData theme = Theme.of(dialogContext);
+        return AlertDialog(
+          icon: const Icon(
+            Icons.celebration_outlined,
+            size: 32,
+            color: AppColors.bluishGreen,
+          ),
+          title: const Text('Correct!'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Text(
+                ticker.symbol,
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                ticker.name,
+                style: theme.textTheme.titleMedium,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 2),
+              Text(
+                '${ticker.sector} · NASDAQ-100',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'You matched the ticker to its company in '
+                '${game.guessesUsed} $guessWord'
+                '${points > 0 ? ' · +$points points' : ''}.',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+          actions: <Widget>[
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Nice'),
+            ),
+          ],
+        );
+      },
     );
   }
 
