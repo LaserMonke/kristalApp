@@ -39,16 +39,16 @@ rejects an alpha channel.
 live Supabase project, and neither a public store listing nor this public
 repository is the place to publish them.
 
-Seeding the bot roster
-(`supabase/migrations/20260806140000_review_access_and_bots.sql`) does NOT solve
-this, which was worth finding out: the bots interleave with the real accounts
-rather than replacing them, so a capture taken after seeding still shows real
-usernames in the top few rows. The bots themselves render correctly, each with a
-BOT badge and robot avatar.
+Seeding a bot roster did NOT solve this, which was worth finding out: bots
+interleave with the real accounts rather than replacing them, so a capture taken
+after seeding still showed real usernames in the top few rows. The bots have
+since been removed altogether
+(`supabase/migrations/20260806180000_remove_leaderboard_bots.sql`), so the board
+is now real learners only — which makes a Ranks screenshot harder, not easier.
 
-A usable Ranks screenshot needs the real accounts gone from the board first —
-they appear to be development test accounts, but "appear to be" is not a basis
-for publishing somebody's username.
+A usable one needs the real accounts gone from the board first. They appear to
+be development test accounts, but "appear to be" is not a basis for publishing
+somebody's username.
 
 **Anything advertising a purchase.** The paywall was removed on 6 August 2026 —
 the app is free in full. If a screenshot or graphic ever shows a price, it is

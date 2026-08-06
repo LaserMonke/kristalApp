@@ -69,8 +69,13 @@ begin
 end $$;
 
 -- ============================================================================
--- 2. SEED THE BOT ROSTER
+-- 2. SEED THE BOT ROSTER  — SUPERSEDED
 -- ============================================================================
+-- REVERSED on 6 August 2026 by 20260806180000_remove_leaderboard_bots.sql,
+-- which empties this table: the board shows real learners only. This section
+-- is left as applied history rather than edited away, but do not re-run this
+-- file expecting the bots to be wanted.
+--
 -- Seeded empty by the Phase 7 migration on purpose. Without any rows the
 -- leaderboard shows only real accounts — which is why the Ranks screen could
 -- not be screenshotted for the store listing without publishing real learners'

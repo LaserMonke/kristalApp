@@ -1,0 +1,23 @@
+-- Take the bots off the leaderboard. Decided 6 August 2026.
+--
+-- 20260806140000_review_access_and_bots.sql seeded a roster so the Ranks
+-- screen had something to show. That is reversed here: the board shows real
+-- learners only.
+--
+-- Deleting rather than deactivating. `active = false` would leave eight
+-- invented names sitting in the table for someone to switch back on without
+-- knowing why they were turned off, and there is nothing here worth keeping —
+-- the rows carried no history, just made-up point totals.
+--
+-- The TABLE and the is_bot plumbing stay. leaderboard_page() and
+-- leaderboard_standing() still stamp is_bot on anything that comes from here,
+-- and the UI still renders a BOT badge for it. That machinery is what makes
+-- CLAUDE.md rule 7 structural rather than something a future change has to
+-- remember, so it is worth keeping even with nothing in the table — an empty
+-- roster is a product decision, not a reason to delete the safety rail.
+--
+-- Re-running the seeding migration would bring them back. If you ever replay
+-- the migration history from scratch, this file runs after it and empties the
+-- table again, which is the correct end state.
+
+delete from public.leaderboard_bots;

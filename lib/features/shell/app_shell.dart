@@ -144,8 +144,79 @@ class _SwipeBetweenTabsState extends State<_SwipeBetweenTabs> {
           // Dragging left moves forward through the tabs.
           _step((travelled ? _dragged : velocity) < 0 ? 1 : -1);
         },
-        child: widget.child,
+        child: _TabChangeSlide(index: widget.index, child: widget.child),
       ),
+    );
+  }
+}
+
+/// Slides the arriving tab in from the side it came from.
+///
+/// The shell is an `IndexedStack`: switching branches swaps the visible child
+/// with no motion at all, so a swipe felt like a cut rather than a movement and
+/// gave no clue which direction had been travelled. Only the incoming tab is
+/// animated — the outgoing one is already gone by the time this rebuilds, and
+/// faking its exit would mean holding a second copy of a live tab on screen.
+///
+/// Short and slight on purpose: this runs on every tab change including the
+/// nav-bar taps, so it has to stay out of the way of someone moving quickly.
+class _TabChangeSlide extends StatefulWidget {
+  const _TabChangeSlide({required this.index, required this.child});
+
+  final int index;
+  final Widget child;
+
+  @override
+  State<_TabChangeSlide> createState() => _TabChangeSlideState();
+}
+
+class _TabChangeSlideState extends State<_TabChangeSlide>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 220),
+    value: 1,
+  );
+
+  /// Which way the new tab travels: positive comes from the right.
+  double _from = 1;
+
+  @override
+  void didUpdateWidget(_TabChangeSlide old) {
+    super.didUpdateWidget(old);
+    if (widget.index != old.index) {
+      _from = widget.index > old.index ? 1 : -1;
+      _controller.forward(from: 0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final Animation<double> eased = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOutCubic,
+    );
+
+    return AnimatedBuilder(
+      animation: eased,
+      builder: (BuildContext context, Widget? child) {
+        final double t = 1 - eased.value;
+        return Opacity(
+          // Never fully transparent: a tab that blinks out reads as a reload.
+          opacity: 1 - t * 0.5,
+          child: FractionalTranslation(
+            translation: Offset(_from * t * 0.12, 0),
+            child: child,
+          ),
+        );
+      },
+      child: widget.child,
     );
   }
 }

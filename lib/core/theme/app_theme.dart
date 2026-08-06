@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart' show CupertinoPageTransitionsBuilder;
 import 'package:flutter/material.dart';
 
 import 'app_colors.dart';
@@ -48,6 +49,27 @@ abstract final class AppTheme {
       extensions: <ThemeExtension<dynamic>>[
         isDark ? PnlColors.dark : PnlColors.light,
       ],
+      // Drag in from the left edge to go back, on every platform.
+      //
+      // Android's own back gesture is a system affordance that an app cannot
+      // rely on being enabled, and Material's page transition has no drag to
+      // dismiss at all — so a pushed screen like Stockle or a lesson deck could
+      // only be left through its own close button. The Cupertino builder brings
+      // the interactive edge-drag with it and is applied to every platform so
+      // the gesture is the same wherever the app runs.
+      //
+      // No conflict with the sideways tab swiping in AppShell: this acts only
+      // on routes pushed ABOVE the shell, and only from the screen edge.
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: <TargetPlatform, PageTransitionsBuilder>{
+          TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.windows: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.linux: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.fuchsia: CupertinoPageTransitionsBuilder(),
+        },
+      ),
       appBarTheme: AppBarTheme(
         backgroundColor: scaffold,
         surfaceTintColor: Colors.transparent,
