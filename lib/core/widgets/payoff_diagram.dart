@@ -589,9 +589,11 @@ class _PayoffPainter extends CustomPainter {
     _text(
       canvas,
       _short(spotMax),
-      Offset(plot.right - 34, plot.bottom + 5),
+      // Wide enough for a 5-character price like "138.0"; a box narrower than
+      // the text would grow to fit and then overhang the plot's right edge.
+      Offset(plot.right - 48, plot.bottom + 5),
       labelStyle,
-      maxWidth: 34,
+      maxWidth: 48,
       align: TextAlign.right,
     );
     _text(
@@ -616,7 +618,15 @@ class _PayoffPainter extends CustomPainter {
       text: TextSpan(text: value, style: style),
       textDirection: textDirection,
       textAlign: align,
-    )..layout(maxWidth: maxWidth);
+    )..layout(
+        // A TextPainter shrink-wraps to the intrinsic width of its text, and
+        // textAlign can only act INSIDE that box. With maxWidth alone, centre
+        // and right therefore do nothing and the text paints flush left at
+        // `at` — which is how the axis title came to sit on top of the
+        // minimum-value label. Alignment needs the box to be the full width.
+        minWidth: align == TextAlign.left ? 0.0 : maxWidth,
+        maxWidth: maxWidth,
+      );
     painter.paint(canvas, at);
   }
 
