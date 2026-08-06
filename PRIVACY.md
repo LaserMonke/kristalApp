@@ -107,18 +107,16 @@ offline and syncs when you are back online. Your app settings (theme, whether
 reminders are on) stay on your device only.
 
 **Market data.** The practice market shows delayed share prices, supplied by
-**Finnhub**. Requests go through our own server, which sends Finnhub only the
-ticker symbol being looked up. Your username, your account, and anything about
-your learning are **never** sent to Finnhub, and Finnhub is not told who is
-asking.
-
-**Payments.** If you choose to unlock the practice market, the purchase is
-handled by **Google Play**, under Google's own privacy policy. We never see or
-store your card details. <!-- Add RevenueCat here once the store layer ships —
-it is a third-party processor and must be named. -->
+**Finnhub**. Requests go through our own server, which passes on two things:
+the ticker symbols being priced, and — when you use the search box — the text
+you typed, so that searching by company name works and not only by exact
+ticker. Our server keeps no record of either. Your username, your account, and
+anything about your learning are **never** sent to Finnhub, and Finnhub is not
+told who is asking.
 
 We do not sell your data. We do not share it with advertisers. We have no
-interest in doing either.
+interest in doing either. The app contains no purchases: there is nothing to
+buy, so we never see or store payment details of any kind.
 
 ---
 

@@ -6,13 +6,13 @@ Run in order. After each phase: flutter run on the iOS simulator, review, then g
 
 Stack: Flutter + Dart. One codebase → iOS + Android. Server: Supabase (added in Phase 6).
 
-STATUS (last updated 2026-08-03): Phases 0–8 are DONE. Phase 9 is PARTLY done — the practice market shipped, and the paywall's app side now exists but cannot talk to a real store yet (see Phase 9 below). Then PHASE 10.
+STATUS (last updated 2026-08-06): Phases 0–9 are DONE. The practice market shipped; the paywall that Phase 9b once carried was removed on 6 August 2026 and the app is free in full. Then PHASE 10.
 
 ────────────────────────────────────────────────────────────────────────────── PREREQUISITES — DONE ──────────────────────────────────────────────────────────────────────────────
 
 Flutter + Xcode + VS Code extensions installed, flutter doctor clear, project scaffolded and running on the iOS simulator. Keep the repo in ~/app (not Desktop/Documents) — iCloud extended attributes break iOS codesigning.
 
-Dependencies (pubspec.yaml): flutter_riverpod, go_router, fl_chart, shared_preferences, flutter_local_notifications, timezone, flutter_timezone, supabase_flutter, flutter_dotenv, http. No in-app-purchase package yet — that arrives with the paywall.
+Dependencies (pubspec.yaml): flutter_riverpod, go_router, fl_chart, shared_preferences, flutter_local_notifications, timezone, flutter_timezone, supabase_flutter, flutter_dotenv, http. No in-app-purchase package, and none is coming — the app is free in full.
 
 .env is gitignored, so a fresh clone or a machine that only pulled has NO credentials, and the build fails outright because .env is a declared asset. Copy .env.example to .env and fill in SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY. Blank values are supported — the app then runs fully on-device.
 
@@ -48,11 +48,10 @@ Shipped: Supabase-backed leaderboard (lib/features/leaderboard/, supabase_leader
 PHASE 8 — Advanced pricer (Monte Carlo, Heston, exotics) — DONE (commits 8f560ac, d92d875, 0bc1646, d01443e, 734d208, 8044380, ef2197a)
 Shipped in six parts: Monte Carlo core with barrier KO/KI and basket options (monte_carlo.dart, barrier.dart, basket.dart, random.dart); Heston stochastic vol (heston.dart, quadrature.dart, complex.dart); structured products as compositions (structured.dart); isolates with serialisable jobs (pricing_job.dart, lib/services/advanced_pricer.dart) plus a price-heavy Edge Function for very large runs, cross-checked and noted in DEPLOY.md; an Advanced pricer tab; and three lessons on the advanced instruments.
 
-PHASE 9 — Paywall + fake-money practice market — PARTLY DONE (commit 5636420)
+PHASE 9 — Fake-money practice market — DONE (commit 5636420)
 Shipped: the Market tab — a fake-money practice options market (lib/features/market/market_view.dart, lib/data/models/market.dart, market_repo.dart, portfolio_repo.dart, supabase_market_repo.dart, lib/providers/market_providers.dart), simulated P&L, a simulation distribution chart for the advanced pricer, and supabase/functions/market-data-proxy/index.ts so the data API key stays server-side. Market took Ranks' slot in the bottom nav.
-PHASE 9b — the paywall's app side — DONE. Decided first: the paid feature is the PRACTICE MARKET ONLY (the advanced pricer stays free — it is the best evidence the teaching is real), the unlock is a one-time non-consumable at ~$5, tied to the signed-in account rather than the device, entitlement id `practice_market`, store layer RevenueCat.
-Shipped: `EntitlementRepo` (interface) + `LocalEntitlementRepo` (the no-store stub) + `entitlementControllerProvider`, `marketUnlockedProvider` now an AsyncValue read from real state, and `PaywallView` replacing the old `_LockedPlaceholder` — with restore, a pending/Ask-to-Buy state, and no hardcoded price. 15 tests in test/market/paywall_test.dart.
-STILL TO DO before this can charge anyone: the Apple ($99/yr, needs a Mac or a cloud-Mac CI for the iOS build) and Google Play ($25) developer accounts, the non-consumable product in each store, the RevenueCat project, then `purchases_flutter` + a `RevenueCatEntitlementRepo` behind the same interface (chosen in `entitlementRepoProvider` on whether the keys are present, exactly as marketRepoProvider chooses on Supabase). Also the terms-of-use and privacy-policy links on the paywall, which need live URLs (Phase 10). Note Google's 12-testers-for-14-days rule before a personal account gets production access — start that early.
+PHASE 9b — the paywall — REMOVED, 6 August 2026. Its app side was built and never wired to a store; the plan to charge for the practice market was dropped before launch and the code deleted with it (EntitlementRepo, LocalEntitlementRepo, Entitlement, entitlementControllerProvider, marketUnlockedProvider, PaywallView, paywall_test.dart). MarketView renders the market directly. The app is free in full — no IAP, no store SDK, no entitlement anywhere. Do not rebuild it without asking: it is a product decision that drags new Data safety declarations, a privacy-policy change and a Play listing revision behind it. See DEPLOY.md §4 item 9 and CLAUDE.md "Monetization rules".
+Still on the release path regardless: Google Play ($25) — and note the 12-testers-for-14-days rule before a personal account gets production access, which is the longest lead time in the launch. Apple is $99/yr and needs a Mac or cloud-Mac CI, only if you want iOS.
 
 PHASE 10 — Personalization, polish, release prep — NEXT AFTER 9b "Personalize by education level: lesson order/depth, Q&A difficulty, which advanced topics surface for people with higher education, and notification content. Polish loading/empty/error states and accessibility (Semantics labels, captions); confirm disclaimers at onboarding and in Settings. Prepare release: app icons/splash, flutter build appbundle and flutter build ipa, privacy policy link — make it fit Apple's and Google's regulations and safety requirements so it is ready to publish. Full publishing + infra steps are in DEPLOY.md."
 

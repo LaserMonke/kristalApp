@@ -34,8 +34,7 @@ Unlock next lesson → Apply (interactive pricer / practice market).
 - Navigation: go_router
 - Charts: fl_chart; payoff diagrams drawn with a CustomPainter for full control
 - Local notifications: flutter_local_notifications
-- In-app purchase: in_app_purchase (or purchases_flutter / RevenueCat) for the paid pricer +
-  practice market
+- In-app purchase: NONE. The app is free throughout (see Monetization rules).
 - Heavy compute: Dart Isolates (compute()) to keep the UI smooth; escalate to a Supabase
   Edge Function / small backend for very large simulations
 - IDE: VS Code with the Flutter + Dart extensions (or Android Studio). Source control: GitHub.
@@ -93,11 +92,14 @@ Unlock next lesson → Apply (interactive pricer / practice market).
 
 ## Monetization rules
 
-- Core LEARNING (lessons + Q&A) stays free — best for reach, learning outcomes, and store
-  approval. Points/streaks/levels/certificate free.
-- Paid (in-app purchase, "donation"-style unlock): the advanced pricer tools and the
-  fake-money real-time practice market. Be clear about what payment unlocks.
-- App stores take ~15-30% on in-app purchases; plan pricing accordingly.
+- The app is FREE, in full. Decided 6 August 2026: the planned practice-market unlock was
+  dropped and the paywall removed. Lessons, Q&A, points, streaks, levels, the certificate,
+  every pricer, and the fake-money practice market are all free.
+- There is NO in-app purchase, no subscription, no store SDK, and no entitlement check
+  anywhere in the app. Do not add one back without asking — it is a product decision, and
+  reintroducing it means new Data safety declarations, a privacy-policy change (a payment
+  processor is a third party and must be named), and a Play listing that is currently
+  declared as having no purchases.
 
 ## Pricer requirements
 
@@ -134,8 +136,8 @@ Build progressively; each model is a tested function in the pure Dart pricer lib
 7. Leaderboard (real users + clearly labeled bots).
 8. Advanced pricer: Monte Carlo (basket, barrier KO/KI) on isolates, Heston, strategies,
    structured products.
-9. Paywall + fake-money real-time practice market (paid data API via Edge Function,
-   delayed-data labels).
+9. Fake-money real-time practice market (paid data API via Edge Function, delayed-data
+   labels). Free — the paywall this phase once carried was removed on 6 August 2026.
 10. Personalized learning paths & notifications by education level. Then deploy (see DEPLOY.md).
 
 ## Coding conventions

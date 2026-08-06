@@ -85,10 +85,6 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> {
             // learner who wants to look at what a barrier option is should be
             // able to, and the tab explains each instrument in plain words
             // before showing a number.
-            //
-            // Not behind the paywall either. This tab is the clearest evidence
-            // that the teaching is real, and it serves the app's stated main
-            // goal directly; the practice market is the paid feature instead.
             const AdvancedPricerView(),
           ],
         ),

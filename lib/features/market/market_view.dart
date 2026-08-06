@@ -9,7 +9,6 @@ import '../../core/widgets/disclaimer_text.dart';
 import '../../data/models/market.dart';
 import '../../providers/market_providers.dart';
 import '../../providers/repository_providers.dart';
-import 'paywall_view.dart';
 
 /// The Phase 9 fake-money practice market (shares).
 ///
@@ -18,9 +17,9 @@ import 'paywall_view.dart';
 /// number is ever presented as a live, tradable quote (CLAUDE.md rules 4 & 8).
 /// Fills are idealised: last price, no spread, no fees — stated plainly.
 ///
-/// The whole tab is gated on [marketUnlockedProvider] — the app's one paid
-/// feature. Locked shows [PaywallView] in this slot; the tab itself never
-/// disappears from the nav.
+/// Free, like the rest of the app. This tab was once the single paid feature;
+/// that plan was dropped, so there is no entitlement to check and nothing
+/// between opening the tab and using it.
 class MarketView extends ConsumerWidget {
   const MarketView({super.key});
 
@@ -36,13 +35,6 @@ class MarketView extends ConsumerWidget {
       final Portfolio? p = next.value;
       if (p != null) _reconcile(context, ref, p);
     });
-
-    // Waiting on the store is its own state. Falling back to "locked" would
-    // flash the paywall at a learner who has already paid, every single time
-    // they open this tab.
-    final AsyncValue<bool> unlocked = ref.watch(marketUnlockedProvider);
-    if (unlocked.isLoading) return const _CardLoading();
-    if (unlocked.value != true) return const PaywallView();
 
     final AsyncValue<MarketSnapshot> quotes = ref.watch(quotesProvider);
     final bool synthetic = ref.watch(feedIsSyntheticProvider);

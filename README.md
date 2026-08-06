@@ -20,7 +20,7 @@ is on-device.
 | 3 | Pricer core (BSM + Greeks, pure Dart) | |
 | 4 | Interactive pricer | |
 | 5 | Points, streaks, levels, certificate | |
-| 6–10 | Supabase, leaderboard, advanced pricer, paywall, release | |
+| 6–10 | Supabase, leaderboard, advanced pricer, practice market, release | |
 
 ## Running it
 

@@ -17,7 +17,7 @@ fields regularly.
 | App name | Stock Options Academy (21 chars, limit 30) |
 | Default language | English (United Kingdom) — the app's copy uses "colour", "idealised", "labelled" |
 | App or game | App |
-| Free or paid | **Free** — with an in-app purchase. Free→Paid cannot be reversed later; Paid→Free can |
+| Free or paid | **Free**, with NO in-app purchases. The planned practice-market unlock was dropped on 6 August 2026 and the paywall removed from the code. Leave "contains in-app purchases" unticked |
 | Category | **Education** — not Finance. See note below |
 | Tags | Education, Educational, Simulation |
 | Contact email | REQUIRED and public. Use one you monitor — it is also the deletion-request address in PRIVACY.md |
@@ -92,8 +92,8 @@ not a recommendation to buy or sell any security. Models are simplified; real
 markets differ in ways that matter, including liquidity, bid/ask spreads,
 dividends, early exercise and fees.
 
-Core learning is free. An optional one-time purchase unlocks the practice
-market.
+Everything here is free. There are no in-app purchases, no subscription and no
+adverts.
 ```
 
 ---
@@ -157,7 +157,8 @@ parties for advertising. No data is used for tracking across apps or websites.**
 | Password / credentials | **Yes** | No | Required | App functionality. Hashed by the auth provider |
 | App activity — in-app actions | **Yes** | No | Required | Lessons finished, Q&A scores, points, streak. Purpose: app functionality, personalisation (lesson difficulty) |
 | "Other info" — education level | **Yes** | No | Required | Personalisation: pitches lesson depth |
-| Purchase history | **Yes** (via Google Play) | No | Optional | Unlocking the practice market |
+| App activity — in-app search history | **Yes** | No | Optional | The Market search box sends what you type to the `market-data-proxy` function, which forwards it to Finnhub so search works by company name and not only by exact ticker. Our function stores nothing |
+| Purchase history | **No** | — | — | There are no purchases. The paywall was removed on 6 August 2026 and no store SDK ships in the binary |
 | Location, contacts, photos, files, messages, calendar, health, financial info | **No** | — | — | Never requested |
 | Device or advertising IDs | **No** | — | — | No ad network, no analytics SDK |
 
@@ -184,7 +185,7 @@ Rate as **Reference, News, or Educational**.
 | Simulated gambling | No |
 | Users can interact / share content | **Yes, limited** — usernames and point totals on a leaderboard. No chat, no messaging, no user-generated content, no photo sharing |
 | Shares user location | No |
-| Allows purchase of digital goods | **Yes** — one-time unlock |
+| Allows purchase of digital goods | **No** — nothing in the app is for sale |
 | Target age | 16+ |
 
 ### The gambling question
