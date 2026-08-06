@@ -20,7 +20,7 @@ void main() {
     );
     await repo.signUp(
       username: 'learner',
-      password: 'hunter2',
+      password: 'hunter2x1',
       educationLevel: EducationLevel.undergraduate,
     );
     return repo;
@@ -34,7 +34,7 @@ void main() {
 
       expect(repo.currentUser, isNull);
       await expectLater(
-        repo.signIn(username: 'learner', password: 'hunter2'),
+        repo.signIn(username: 'learner', password: 'hunter2x1'),
         throwsA(isA<AuthException>()),
       );
       repo.dispose();
@@ -48,7 +48,7 @@ void main() {
       // mean a record survived the delete.
       final user = await repo.signUp(
         username: 'learner',
-        password: 'different',
+        password: 'different1',
         educationLevel: EducationLevel.highSchool,
       );
 
@@ -87,7 +87,7 @@ void main() {
       await repo.deleteAccount();
 
       await expectLater(
-        repo.signIn(username: 'renamed', password: 'hunter2'),
+        repo.signIn(username: 'renamed', password: 'hunter2x1'),
         throwsA(isA<AuthException>()),
       );
       repo.dispose();

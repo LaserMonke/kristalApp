@@ -80,3 +80,41 @@ String? usernameFromEmail(String? email) {
 /// Minimum password length. Matches the sign-in form's own validator and the
 /// Supabase project's Auth setting — keep all three in step (DEPLOY.md §1a).
 const int minPasswordLength = 6;
+
+/// What a NEW password has to look like, in wording safe to show verbatim.
+///
+/// This mirrors the "Password Requirements" setting on the Supabase project
+/// (letters and digits). The server is the real authority, but it can only
+/// answer after a round trip, and its refusal arrives as an error rather than
+/// as guidance — so a learner who picks `password` is told the account could
+/// not be created without ever being told why. Stating the rule here lets the
+/// form say it up front and reject it on the spot.
+///
+/// KEEP IN STEP with the Supabase dashboard. Loosening this without loosening
+/// the project setting puts the silent failure straight back.
+///
+/// Deliberately NOT applied when signing in. Accounts created under an older
+/// rule still have to be able to get in; a strength check on the sign-in form
+/// would lock out the very people it was meant to protect.
+class PasswordRule {
+  const PasswordRule._();
+
+  /// Shown under the field before anything has gone wrong. The point is that
+  /// the rule is visible while choosing, not explained after failing.
+  static const String describe =
+      'At least $minPasswordLength characters, including a letter and a number.';
+
+  /// Null when [password] is acceptable, otherwise the reason why not.
+  static String? validate(String password) {
+    if (password.length < minPasswordLength) {
+      return 'Password must be at least $minPasswordLength characters.';
+    }
+    if (!RegExp(r'[A-Za-z]').hasMatch(password)) {
+      return 'Password must include at least one letter.';
+    }
+    if (!RegExp(r'[0-9]').hasMatch(password)) {
+      return 'Password must include at least one number.';
+    }
+    return null;
+  }
+}

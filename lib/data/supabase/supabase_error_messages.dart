@@ -14,6 +14,8 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 
+import 'account_identity.dart';
+
 const String _offline =
     'Can’t reach the server. Check your connection and try again.';
 
@@ -55,7 +57,11 @@ String signUpErrorMessage(Object error) {
       case 'email_exists':
         return 'That username is already taken.';
       case 'weak_password':
-        return 'Please choose a stronger password.';
+        // "Choose a stronger password" tells a learner nothing they can act
+        // on. The client checks the same rule before sending, so reaching
+        // here means the project's setting is stricter than PasswordRule —
+        // say what the app knows the rule to be rather than staying vague.
+        return PasswordRule.describe;
       case 'over_request_rate_limit':
       case 'over_email_send_rate_limit':
         return 'Too many attempts. Wait a minute and try again.';

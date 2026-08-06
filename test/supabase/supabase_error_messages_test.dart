@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
+import 'package:optionsschool/data/supabase/account_identity.dart';
 import 'package:optionsschool/data/supabase/supabase_error_messages.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 
@@ -59,13 +60,16 @@ void main() {
       expect(signUpErrorMessage(exists), 'That username is already taken.');
     });
 
-    test('a weak password asks for a stronger one', () {
+    test('a weak password is answered with the rule, not with "stronger"', () {
       const sb.AuthApiException weak = sb.AuthApiException(
         'Password is too weak',
         statusCode: '422',
         code: 'weak_password',
       );
-      expect(signUpErrorMessage(weak), contains('stronger password'));
+      // "Choose a stronger password" leaves the learner guessing at which of
+      // length, letters or digits it wanted. State the requirement instead.
+      expect(signUpErrorMessage(weak), PasswordRule.describe);
+      expect(signUpErrorMessage(weak), contains('number'));
     });
 
     test('a rejected synthetic address does not blame the learner', () {

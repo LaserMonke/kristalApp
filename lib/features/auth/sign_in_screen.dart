@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/widgets/data_location_text.dart';
 import '../../data/models/education_level.dart';
 import '../../data/repositories/auth_repo.dart';
+import '../../data/supabase/account_identity.dart';
 import '../../providers/auth_controller.dart';
 import '../../providers/repository_providers.dart';
 
@@ -130,6 +131,11 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                       onFieldSubmitted: (_) => _submit(),
                       decoration: InputDecoration(
                         labelText: 'Password',
+                        // Stated while choosing, not after being refused. The
+                        // server enforces the same rule but can only say so
+                        // after a round trip, and it says it as a failure.
+                        helperText: _isSignUp ? PasswordRule.describe : null,
+                        helperMaxLines: 2,
                         prefixIcon: const Icon(Icons.lock_outline),
                         suffixIcon: IconButton(
                           icon: Icon(
@@ -142,9 +148,19 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                               setState(() => _obscure = !_obscure),
                         ),
                       ),
-                      validator: (String? value) => (value ?? '').length < 6
-                          ? 'At least 6 characters'
-                          : null,
+                      // Sign-up is held to the full rule; signing in is only
+                      // checked for emptiness. An account made under an older
+                      // rule must still be able to get in, and the server is
+                      // what decides whether the password is right anyway.
+                      validator: (String? value) {
+                        final String password = value ?? '';
+                        if (!_isSignUp) {
+                          return password.isEmpty
+                              ? 'Enter your password'
+                              : null;
+                        }
+                        return PasswordRule.validate(password);
+                      },
                     ),
                     if (_isSignUp) ...<Widget>[
                       const SizedBox(height: 22),

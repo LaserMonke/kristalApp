@@ -76,4 +76,31 @@ void main() {
       );
     });
   });
+
+  group('PasswordRule', () {
+    test('accepts a password with length, a letter and a number', () {
+      expect(PasswordRule.validate('hunter2x1'), isNull);
+      expect(PasswordRule.validate('a1b2c3'), isNull);
+    });
+
+    test('names the specific thing that is missing', () {
+      // The whole reason this exists: "could not create the account" told a
+      // learner nothing, so each branch has to say what to change.
+      expect(PasswordRule.validate('ab1'), contains('6 characters'));
+      expect(PasswordRule.validate('12345678'), contains('letter'));
+      expect(PasswordRule.validate('password'), contains('number'));
+    });
+
+    test('the description names every rule it enforces', () {
+      // A description that drifts from the checks is worse than none: the form
+      // would promise one thing and reject on another.
+      expect(PasswordRule.describe, contains('$minPasswordLength'));
+      expect(PasswordRule.describe, contains('letter'));
+      expect(PasswordRule.describe, contains('number'));
+    });
+
+    test('an empty password fails on length, not on a crash', () {
+      expect(PasswordRule.validate(''), isNotNull);
+    });
+  });
 }

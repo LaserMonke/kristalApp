@@ -68,11 +68,8 @@ class SupabaseAuthRepo implements AuthRepo {
   }) async {
     final String? problem = UsernameRule.validate(username);
     if (problem != null) throw AuthException(problem);
-    if (password.length < minPasswordLength) {
-      throw const AuthException(
-        'Password must be at least $minPasswordLength characters.',
-      );
-    }
+    final String? weak = PasswordRule.validate(password);
+    if (weak != null) throw AuthException(weak);
 
     // Asked up front so a taken name reads as "already taken" instead of the
     // raw unique-index violation the sign-up trigger would otherwise raise.

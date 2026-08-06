@@ -62,6 +62,13 @@ class _LessonPlayerScreenState extends ConsumerState<LessonPlayerScreen> {
     );
   }
 
+  void _previous() {
+    _controller?.previousPage(
+      duration: const Duration(milliseconds: 260),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
   Future<void> _finish(Lesson lesson) async {
     await ref
         .read(progressControllerProvider.notifier)
@@ -141,14 +148,17 @@ class _LessonPlayerScreenState extends ConsumerState<LessonPlayerScreen> {
             itemBuilder: (BuildContext context, int index) => _DeckCard(
               controller: _controller!,
               index: index,
-              child: LessonCardView(card: lesson.cards[index]),
+              child: _ChainToDeck(
+                onNext: _next,
+                onPrevious: _previous,
+                child: LessonCardView(card: lesson.cards[index]),
+              ),
             ),
           ),
         ),
         _PlayerFooter(
           lesson: lesson,
           isLast: isLast,
-          onNext: _next,
           onFinish: () => _finish(lesson),
         ),
       ],
@@ -205,6 +215,80 @@ class _LessonPlayerScreenState extends ConsumerState<LessonPlayerScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Hands a drag that runs off the end of a long card back to the deck.
+///
+/// A card that overflows scrolls internally, and Flutter gives that inner
+/// scrollable the whole vertical drag: the gesture arena picks the innermost
+/// scrollable that will take it, and nested scrollables on the same axis do not
+/// chain. So on a long card, swiping up scrolled the text and then simply
+/// stopped at the bottom — the deck never saw the gesture, and reaching the
+/// next card meant lifting off and starting a fresh swipe.
+///
+/// Overscroll is the signal that the finger is still going after the text has
+/// run out. Accumulate it, and past a short threshold turn it into a page
+/// change, so one continuous upward drag reads to the end of a card and then
+/// carries on into the next one.
+class _ChainToDeck extends StatefulWidget {
+  const _ChainToDeck({
+    required this.onNext,
+    required this.onPrevious,
+    required this.child,
+  });
+
+  final VoidCallback onNext;
+  final VoidCallback onPrevious;
+  final Widget child;
+
+  @override
+  State<_ChainToDeck> createState() => _ChainToDeckState();
+}
+
+class _ChainToDeckState extends State<_ChainToDeck> {
+  /// Drag accumulated past an edge. Positive is past the bottom of the card.
+  double _beyond = 0;
+
+  /// One page change per gesture. Without this a long pull would run through
+  /// several cards at once.
+  bool _turned = false;
+
+  /// Far enough that a firm scroll to the bottom does not turn the page by
+  /// itself, short enough that continuing the same drag obviously works.
+  static const double _threshold = 42;
+
+  bool _onNotification(Notification note) {
+    if (note is ScrollStartNotification) {
+      _beyond = 0;
+      _turned = false;
+    } else if (note is ScrollEndNotification) {
+      _beyond = 0;
+      _turned = false;
+    } else if (note is OverscrollNotification && !_turned) {
+      // Only a real finger counts. A fling that coasts into the end of the
+      // card also reports overscroll, and turning the page on that would take
+      // the card away from someone who was still reading it.
+      if (note.dragDetails == null) return false;
+
+      _beyond += note.overscroll;
+      if (_beyond > _threshold) {
+        _turned = true;
+        widget.onNext();
+      } else if (_beyond < -_threshold) {
+        _turned = true;
+        widget.onPrevious();
+      }
+    }
+    return false;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return NotificationListener<Notification>(
+      onNotification: _onNotification,
+      child: widget.child,
     );
   }
 }
@@ -367,13 +451,11 @@ class _PlayerFooter extends StatelessWidget {
   const _PlayerFooter({
     required this.lesson,
     required this.isLast,
-    required this.onNext,
     required this.onFinish,
   });
 
   final Lesson lesson;
   final bool isLast;
-  final VoidCallback onNext;
   final VoidCallback onFinish;
 
   @override
@@ -385,36 +467,43 @@ class _PlayerFooter extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
+          // No "Next" button. Swiping is the only way through the deck now,
+          // which is the whole point of a reel — and a button that duplicated
+          // the swipe was what made the broken scroll on a long card survivable
+          // rather than obvious. The hint keeps a fixed height so the card above
+          // does not resize from one card to the next.
           if (!isLast)
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                Icon(
-                  Icons.swipe_up_alt_outlined,
-                  size: 14,
-                  color: theme.colorScheme.onSurfaceVariant,
+            SizedBox(
+              height: 48,
+              child: Center(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Icon(
+                      Icons.swipe_up_alt_outlined,
+                      size: 14,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Swipe up for the next card',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 6),
-                Text(
-                  'Swipe up, or use the button',
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
+              ),
             ),
-          const SizedBox(height: 10),
-          FilledButton(
-            onPressed: isLast ? onFinish : onNext,
-            child: Text(
-              !isLast
-                  ? 'Next'
-                  : lesson.hasQuiz
-                  ? 'Start the Q&A · ${lesson.quizQuestionCount} questions'
-                  : 'Finish lesson',
-            ),
-          ),
           if (isLast) ...<Widget>[
+            FilledButton(
+              onPressed: onFinish,
+              child: Text(
+                lesson.hasQuiz
+                    ? 'Start the Q&A · ${lesson.quizQuestionCount} questions'
+                    : 'Finish lesson',
+              ),
+            ),
             const SizedBox(height: 10),
             Text(
               lesson.reviewedBy == null

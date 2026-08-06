@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/app_user.dart';
 import '../models/education_level.dart';
 import '../repositories/auth_repo.dart';
+import '../supabase/account_identity.dart';
 
 /// Device-only mock authentication so the app is fully usable offline in
 /// Part A of the build (no server exists yet).
@@ -180,9 +181,11 @@ class LocalAuthRepo implements AuthRepo {
     if (username.trim().length < 3) {
       throw const AuthException('Username must be at least 3 characters.');
     }
-    if (password.length < 6) {
-      throw const AuthException('Password must be at least 6 characters.');
-    }
+    // The same rule the Supabase path enforces, so a learner who starts on a
+    // build with no backend and later signs up against one is not told
+    // different things about the same password.
+    final String? weak = PasswordRule.validate(password);
+    if (weak != null) throw AuthException(weak);
   }
 
   Map<String, dynamic> _readAccounts() {

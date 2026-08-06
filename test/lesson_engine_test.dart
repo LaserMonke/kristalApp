@@ -647,10 +647,13 @@ void main() {
 
       expect(find.text('Opening card'), findsOneWidget);
       expect(find.text('1/2'), findsOneWidget);
-      expect(find.text('Next'), findsOneWidget);
 
-      await tester.tap(find.text('Next'));
-      await tester.pumpAndSettle();
+      // Swiping is the only way through the deck: there is no Next button to
+      // fall back on, so the gesture itself is what the test has to exercise.
+      expect(find.text('Next'), findsNothing);
+      expect(find.text('Swipe up for the next card'), findsOneWidget);
+
+      await _swipeToNextCard(tester);
 
       expect(find.text('Recap'), findsOneWidget);
       expect(find.text('2/2'), findsOneWidget);
@@ -661,10 +664,52 @@ void main() {
       WidgetTester tester,
     ) async {
       await _pumpPlayer(tester, lesson, <String>[]);
-      await tester.tap(find.text('Next'));
-      await tester.pumpAndSettle();
+      await _swipeToNextCard(tester);
 
       expect(find.textContaining('not yet been reviewed'), findsOneWidget);
+    });
+
+    testWidgets('a card long enough to scroll still hands the deck the swipe', (
+      WidgetTester tester,
+    ) async {
+      // A card that overflows scrolls internally, and Flutter hands that inner
+      // scrollable the entire vertical drag — nested scrollables on one axis do
+      // not chain. Before _ChainToDeck, one long swipe scrolled the text and
+      // then stopped dead: the deck never advanced, and with the Next button
+      // now gone that would strand the learner on the card.
+      final Lesson tall = Lesson(
+        id: 'long',
+        order: 1,
+        title: 'Long lesson',
+        summary: 'Has a card taller than the viewport',
+        cards: <LessonCard>[
+          TextCard(
+            heading: 'A card that does not fit',
+            body: List<String>.filled(60, 'This body runs well past the '
+                'bottom of any phone screen.').join(' '),
+          ),
+          const SummaryCard(heading: 'Recap', takeaways: <String>['Got there']),
+        ],
+      );
+
+      await _pumpPlayer(tester, tall, <String>[]);
+      expect(find.text('1/2'), findsOneWidget);
+
+      // Scroll the card to its end, then keep going in the SAME gesture. The
+      // second part is the whole point: it is the overscroll that has to turn
+      // into a page change.
+      final TestGesture drag = await tester.startGesture(
+        tester.getCenter(find.byType(PageView)),
+      );
+      for (int i = 0; i < 40; i++) {
+        await drag.moveBy(const Offset(0, -60));
+        await tester.pump();
+      }
+      await drag.up();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Recap'), findsOneWidget);
+      expect(find.text('2/2'), findsOneWidget);
     });
 
     testWidgets('finishing records completion and returns to the path', (
@@ -673,8 +718,7 @@ void main() {
       final List<String> completed = <String>[];
       await _pumpPlayer(tester, lesson, completed);
 
-      await tester.tap(find.text('Next'));
-      await tester.pumpAndSettle();
+      await _swipeToNextCard(tester);
       await tester.tap(find.text('Finish lesson'));
       await tester.pumpAndSettle();
 
@@ -682,6 +726,12 @@ void main() {
       expect(find.text('back on the path'), findsOneWidget);
     });
   });
+}
+
+/// Swipes the top card away, the way a learner advances the deck.
+Future<void> _swipeToNextCard(WidgetTester tester) async {
+  await tester.fling(find.byType(PageView), const Offset(0, -320), 900);
+  await tester.pumpAndSettle();
 }
 
 /// Drives the reel the way a learner does: open, advance, finish.

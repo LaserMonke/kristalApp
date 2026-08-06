@@ -35,9 +35,17 @@ Supabase gives you, as managed services, everything this app needs:
      mailbox, so a confirmation mail can never be answered and sign-up would hang forever.
      `SupabaseAuthRepo.signUp` detects this misconfiguration and says so explicitly.
    - Leave email/password sign-in ENABLED; no other provider is used.
-   - Minimum password length: 6, matching `minPasswordLength` in
-     `lib/data/supabase/account_identity.dart` and the sign-in form's own validator. Change
-     all three together or the form will accept a password the server rejects.
+   - Password rules: minimum length 6, and "Password Requirements" set to letters AND
+     digits. This is mirrored by `PasswordRule` in
+     `lib/data/supabase/account_identity.dart`, which the sign-up form, `LocalAuthRepo` and
+     `SupabaseAuthRepo` all defer to. CHANGE THEM TOGETHER.
+     Why it matters: the server can only refuse a password after a round trip, and it
+     refuses with an error rather than with guidance — so a project rule stricter than
+     `PasswordRule` reappears to the learner as "couldn't create the account" with no
+     mention of what was wrong. `PasswordRule.describe` is shown under the field while the
+     password is being chosen, which is the only place the rule is any use.
+     Note the rule is NOT applied when signing in: accounts made under an older rule still
+     have to be able to get in.
    - Enable "leaked password protection" (HaveIBeenPwned check) if your plan offers it.
    - CONSEQUENCE OF NO EMAIL: there is no password reset. The sign-in screen says so plainly
      rather than implying recovery exists. If you later decide recovery matters more than
