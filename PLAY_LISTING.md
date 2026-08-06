@@ -116,6 +116,27 @@ Instructions to paste into the App access form:
 > steps. Every feature including the practice market is reachable immediately
 > after signing in.
 
+### The account must be UNLOCKED, not just valid
+
+Lessons are progression-gated (`lib/providers/lesson_providers.dart`): each one
+stays locked until the previous lesson's Q&A is finished, and the Sandbox
+**Strategy** tab stays locked until `options-strategies` is done. A reviewer
+handed a fresh account sees locked screens and can fail the submission for
+inaccessible functionality.
+
+Run `supabase/migrations/20260806140000_review_access_and_bots.sql` after the
+account exists. It marks all nine lessons finished for that one account.
+
+Two consequences to know about:
+
+- `points_earned` is a generated column, so the unlock necessarily awards 20
+  points per lesson — 180 total — and the account then sits on the leaderboard
+  next to real learners without having earned it. That is a rule 7 wrinkle. The
+  intended fix is lifecycle, not accounting: delete the account via Profile ->
+  Delete account once review passes.
+- `correct_answers` is left at 0 deliberately. Recording a perfect score would
+  be inventing a result the account never produced.
+
 Note the account is an ordinary learner account: its username appears on the
 in-app leaderboard like any other.
 
