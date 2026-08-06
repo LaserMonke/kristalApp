@@ -16,7 +16,12 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.0+1
+# The number after "+" is the Android versionCode and the iOS build number.
+# Play REJECTS an upload whose versionCode already exists on the track, so this
+# has to go up for every bundle you upload — even a rebuild of identical code.
+# The part before "+" is what a learner sees; it only changes when you decide
+# the release is worth a new name.
+version: 1.0.0+2
 
 environment:
   sdk: ^3.12.2
