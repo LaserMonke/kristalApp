@@ -6,21 +6,19 @@ import 'package:timezone/timezone.dart' as tz;
 
 import 'reminder_service.dart';
 
-/// Daily reminder via flutter_local_notifications.
+/// Daily reminders via flutter_local_notifications.
 ///
-/// One notification a day at the learner's chosen local time, scheduled
-/// INEXACTLY on Android — a learning nudge does not justify exact-alarm
-/// permissions or battery cost. The copy is a low-key invitation to study:
-/// no guilt, no urgency theatre, and no profit language (CLAUDE.md rules 3
-/// and 9).
+/// Up to three a day — lesson, daily game, practice market — each at its own
+/// chosen local time and on its own Android channel, scheduled INEXACTLY: a
+/// learning nudge does not justify exact-alarm permissions or battery cost.
+/// The copy is a low-key invitation: no guilt, no urgency theatre, and no
+/// profit language (CLAUDE.md rules 3 and 9).
 class LocalReminderService implements ReminderService {
   LocalReminderService([FlutterLocalNotificationsPlugin? plugin])
     : _plugin = plugin ?? FlutterLocalNotificationsPlugin();
 
   final FlutterLocalNotificationsPlugin _plugin;
   bool _initialized = false;
-
-  static const int _dailyReminderId = 1001;
 
   @override
   bool get isSupported =>
@@ -89,6 +87,7 @@ class LocalReminderService implements ReminderService {
 
   @override
   Future<bool> scheduleDaily({
+    required ReminderKind kind,
     required int hour,
     required int minute,
     required String title,
@@ -101,6 +100,7 @@ class LocalReminderService implements ReminderService {
     // worth taking the app down for.
     try {
       return await _schedule(
+        kind: kind,
         hour: hour,
         minute: minute,
         title: title,
@@ -112,6 +112,7 @@ class LocalReminderService implements ReminderService {
   }
 
   Future<bool> _schedule({
+    required ReminderKind kind,
     required int hour,
     required int minute,
     required String title,
@@ -120,21 +121,23 @@ class LocalReminderService implements ReminderService {
     await _ensureInitialized();
     if (!await _requestPermission()) return false;
 
+    // A channel per kind, so Android's own per-channel controls work: someone
+    // who wants the lesson nudge but not the game can silence one from system
+    // settings without losing the other, and without coming back here.
     await _plugin.zonedSchedule(
-      id: _dailyReminderId,
+      id: kind.id,
       title: title,
       body: body,
       scheduledDate: _nextInstanceOf(hour, minute),
-      notificationDetails: const NotificationDetails(
+      notificationDetails: NotificationDetails(
         android: AndroidNotificationDetails(
-          'daily_reminder',
-          'Daily learning reminder',
-          channelDescription:
-              'The single opt-in daily reminder to keep learning.',
+          kind.channelId,
+          kind.channelName,
+          channelDescription: 'An opt-in daily reminder. Off in one tap.',
           importance: Importance.defaultImportance,
           priority: Priority.defaultPriority,
         ),
-        iOS: DarwinNotificationDetails(),
+        iOS: const DarwinNotificationDetails(),
       ),
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       // Repeat at this wall-clock time every day.
@@ -144,11 +147,11 @@ class LocalReminderService implements ReminderService {
   }
 
   @override
-  Future<void> cancel() async {
+  Future<void> cancel(ReminderKind kind) async {
     if (!isSupported) return;
     try {
       await _ensureInitialized();
-      await _plugin.cancel(id: _dailyReminderId);
+      await _plugin.cancel(id: kind.id);
     } on Object {
       // Nothing scheduled or no plugin — either way there is nothing to
       // cancel, which is the state the caller wanted.

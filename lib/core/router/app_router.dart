@@ -54,6 +54,10 @@ final GlobalKey<NavigatorState> _rootKey = GlobalKey<NavigatorState>(
   debugLabel: 'root',
 );
 
+/// The root navigator, for code that sits ABOVE the router and so cannot reach
+/// it through a [BuildContext] — the app-wide swipe-back in `app.dart`.
+GlobalKey<NavigatorState> get rootNavigatorKey => _rootKey;
+
 final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
   // go_router needs a Listenable to re-evaluate `redirect`; bumping this
   // counter whenever auth or onboarding state changes is enough.
