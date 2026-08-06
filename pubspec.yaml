@@ -64,6 +64,24 @@ dev_dependencies:
   # `Override` type when building parameterised provider overrides.
   riverpod: ^3.4.1
 
+  # Generates the platform launcher icons from assets/branding/. Build-time
+  # only — regenerate with `dart run flutter_launcher_icons` after editing the
+  # source PNGs, and commit the generated mipmaps.
+  flutter_launcher_icons: ^0.14.4
+
+# Source images live in assets/branding/ and are deliberately NOT registered as
+# Flutter assets — they are inputs to icon generation, not things the app loads
+# at runtime, and bundling them would just pad the download.
+flutter_launcher_icons:
+  android: true
+  ios: false # No Mac in this setup yet; revisit with the Apple track (DEPLOY.md 9b-a).
+  image_path: assets/branding/app_icon.png
+  # Adaptive icons: Android masks the foreground to a circle/squircle and crops
+  # the outer third, so the payoff mark is inset in its own foreground file.
+  # The background is the flat terminal-dark from AppColors.darkBackground.
+  adaptive_icon_background: "#0B0E13"
+  adaptive_icon_foreground: assets/branding/app_icon_foreground.png
+
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 

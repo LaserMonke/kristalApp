@@ -34,6 +34,93 @@ with a fake-money simulator; no real trading, no brokerage, no money movement.*
 
 ---
 
+## Store listing copy
+
+Written to the CLAUDE.md content rules: no profit promises, downside stated
+plainly, simulation labelled as simulation. Paste verbatim; if you rewrite it,
+re-read rules 2–5 first.
+
+### Short description (80 char limit)
+
+```
+Learn how options really work: lessons, quizzes and a fake-money simulator.
+```
+
+### Full description (4000 char limit)
+
+```
+Stock Options Academy teaches you how options and derivatives actually work -
+from what a call and a put are, through payoff diagrams, to the Greeks and the
+models used to price them.
+
+This is a learning app, not a trading app. It places no real trades, connects to
+no brokerage, and moves no real money.
+
+HOW IT WORKS
+Short, swipeable lesson cards explain one idea at a time. Each lesson ends with
+a few questions so you find out whether it landed. Points, streaks and levels
+track your progress and unlock what comes next.
+
+WHAT YOU WILL LEARN
+- Calls, puts, strikes, expiry and premium
+- Reading and drawing payoff diagrams
+- Why an option loses value as expiry approaches
+- The Greeks: delta, gamma, vega, theta, rho
+- Black-Scholes-Merton, and what it assumes
+- Spreads, straddles, strangles, covered calls, protective puts and collars
+- Monte Carlo simulation, barrier and basket options, and stochastic volatility
+
+HONEST ABOUT RISK
+Options can and do expire worthless: a long option can lose 100% of the premium
+paid. Some strategies carry very large or theoretically unlimited losses. Every
+lesson states the downside plainly. Nothing here is presented as easy money,
+because it is not.
+
+INTERACTIVE PRICERS
+Move a slider and watch the price and the payoff respond. The engine underneath
+is the real mathematics - Black-Scholes-Merton in closed form, Monte Carlo for
+path-dependent payoffs - with its assumptions stated wherever it is used.
+
+PRACTICE MARKET
+A fake-money simulator for trying out what you have learned. Balances are
+simulated, fills are idealised (no spreads, no fees, no slippage) and market
+data is delayed. Simulated results tell you nothing about real-world outcomes.
+
+EDUCATIONAL ONLY
+Stock Options Academy is not financial, investment, tax or legal advice, and is
+not a recommendation to buy or sell any security. Models are simplified; real
+markets differ in ways that matter, including liquidity, bid/ask spreads,
+dividends, early exercise and fees.
+
+Core learning is free. An optional one-time purchase unlocks the practice
+market.
+```
+
+---
+
+## App access (reviewer credentials)
+
+The app requires an account and collects no email, so a reviewer cannot sign
+themselves up and receive anything. Play's **App content → App access** section
+must therefore carry working credentials, or review fails with "we could not
+access your app".
+
+A demo account with the username `playreview` exists for this. **The password is
+deliberately not recorded here — this repository is public.** It lives in the
+Play Console field and your password manager, nowhere else.
+
+Instructions to paste into the App access form:
+
+> All functionality is behind a single sign-in. Use the supplied username and
+> password on the sign-in screen — no email, no verification code, no other
+> steps. Every feature including the practice market is reachable immediately
+> after signing in.
+
+Note the account is an ordinary learner account: its username appears on the
+in-app leaderboard like any other.
+
+---
+
 ## Data safety form
 
 Google asks, per data type: collected? shared? optional? why? encrypted in
