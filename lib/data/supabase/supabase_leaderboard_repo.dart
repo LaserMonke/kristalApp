@@ -29,7 +29,7 @@ class SupabaseLeaderboardRepo implements LeaderboardRepo {
   @override
   Future<LeaderboardBoard> load({
     required LeaderboardPeriod period,
-    int limit = 50,
+    int limit = kLeaderboardPageSize,
   }) async {
     try {
       // Two round trips rather than one: the page is capped, so a learner

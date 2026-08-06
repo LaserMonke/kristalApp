@@ -30,13 +30,24 @@ class HomeScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         leading: const SettingsButton(),
-        actions: const <Widget>[ThemeToggleButton(), SizedBox(width: 4)],
+        actions: const <Widget>[
+          // Stockle also has a card further down, but the hero and the next
+          // lesson push that below the fold on a phone — a daily game nobody
+          // scrolls to is a daily game nobody plays. This is always on screen,
+          // and carries a dot until today's puzzle has been played.
+          _StockleButton(),
+          ThemeToggleButton(),
+          SizedBox(width: 4),
+        ],
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 14, 16, 28),
         children: <Widget>[
           const HomeHero(),
-          const SizedBox(height: 24),
+          // Gaps below the fold-critical part are tighter than the rest, so
+          // "Up next" and the daily game both land on a phone screen instead
+          // of the game starting just past the bottom edge.
+          const SizedBox(height: 18),
           const _SectionHeader(
             icon: Icons.play_circle_outline,
             label: 'Up next',
@@ -49,7 +60,7 @@ class HomeScreen extends ConsumerWidget {
             ),
             data: (List<LessonNode> nodes) => _NextLessonCard(nodes: nodes),
           ),
-          const SizedBox(height: 28),
+          const SizedBox(height: 18),
           const _SectionHeader(
             icon: Icons.grid_view_outlined,
             label: 'Daily game',
@@ -92,6 +103,31 @@ class HomeScreen extends ConsumerWidget {
 ///
 /// States the streak but never nags about it: no countdown, no "don't lose
 /// your streak" (CLAUDE.md rule 9 — streaks encourage, they do not guilt).
+/// Always-visible way into Stockle, with a dot while today's puzzle is unplayed.
+class _StockleButton extends ConsumerWidget {
+  const _StockleButton();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final ThemeData theme = Theme.of(context);
+    final StockleState? game = ref.watch(stockleProvider);
+    final bool waiting = !(game?.isOver ?? false);
+
+    return IconButton(
+      onPressed: () => context.push(Routes.stockle),
+      tooltip: waiting ? 'Stockle — today’s puzzle is waiting' : 'Stockle',
+      icon: Badge(
+        // The dot is a state, not a nag: it goes the moment the puzzle has
+        // been played, win or lose, and never counts days missed
+        // (CLAUDE.md rule 9).
+        isLabelVisible: waiting,
+        backgroundColor: theme.colorScheme.primary,
+        child: const Icon(Icons.grid_view_outlined),
+      ),
+    );
+  }
+}
+
 class _StockleCard extends ConsumerWidget {
   const _StockleCard();
 

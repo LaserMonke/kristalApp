@@ -216,7 +216,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(repo.requested.last, LeaderboardPeriod.allTime);
-    expect(find.text('ALL TIME'), findsOneWidget);
+    // The heading also states the cap, so a learner below it can tell a
+    // truncated board from a small one.
+    expect(find.text('ALL TIME · TOP $kLeaderboardPageSize'), findsOneWidget);
     expect(find.textContaining('every point you have earned'), findsOneWidget);
   });
 }

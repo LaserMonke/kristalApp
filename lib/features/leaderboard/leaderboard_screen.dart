@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/models/leaderboard.dart';
+import '../../data/repositories/leaderboard_repo.dart';
 import '../../providers/leaderboard_providers.dart';
 import '../../providers/market_providers.dart';
 import 'widgets/leaderboard_row.dart';
@@ -96,9 +97,12 @@ class _Board extends ConsumerWidget {
         if (board.entries.isNotEmpty) ...<Widget>[
           const SizedBox(height: 20),
           Text(
+            // Says "top N" because the board is capped. Without it, a learner
+            // ranked below the cut has no way to tell a short list from a
+            // small app — their own standing above still shows their true rank.
             board.period == LeaderboardPeriod.week
-                ? 'THIS WEEK'
-                : 'ALL TIME',
+                ? 'THIS WEEK · TOP $kLeaderboardPageSize'
+                : 'ALL TIME · TOP $kLeaderboardPageSize',
             style: theme.textTheme.labelSmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
               letterSpacing: 1.1,

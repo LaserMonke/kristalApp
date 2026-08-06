@@ -27,7 +27,7 @@ class LocalLeaderboardRepo implements LeaderboardRepo {
   @override
   Future<LeaderboardBoard> load({
     required LeaderboardPeriod period,
-    int limit = 50,
+    int limit = kLeaderboardPageSize,
   }) async {
     final AppUser? user = _auth.currentUser;
     if (user == null) {
