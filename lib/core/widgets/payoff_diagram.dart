@@ -408,17 +408,35 @@ class _PayoffPainter extends CustomPainter {
       ..color = axis
       ..strokeWidth = 1;
 
-    for (final double strike in strikes) {
+    // Every label used to sit on one baseline at its own strike's x, so two
+    // strikes close together overprinted each other — a bull spread at 100 and
+    // 110 read as "K 100K 110". Strikes are drawn left to right and each label
+    // takes the topmost row it actually fits on, stacking only as far as the
+    // crowding forces.
+    const double gap = 6;
+    final List<double> rowRightEdges = <double>[];
+    final List<double> ordered = strikes.toList()..sort();
+
+    for (final double strike in ordered) {
       final double x = dx(strike);
       for (double y = plot.top; y < plot.bottom; y += 6) {
         canvas.drawLine(Offset(x, y), Offset(x, math.min(y + 3, plot.bottom)), paint);
       }
-      _text(
+
+      final double labelX = x + 4;
+      int row = 0;
+      while (row < rowRightEdges.length && labelX < rowRightEdges[row] + gap) {
+        row++;
+      }
+      if (row == rowRightEdges.length) rowRightEdges.add(0);
+
+      final Size size = _text(
         canvas,
         'K ${_short(strike)}',
-        Offset(x + 4, plot.top + 3),
+        Offset(labelX, plot.top + 3 + row * (labelStyle.fontSize ?? 11) * 1.3),
         labelStyle,
       );
+      rowRightEdges[row] = labelX + size.width;
     }
   }
 
@@ -606,7 +624,9 @@ class _PayoffPainter extends CustomPainter {
     );
   }
 
-  void _text(
+  /// Paints [value] at [at] and returns the size it occupied, so a caller
+  /// placing several labels can tell whether the next one would overlap.
+  Size _text(
     Canvas canvas,
     String value,
     Offset at,
@@ -628,6 +648,7 @@ class _PayoffPainter extends CustomPainter {
         maxWidth: maxWidth,
       );
     painter.paint(canvas, at);
+    return painter.size;
   }
 
   String _short(double v) =>
