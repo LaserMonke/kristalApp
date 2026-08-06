@@ -23,7 +23,7 @@ Android masks it to a circle and crops the outer third.
 
 ## screenshots/
 
-Seven phone screenshots, in listing order. Play accepts 2–8.
+Eight phone screenshots, in listing order — Play's maximum.
 
 Captured from a **release** build on a Pixel emulator, in dark mode.
 
@@ -36,10 +36,19 @@ rejects an alpha channel.
 ## What is deliberately absent
 
 **A Ranks (leaderboard) screenshot.** The board shows real usernames from the
-live Supabase project, and a public store listing is not the place to publish
-them. `supabase/migrations/20260806140000_review_access_and_bots.sql` seeds a
-labelled bot roster; once that has been run, a Ranks screenshot can be taken
-that shows no real accounts.
+live Supabase project, and neither a public store listing nor this public
+repository is the place to publish them.
+
+Seeding the bot roster
+(`supabase/migrations/20260806140000_review_access_and_bots.sql`) does NOT solve
+this, which was worth finding out: the bots interleave with the real accounts
+rather than replacing them, so a capture taken after seeding still shows real
+usernames in the top few rows. The bots themselves render correctly, each with a
+BOT badge and robot avatar.
+
+A usable Ranks screenshot needs the real accounts gone from the board first —
+they appear to be development test accounts, but "appear to be" is not a basis
+for publishing somebody's username.
 
 **Anything advertising a purchase.** The paywall was removed on 6 August 2026 —
 the app is free in full. If a screenshot or graphic ever shows a price, it is
