@@ -159,6 +159,8 @@ class _LessonPlayerScreenState extends ConsumerState<LessonPlayerScreen> {
         _PlayerFooter(
           lesson: lesson,
           isLast: isLast,
+          // The swipe hint is only worth its space on the very first card.
+          showHint: _index == 0,
           onFinish: () => _finish(lesson),
         ),
       ],
@@ -451,51 +453,33 @@ class _PlayerFooter extends StatelessWidget {
   const _PlayerFooter({
     required this.lesson,
     required this.isLast,
+    required this.showHint,
     required this.onFinish,
   });
 
   final Lesson lesson;
   final bool isLast;
+
+  /// Whether the "swipe up" hint should be visible. True only on the first
+  /// card; once the learner moves on, it slides away.
+  final bool showHint;
+
   final VoidCallback onFinish;
+
+  static const Duration _duration = Duration(milliseconds: 300);
+  static const Curve _curve = Curves.easeInOutCubic;
 
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          // No "Next" button. Swiping is the only way through the deck now,
-          // which is the whole point of a reel — and a button that duplicated
-          // the swipe was what made the broken scroll on a long card survivable
-          // rather than obvious. The hint keeps a fixed height so the card above
-          // does not resize from one card to the next.
-          if (!isLast)
-            SizedBox(
-              height: 48,
-              child: Center(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    Icon(
-                      Icons.swipe_up_alt_outlined,
-                      size: 14,
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Swipe up for the next card',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          if (isLast) ...<Widget>[
+    // The finish card gets the call to action and the review note.
+    if (isLast) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
             FilledButton(
               onPressed: onFinish,
               child: Text(
@@ -517,7 +501,49 @@ class _PlayerFooter extends StatelessWidget {
               ),
             ),
           ],
-        ],
+        ),
+      );
+    }
+
+    // The swipe hint teaches the gesture once, on the first card. After that it
+    // slides down out of view AND collapses its height (heightFactor → 0), so
+    // every later card in the reel gets that strip of screen back.
+    return ClipRect(
+      child: AnimatedAlign(
+        alignment: Alignment.topCenter,
+        heightFactor: showHint ? 1.0 : 0.0,
+        duration: _duration,
+        curve: _curve,
+        child: AnimatedSlide(
+          offset: showHint ? Offset.zero : const Offset(0, 1),
+          duration: _duration,
+          curve: _curve,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+            child: SizedBox(
+              height: 48,
+              child: Center(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Icon(
+                      Icons.swipe_up_alt_outlined,
+                      size: 14,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Swipe up for the next card',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

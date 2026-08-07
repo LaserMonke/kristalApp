@@ -79,8 +79,12 @@ dev_dependencies:
 # at runtime, and bundling them would just pad the download.
 flutter_launcher_icons:
   android: true
-  ios: false # No Mac in this setup yet; revisit with the Apple track (DEPLOY.md 9b-a).
+  ios: true # Generated here so the iOS mark matches Android's, not the Flutter default.
   image_path: assets/branding/app_icon.png
+  # iOS icons may not carry an alpha channel (App Store rejects it). Flatten any
+  # transparency onto the brand dark so the mark still reads on it.
+  remove_alpha_ios: true
+  background_color_ios: "#0B0E13"
   # Adaptive icons: Android masks the foreground to a circle/squircle and crops
   # the outer third, so the payoff mark is inset in its own foreground file.
   # The background is the flat terminal-dark from AppColors.darkBackground.
