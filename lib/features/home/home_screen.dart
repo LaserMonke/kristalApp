@@ -34,7 +34,8 @@ class HomeScreen extends ConsumerWidget {
           // Stockle also has a card further down, but the hero and the next
           // lesson push that below the fold on a phone — a daily game nobody
           // scrolls to is a daily game nobody plays. This is always on screen,
-          // and carries a dot until today's puzzle has been played.
+          // named rather than left as a bare icon to guess at, and carries a
+          // dot until today's puzzle has been played.
           _StockleButton(),
           ThemeToggleButton(),
           SizedBox(width: 4),
@@ -113,16 +114,21 @@ class _StockleButton extends ConsumerWidget {
     final StockleState? game = ref.watch(stockleProvider);
     final bool waiting = !(game?.isOver ?? false);
 
-    return IconButton(
-      onPressed: () => context.push(Routes.stockle),
-      tooltip: waiting ? 'Stockle — today’s puzzle is waiting' : 'Stockle',
-      icon: Badge(
+    return Tooltip(
+      message: waiting ? 'Stockle — today’s puzzle is waiting' : 'Stockle',
+      child: Badge(
         // The dot is a state, not a nag: it goes the moment the puzzle has
         // been played, win or lose, and never counts days missed
         // (CLAUDE.md rule 9).
         isLabelVisible: waiting,
         backgroundColor: theme.colorScheme.primary,
-        child: const Icon(Icons.grid_view_outlined),
+        // Sits over the label's top corner, so keep it off the text.
+        offset: const Offset(-2, 2),
+        child: TextButton.icon(
+          onPressed: () => context.push(Routes.stockle),
+          icon: const Icon(Icons.grid_view_outlined, size: 18),
+          label: const Text('Stockle'),
+        ),
       ),
     );
   }

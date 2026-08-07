@@ -14,10 +14,12 @@ import '../../features/profile/profile_screen.dart';
 import '../../features/quiz/quiz_screen.dart';
 import '../../features/sandbox/sandbox_screen.dart';
 import '../../features/shell/app_shell.dart';
+import '../../features/shell/tab_pager.dart';
 import '../../features/splash/intro_screen.dart';
 import '../../features/stockle/stockle_screen.dart';
 import '../../providers/auth_controller.dart';
 import '../../providers/onboarding_controller.dart';
+import '../widgets/swipe_away_panel.dart';
 
 /// Route paths, referenced by name so links survive path changes.
 abstract final class Routes {
@@ -145,10 +147,11 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
         parentNavigatorKey: _rootKey,
         // Settings opens from the gear in the top-LEFT, so it slides in from
         // the left — the reverse of the platform-default right-to-left push.
+        // A sideways drag pushes it back off again, either way.
         pageBuilder: (BuildContext context, GoRouterState state) =>
             CustomTransitionPage<void>(
               key: state.pageKey,
-              child: const ProfileScreen(),
+              child: const SwipeAwayPanel(child: ProfileScreen()),
               transitionsBuilder:
                   (
                     BuildContext context,
@@ -170,13 +173,21 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
                   ),
             ),
       ),
-      StatefulShellRoute.indexedStack(
+      StatefulShellRoute(
         builder:
             (
               BuildContext context,
               GoRouterState state,
               StatefulNavigationShell shell,
             ) => AppShell(navigationShell: shell),
+        // Not `.indexedStack`: the tabs are laid out side by side so changing
+        // tab slides rather than cuts, and a drag can move between them live.
+        navigatorContainerBuilder:
+            (
+              BuildContext context,
+              StatefulNavigationShell shell,
+              List<Widget> children,
+            ) => TabPager(shell: shell, branches: children),
         branches: <StatefulShellBranch>[
           _branch(Routes.home, const HomeScreen()),
           _branch(Routes.learn, const LearnScreen()),

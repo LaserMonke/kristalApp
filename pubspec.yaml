@@ -21,7 +21,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # has to go up for every bundle you upload — even a rebuild of identical code.
 # The part before "+" is what a learner sees; it only changes when you decide
 # the release is worth a new name.
-version: 1.0.0+2
+version: 1.0.1+3
 
 environment:
   sdk: ^3.12.2
