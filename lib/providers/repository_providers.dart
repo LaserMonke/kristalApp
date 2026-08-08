@@ -1,16 +1,19 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:local_auth/local_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 
+import '../core/auth/device_unlock.dart';
 import '../data/local/asset_lesson_repo.dart';
 import '../data/local/disclaimer_store.dart';
 import '../data/local/local_auth_repo.dart';
 import '../data/local/local_leaderboard_repo.dart';
 import '../data/local/local_market_repo.dart';
 import '../data/local/local_portfolio_repo.dart';
+import '../data/local/lesson_resume_store.dart';
 import '../data/local/local_profile_repo.dart';
 import '../data/local/local_progress_repo.dart';
-import '../data/local/lesson_resume_store.dart';
+import '../data/local/secure_saved_login_store.dart';
 import '../data/repositories/auth_repo.dart';
 import '../data/repositories/leaderboard_repo.dart';
 import '../data/repositories/lesson_repo.dart';
@@ -18,6 +21,7 @@ import '../data/repositories/market_repo.dart';
 import '../data/repositories/portfolio_repo.dart';
 import '../data/repositories/profile_repo.dart';
 import '../data/repositories/progress_repo.dart';
+import '../data/repositories/saved_login_store.dart';
 import '../data/supabase/supabase_auth_repo.dart';
 import '../data/supabase/supabase_leaderboard_repo.dart';
 import '../data/supabase/supabase_market_repo.dart';
@@ -112,6 +116,22 @@ final Provider<ProgressRepo> progressRepoProvider = Provider<ProgressRepo>((
   // without signal is never lost.
   return SupabaseProgressRepo(client: client, cache: local, prefs: prefs);
 });
+
+/// One saved sign-in for this device, in the platform keystore, and the device
+/// lock that releases it.
+///
+/// Kept apart from [authRepoProvider]: the account still lives wherever the
+/// auth repository says it does. This only decides whether the learner has to
+/// type their password to get back to it.
+final Provider<SavedLoginStore> savedLoginStoreProvider =
+    Provider<SavedLoginStore>(
+      (Ref ref) =>
+          const SecureSavedLoginStore(SecureSavedLoginStore.defaultStorage),
+    );
+
+final Provider<DeviceUnlock> deviceUnlockProvider = Provider<DeviceUnlock>(
+  (Ref ref) => LocalAuthDeviceUnlock(LocalAuthentication()),
+);
 
 /// Where the learner left off in each lesson — the card on screen and any Q&A
 /// run in progress.

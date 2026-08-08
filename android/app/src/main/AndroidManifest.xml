@@ -9,6 +9,10 @@
          it here a RELEASE build would have no network at all and every sync
          would fail silently. -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- The device lock that releases a saved sign-in (local_auth). Covers
+         fingerprint/face where enrolled; the PIN/pattern fallback needs no
+         permission of its own. -->
+    <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
     <application
         android:label="Stock Options Academy"
         android:name="${applicationName}"

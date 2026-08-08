@@ -43,7 +43,7 @@ learners on the leaderboard. Nothing else about you is.
 | What | Why | Where it is stored |
 |---|---|---|
 | Username (chosen by you) | Identifies your account and appears on the leaderboard | Our server and your device |
-| Password | Signing you in | Our server, hashed — never stored or transmitted in a readable form |
+| Password | Signing you in | Our server, hashed — never stored or transmitted in a readable form. If you switch on "Stay signed in on this phone", a copy is also kept in your phone's own secure storage so your fingerprint, face or device PIN can sign you back in. That copy stays on the device and is never sent to us. Settings → "Signing in" removes it. |
 | Education level (a coarse band, e.g. "undergraduate") | Pitches lesson difficulty and the learning path at roughly the right level | Our server and your device |
 
 **Things the app records as you learn**
@@ -104,7 +104,16 @@ processor. This is what lets your progress follow you to a new device.
 
 **Your device.** A copy of your progress is also kept locally so the app works
 offline and syncs when you are back online. Your app settings (theme, whether
-reminders are on) stay on your device only.
+reminders are on) stay on your device only, and so does the place you had got
+to in a lesson or a Q&A.
+
+If you choose to stay signed in on a phone, your username and password are also
+kept there, in the secure storage the operating system provides for exactly
+this (the Android Keystore, or the iOS Keychain). They are encrypted, they are
+released only after your fingerprint, face or device PIN, and they are not
+included in a backup restored onto different hardware. This is a choice you
+make, it is off if you never switch it on, and you can remove it at any time in
+Settings → "Signing in". Deleting your account removes it too.
 
 **Market data.** The practice market shows delayed share prices, supplied by
 **Finnhub**. Requests go through our own server, which passes on two things:
@@ -193,6 +202,16 @@ lose money — and it never enables real trading with real money.
 
 Passwords are hashed by our authentication provider and are never stored in a
 readable form, including by us. Data in transit is encrypted (HTTPS).
+
+If you switch on "Stay signed in on this phone", the app keeps your sign-in in
+the device's secure storage and puts your screen lock in front of it. Being
+honest about what that does and does not protect: it stops someone who picks up
+your unlocked phone, and it means the credential is encrypted at rest and does
+not travel to a replacement device. It would not stop someone who had already
+taken full control of the phone itself. We think that is the right trade for an
+account that unlocks lessons and a points total and holds no money and no
+payment details — but it is your call, the setting is off unless you turn it
+on, and Settings → "Signing in" ends it.
 Database-level access rules mean each account can only read and write its own
 rows; the only exception is the leaderboard, which exposes nothing but a
 username and a point total.

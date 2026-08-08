@@ -14,6 +14,11 @@
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
+	<!-- Shown by iOS the first time Face ID is used to release the saved
+	     sign-in. Required: without it the prompt fails and, on a real device,
+	     the app is terminated. -->
+	<key>NSFaceIDUsageDescription</key>
+	<string>Face ID unlocks the sign-in saved on this device, so you can get back to your lessons without typing your password.</string>
 	<key>CFBundleName</key>
 	<string>Options Academy</string>
 	<key>CFBundlePackageType</key>

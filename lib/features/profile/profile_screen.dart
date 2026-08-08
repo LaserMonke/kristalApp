@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/auth/device_unlock.dart';
 import '../../core/feedback/feedback_settings.dart';
 import '../../core/feedback/haptics.dart';
 import '../../core/widgets/data_location_text.dart';
@@ -14,6 +15,7 @@ import '../../providers/auth_controller.dart';
 import '../../providers/engagement_providers.dart';
 import '../../providers/progress_controller.dart';
 import '../../providers/repository_providers.dart';
+import '../../providers/saved_login_controller.dart';
 import '../../providers/theme_controller.dart';
 import 'widgets/progress_section.dart';
 import 'widgets/reminders_section.dart';
@@ -62,6 +64,7 @@ class ProfileScreen extends ConsumerWidget {
           const SizedBox(height: 8),
           if (user != null) _EducationLevelTile(user: user),
           const SizedBox(height: 24),
+          const _SavedLoginSection(),
           _SectionLabel('Legal & safety', theme: theme),
           const SizedBox(height: 8),
           Card(
@@ -555,6 +558,89 @@ class _EducationLevelTile extends ConsumerWidget {
           }
         },
       ),
+    );
+  }
+}
+
+/// The saved sign-in on this device: what is stored, and the way to remove it.
+///
+/// Only rendered when there IS one. The offer to save is made at sign-in,
+/// where the password is in hand — Settings cannot create one, only end it, so
+/// showing an empty row here would be a switch that does nothing.
+class _SavedLoginSection extends ConsumerWidget {
+  const _SavedLoginSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final ThemeData theme = Theme.of(context);
+    final SavedLoginState saved =
+        ref.watch(savedLoginControllerProvider).value ??
+        SavedLoginState.unavailable;
+    if (!saved.hasSavedLogin) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        _SectionLabel('Signing in', theme: theme),
+        const SizedBox(height: 8),
+        Card(
+          child: ListTile(
+            leading: const Icon(Icons.phonelink_lock_outlined),
+            title: Text('Saved on this device as ${saved.username}'),
+            // States plainly where the credential is and what unlocks it —
+            // a learner should never have to guess whether their password
+            // left the phone (CLAUDE.md rule 8).
+            subtitle: Text(
+              'Your sign-in is kept on this phone only and never sent '
+              'anywhere. ${_capitalise(saved.lock.label)} unlocks it.',
+            ),
+            isThreeLine: true,
+            trailing: TextButton(
+              onPressed: () => _confirmForget(context, ref),
+              child: const Text('Remove'),
+            ),
+          ),
+        ),
+        const SizedBox(height: 24),
+      ],
+    );
+  }
+
+  static String _capitalise(String text) =>
+      text.isEmpty ? text : text[0].toUpperCase() + text.substring(1);
+
+  /// Asks first: with no email on file, a learner who removes this and has
+  /// forgotten their password has no way back into the account.
+  Future<void> _confirmForget(BuildContext context, WidgetRef ref) async {
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        title: const Text('Remove the saved sign-in?'),
+        content: const Text(
+          'This phone will forget your username and password, and you will '
+          'type them the next time you sign in. Your account, progress and '
+          'points are not affected.\n\n'
+          'There is no email on your account, so make sure you still know '
+          'your password before removing it.',
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Keep it'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Remove'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    await ref.read(savedLoginControllerProvider.notifier).forget();
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Saved sign-in removed from this device.')),
     );
   }
 }

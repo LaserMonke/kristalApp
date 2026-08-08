@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/auth/device_unlock.dart';
 import '../../core/widgets/data_location_text.dart';
 import '../../data/models/education_level.dart';
 import '../../data/repositories/auth_repo.dart';
 import '../../data/supabase/account_identity.dart';
 import '../../providers/auth_controller.dart';
 import '../../providers/repository_providers.dart';
+import '../../providers/saved_login_controller.dart';
 
 /// Sign-in / sign-up.
 ///
@@ -32,6 +34,19 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
   EducationLevel _level = EducationLevel.undergraduate;
   String? _error;
 
+  /// Whether to keep this sign-in on the device once it succeeds.
+  ///
+  /// Starts on. It is a labelled switch sitting directly above the button that
+  /// acts on it, and Settings can drop the saved sign-in at any time — so it is
+  /// a default, not a trick (CLAUDE.md rule 9). Only ever shown on a device
+  /// that has a screen lock to put in front of it.
+  bool _remember = true;
+
+  /// Set when the learner chooses to sign in some other way, so the saved-login
+  /// card gets out of the way for the rest of this visit. Deliberately not the
+  /// same as forgetting the credential — that lives in Settings.
+  bool _useForm = false;
+
   @override
   void dispose() {
     _username.dispose();
@@ -48,6 +63,9 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
     });
 
     final AuthController auth = ref.read(authControllerProvider.notifier);
+    final SavedLoginController saved = ref.read(
+      savedLoginControllerProvider.notifier,
+    );
     try {
       if (_isSignUp) {
         await auth.signUp(
@@ -62,8 +80,47 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
       // throwing, so surface that here.
       final Object? error = ref.read(authControllerProvider).error;
       if (error != null) throw error;
+
+      final String username = _username.text.trim();
+      if (_remember && (ref.read(savedLoginControllerProvider).value?.canOffer ?? false)) {
+        await saved.remember(username: username, password: _password.text);
+      } else if (normaliseUsername(
+            ref.read(savedLoginControllerProvider).value?.username ?? '',
+          ) !=
+          normaliseUsername(username)) {
+        // Somebody else just signed in on this device. Leaving the previous
+        // learner's credential saved would offer their account to whoever
+        // signs out next.
+        await saved.forget();
+      }
     } on AuthException catch (e) {
       if (mounted) setState(() => _error = e.message);
+    } catch (e) {
+      if (mounted) setState(() => _error = 'Something went wrong. $e');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  /// The one-tap path: device lock, then straight in.
+  Future<void> _submitSavedLogin() async {
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+
+    try {
+      await ref.read(savedLoginControllerProvider.notifier).signIn();
+    } on AuthException catch (e) {
+      // The saved credential has already been dropped by the controller, so
+      // fall back to the form rather than leaving a card that cannot work.
+      if (mounted) {
+        setState(() {
+          _error = e.message;
+          _isSignUp = false;
+          _useForm = true;
+        });
+      }
     } catch (e) {
       if (mounted) setState(() => _error = 'Something went wrong. $e');
     } finally {
@@ -74,6 +131,14 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
+    final SavedLoginState saved =
+        ref.watch(savedLoginControllerProvider).value ??
+        SavedLoginState.unavailable;
+
+    // The saved card takes over the whole screen when there is one: a learner
+    // coming back to their own phone should see their name and one button, not
+    // a form they are not going to fill in.
+    final bool showSaved = saved.hasSavedLogin && !_useForm;
 
     return Scaffold(
       body: SafeArea(
@@ -99,14 +164,47 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      _isSignUp
-                          ? 'Create an account to track your progress.'
-                          : 'Welcome back.',
+                      showSaved || !_isSignUp
+                          ? 'Welcome back.'
+                          : 'Create an account to track your progress.',
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
                     const SizedBox(height: 28),
+                    if (showSaved) ...<Widget>[
+                      _SavedLoginCard(
+                        username: saved.username!,
+                        lock: saved.lock,
+                        busy: _busy,
+                        onTap: _submitSavedLogin,
+                      ),
+                      if (_error != null) ...<Widget>[
+                        const SizedBox(height: 18),
+                        _ErrorText(_error!),
+                      ],
+                      const SizedBox(height: 18),
+                      TextButton(
+                        onPressed: _busy
+                            ? null
+                            : () => setState(() {
+                                _useForm = true;
+                                _isSignUp = false;
+                                _error = null;
+                              }),
+                        child: const Text('Use my password instead'),
+                      ),
+                      TextButton(
+                        onPressed: _busy
+                            ? null
+                            : () => setState(() {
+                                _useForm = true;
+                                _isSignUp = true;
+                                _error = null;
+                              }),
+                        child: const Text('Sign in as someone else'),
+                      ),
+                    ] else ...<Widget>[
                     TextFormField(
                       controller: _username,
                       autocorrect: false,
@@ -189,6 +287,17 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                             setState(() => _level = value),
                       ),
                     ],
+                    if (saved.canOffer) ...<Widget>[
+                      const SizedBox(height: 8),
+                      _RememberSwitch(
+                        value: _remember,
+                        lock: saved.lock,
+                        onChanged: _busy
+                            ? null
+                            : (bool value) =>
+                                  setState(() => _remember = value),
+                      ),
+                    ],
                     if (_error != null) ...<Widget>[
                       const SizedBox(height: 18),
                       _ErrorText(_error!),
@@ -218,6 +327,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                             : 'Create an account instead',
                       ),
                     ),
+                    ],
                     const SizedBox(height: 16),
                     Text(
                       DataLocation.accounts(
@@ -233,6 +343,131 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The one-tap way back in: who this device remembers, and the lock that
+/// releases it.
+///
+/// Names the account it is offering. A device can be handed round, and
+/// "unlock to sign in" without saying whose account would be a way to end up
+/// in someone else's progress.
+class _SavedLoginCard extends StatelessWidget {
+  const _SavedLoginCard({
+    required this.username,
+    required this.lock,
+    required this.busy,
+    required this.onTap,
+  });
+
+  final String username;
+  final DeviceLockKind lock;
+  final bool busy;
+  final VoidCallback onTap;
+
+  IconData get _icon => switch (lock) {
+    DeviceLockKind.face => Icons.face_outlined,
+    DeviceLockKind.fingerprint => Icons.fingerprint,
+    DeviceLockKind.iris => Icons.remove_red_eye_outlined,
+    DeviceLockKind.passcode || DeviceLockKind.none => Icons.lock_open_outlined,
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: theme.colorScheme.outline),
+            color: theme.colorScheme.surfaceContainerHighest,
+          ),
+          child: Row(
+            children: <Widget>[
+              CircleAvatar(
+                radius: 18,
+                backgroundColor: theme.colorScheme.primary.withValues(
+                  alpha: 0.15,
+                ),
+                child: Text(
+                  username.characters.first.toUpperCase(),
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(username, style: theme.textTheme.titleSmall),
+                    Text(
+                      'Saved on this device',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 14),
+        FilledButton.icon(
+          onPressed: busy ? null : onTap,
+          icon: busy
+              ? const SizedBox(
+                  height: 18,
+                  width: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Icon(_icon),
+          label: Text('Sign in with ${lock.label}'),
+        ),
+      ],
+    );
+  }
+}
+
+/// The offer to keep this sign-in on the device.
+///
+/// Says what is stored and where in the same breath as asking — CLAUDE.md
+/// rule 9, and a password is exactly the thing not to be vague about.
+class _RememberSwitch extends StatelessWidget {
+  const _RememberSwitch({
+    required this.value,
+    required this.lock,
+    required this.onChanged,
+  });
+
+  final bool value;
+  final DeviceLockKind lock;
+  final ValueChanged<bool>? onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+
+    return SwitchListTile.adaptive(
+      value: value,
+      onChanged: onChanged,
+      contentPadding: EdgeInsets.zero,
+      visualDensity: VisualDensity.compact,
+      title: Text('Stay signed in on this phone', style: theme.textTheme.titleSmall),
+      subtitle: Text(
+        'Your sign-in is kept on this device only, and ${lock.label} unlocks '
+        'it. Remove it any time in Settings.',
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
         ),
       ),
     );

@@ -5,6 +5,7 @@ import '../data/models/education_level.dart';
 import '../data/repositories/auth_repo.dart';
 import '../data/repositories/profile_repo.dart';
 import 'repository_providers.dart';
+import 'saved_login_controller.dart';
 
 /// Session state for the whole app.
 ///
@@ -68,6 +69,11 @@ class AuthController extends AsyncNotifier<AppUser?> {
   /// rather than looking like it worked.
   Future<void> deleteAccount() async {
     await _repo.deleteAccount();
+    // The account is gone, so a saved sign-in for it can only ever offer a
+    // door that no longer opens. Cleared here rather than in the screen so it
+    // cannot be missed — unlike [signOut], which deliberately leaves it: being
+    // able to get back in with one tap is the whole reason it was saved.
+    await ref.read(savedLoginControllerProvider.notifier).forget();
     state = const AsyncValue<AppUser?>.data(null);
   }
 
