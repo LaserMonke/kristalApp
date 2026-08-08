@@ -52,7 +52,13 @@ dependencies:
   audioplayers: ^6.8.1
   printing: ^5.15.0
   pdf: ^3.13.0
-  flutter_secure_storage: ^11.0.0
+  # Pinned below 11.x deliberately. flutter_secure_storage 11 hardcodes
+  # `compileSdk = 37`, and the Android SDK currently publishes API 37 only as
+  # `android-37.0`/`37.1`/`37.2` — there is no plain `android-37` for AGP to
+  # resolve, so 11.x cannot build here at all. 10.x compiles against 36, which
+  # is what Flutter targets anyway, and the API this app uses is identical.
+  # Revisit when a plain android-37 platform ships.
+  flutter_secure_storage: ^10.0.0
   local_auth: ^3.0.2
 
 dev_dependencies:
