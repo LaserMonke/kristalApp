@@ -56,10 +56,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
           educationLevel: _level,
         );
       } else {
-        await auth.signIn(
-          username: _username.text,
-          password: _password.text,
-        );
+        await auth.signIn(username: _username.text, password: _password.text);
       }
       // A failed guard leaves the controller in an error state rather than
       // throwing, so surface that here.
@@ -118,10 +115,21 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                         labelText: 'Username',
                         prefixIcon: Icon(Icons.person_outline),
                       ),
-                      validator: (String? value) =>
-                          (value ?? '').trim().length < 3
-                          ? 'At least 3 characters'
-                          : null,
+                      // Sign-up is held to the full rule — shape and words —
+                      // so a refused name is explained on the spot instead of
+                      // after a round trip. Signing in only checks that
+                      // something was typed: an account made under an older
+                      // rule must still be able to get in, and the server
+                      // decides whether the credentials are right anyway.
+                      validator: (String? value) {
+                        final String username = (value ?? '').trim();
+                        if (!_isSignUp) {
+                          return username.isEmpty
+                              ? 'Enter your username'
+                              : null;
+                        }
+                        return UsernameRule.validateNew(username);
+                      },
                     ),
                     const SizedBox(height: 14),
                     TextFormField(
@@ -144,8 +152,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                                 : Icons.visibility_off_outlined,
                           ),
                           tooltip: _obscure ? 'Show password' : 'Hide password',
-                          onPressed: () =>
-                              setState(() => _obscure = !_obscure),
+                          onPressed: () => setState(() => _obscure = !_obscure),
                         ),
                       ),
                       // Sign-up is held to the full rule; signing in is only
@@ -251,10 +258,7 @@ class _EducationPicker extends StatelessWidget {
             onTap: () => onChanged(level),
             borderRadius: BorderRadius.circular(10),
             child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 14,
-                vertical: 12,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(

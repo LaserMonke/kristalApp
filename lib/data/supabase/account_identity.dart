@@ -18,6 +18,8 @@
 /// own.
 library;
 
+import '../../core/moderation/username_words.dart';
+
 const String usernameDomain = 'users.optionsschool.invalid';
 
 /// Why a username was rejected, in wording safe to show a learner verbatim.
@@ -30,7 +32,9 @@ class UsernameRule {
   /// Letters, digits, and the three separators that are safe in an email
   /// local part. No spaces, no unicode look-alikes — two learners should never
   /// be able to pick names that read identically on a leaderboard.
-  static final RegExp _allowed = RegExp(r'^[a-zA-Z0-9]([a-zA-Z0-9._-]*[a-zA-Z0-9])?$');
+  static final RegExp _allowed = RegExp(
+    r'^[a-zA-Z0-9]([a-zA-Z0-9._-]*[a-zA-Z0-9])?$',
+  );
 
   /// Null when [username] is acceptable, otherwise the reason why not.
   static String? validate(String username) {
@@ -51,6 +55,18 @@ class UsernameRule {
     }
     return null;
   }
+
+  /// The rule for a name being CLAIMED — at sign-up, or on a rename.
+  ///
+  /// [validate] plus the word rules in [UsernameWords]. The two are kept apart
+  /// deliberately: [validate] is also what [emailForUsername] and the sign-in
+  /// path run, and applying the word list there would lock an existing learner
+  /// out of their own account the day a term is added to the list. Blocking a
+  /// name at the door is moderation; blocking it at the door someone is already
+  /// inside is a bug. Renaming an account that predates the list is handled by
+  /// a person, not by refusing the password.
+  static String? validateNew(String username) =>
+      validate(username) ?? UsernameWords.check(username.trim());
 }
 
 /// The case-insensitive key for a username. "Alice" and "alice" are one person,

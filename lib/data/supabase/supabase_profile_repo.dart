@@ -61,7 +61,7 @@ class SupabaseProfileRepo implements ProfileRepo {
 
     if (username != null) {
       final String trimmed = username.trim();
-      final String? problem = UsernameRule.validate(trimmed);
+      final String? problem = UsernameRule.validateNew(trimmed);
       if (problem != null) throw AuthException(problem);
       patch['username'] = trimmed;
     }

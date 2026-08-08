@@ -95,7 +95,8 @@ class LocalAuthRepo implements AuthRepo {
     final Map<String, dynamic>? record =
         accounts[_normalise(username)] as Map<String, dynamic>?;
 
-    if (record == null || record['password_hash'] != _hash(password, record['id'] as String)) {
+    if (record == null ||
+        record['password_hash'] != _hash(password, record['id'] as String)) {
       throw const AuthException('Incorrect username or password.');
     }
 
@@ -145,8 +146,7 @@ class LocalAuthRepo implements AuthRepo {
     );
     if (key == null) return;
 
-    final Map<String, dynamic> record =
-        accounts[key] as Map<String, dynamic>;
+    final Map<String, dynamic> record = accounts[key] as Map<String, dynamic>;
     final Map<String, dynamic> updated = <String, dynamic>{
       ...record,
       ...user.toJson(),
@@ -178,9 +178,11 @@ class LocalAuthRepo implements AuthRepo {
   }
 
   void _validate({required String username, required String password}) {
-    if (username.trim().length < 3) {
-      throw const AuthException('Username must be at least 3 characters.');
-    }
+    // The same shape and word rules the Supabase path enforces. A learner who
+    // signs up offline and later moves to a backend must not find the name
+    // they picked here refused there.
+    final String? problem = UsernameRule.validateNew(username);
+    if (problem != null) throw AuthException(problem);
     // The same rule the Supabase path enforces, so a learner who starts on a
     // build with no backend and later signs up against one is not told
     // different things about the same password.

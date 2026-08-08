@@ -2,7 +2,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/app_user.dart';
 import '../models/education_level.dart';
+import '../repositories/auth_repo.dart';
 import '../repositories/profile_repo.dart';
+import '../supabase/account_identity.dart';
 import 'disclaimer_store.dart';
 import 'local_auth_repo.dart';
 
@@ -26,6 +28,12 @@ class LocalProfileRepo implements ProfileRepo {
     final AppUser? existing = _auth.findById(userId);
     if (existing == null) {
       throw StateError('No local profile for $userId');
+    }
+
+    // A rename claims a new name, so it is held to the same rules as sign-up.
+    if (username != null) {
+      final String? problem = UsernameRule.validateNew(username);
+      if (problem != null) throw AuthException(problem);
     }
 
     final AppUser updated = existing.copyWith(

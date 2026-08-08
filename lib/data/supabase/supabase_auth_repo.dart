@@ -66,7 +66,7 @@ class SupabaseAuthRepo implements AuthRepo {
     required String password,
     required EducationLevel educationLevel,
   }) async {
-    final String? problem = UsernameRule.validate(username);
+    final String? problem = UsernameRule.validateNew(username);
     if (problem != null) throw AuthException(problem);
     final String? weak = PasswordRule.validate(password);
     if (weak != null) throw AuthException(weak);
