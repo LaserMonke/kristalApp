@@ -9,6 +9,7 @@ import 'widgets/stockle_grid.dart';
 import 'widgets/stockle_hint.dart';
 import 'widgets/stockle_keyboard.dart';
 import 'widgets/stockle_result.dart';
+import 'widgets/stockle_ticker_list.dart';
 
 /// Stockle — one NASDAQ-100 ticker a day, six guesses.
 ///
@@ -31,6 +32,10 @@ class _StockleScreenState extends ConsumerState<StockleScreen> {
   /// nothing to tap again, and a hint the player never wanted should not
   /// reappear on its own after a restart.
   bool _hintRevealed = false;
+
+  /// Guards the first-visit rules sheet so it is considered once per screen,
+  /// not on every rebuild.
+  bool _howToPlayChecked = false;
 
   void _onLetter(String letter) {
     if (_typed.length >= tickerLength) return;
@@ -111,6 +116,11 @@ class _StockleScreenState extends ConsumerState<StockleScreen> {
             return const Center(child: CircularProgressIndicator());
           }
 
+          // Open the rules unprompted the very first time someone lands here.
+          // Waiting for the dictionary means the sheet can quote the real list
+          // size rather than a placeholder.
+          _maybeShowHowToPlayOnFirstVisit();
+
           return SafeArea(
             child: Column(
               children: <Widget>[
@@ -133,7 +143,16 @@ class _StockleScreenState extends ConsumerState<StockleScreen> {
                           ),
                           textAlign: TextAlign.center,
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 4),
+                        // The accepted set is not a secret: guesses have to
+                        // come from it, so hiding it would test recall of index
+                        // membership instead of the reasoning the game is for.
+                        TextButton.icon(
+                          onPressed: () => _showTickerList(dict, game),
+                          icon: const Icon(Icons.list_alt, size: 18),
+                          label: const Text('View the ticker list'),
+                        ),
+                        const SizedBox(height: 4),
                         StockleGrid(game: game, typed: _typed),
                         if (!game.isOver) ...<Widget>[
                           const SizedBox(height: 14),
@@ -242,9 +261,36 @@ class _StockleScreenState extends ConsumerState<StockleScreen> {
     );
   }
 
+  /// Shows the rules once, on a player's first visit, and records that it has
+  /// been shown so it never opens itself again.
+  void _maybeShowHowToPlayOnFirstVisit() {
+    if (_howToPlayChecked) return;
+    _howToPlayChecked = true;
+
+    final StockleController controller = ref.read(stockleProvider.notifier);
+    if (controller.hasSeenHowToPlay) return;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      controller.markHowToPlaySeen();
+      _showHowToPlay(context);
+    });
+  }
+
+  void _showTickerList(StockleDictionary dict, StockleState game) {
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (BuildContext context) => StockleTickerListSheet(
+        dictionary: dict,
+        guessed: game.guesses.map((StockleGuess g) => g.symbol).toSet(),
+      ),
+    );
+  }
+
   void _showHowToPlay(BuildContext context) {
-    final int listSize =
-        ref.read(stockleDictionaryProvider).value?.length ?? 0;
+    final int listSize = ref.read(stockleDictionaryProvider).value?.length ?? 0;
     final String asOf =
         ref.read(stockleDictionaryProvider).value?.asOf ?? 'unknown';
 
@@ -266,7 +312,9 @@ class _StockleScreenState extends ConsumerState<StockleScreen> {
               const SizedBox(height: 12),
               Text(
                 'Guess the $tickerLength-letter ticker in $maxGuesses tries. '
-                'Each guess must be a ticker from the list.\n\n'
+                'Each guess must be a ticker from the list — tap “View the '
+                'ticker list” on the game screen to read every one of them, '
+                'with the company behind it.\n\n'
                 'After each guess the tiles show how close you were. A filled '
                 'tile with a ring means the letter is in the right place. A '
                 'half-filled tile means the letter is in the ticker but '

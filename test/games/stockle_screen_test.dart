@@ -16,7 +16,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 class _FakeMarketRepo implements MarketRepo {
   @override
   Future<List<Quote>> quotes(List<String> symbols) async => <Quote>[
-    Quote(symbol: symbols.first, price: 123.45, change: 1.5, percentChange: 1.2),
+    Quote(
+      symbol: symbols.first,
+      price: 123.45,
+      change: 1.5,
+      percentChange: 1.2,
+    ),
   ];
 
   @override
@@ -27,7 +32,11 @@ void main() {
   late StockleDictionary dictionary;
 
   setUp(() {
-    SharedPreferences.setMockInitialValues(<String, Object>{});
+    // Default to a returning player: the rules sheet opens itself only on a
+    // first visit, and the play-flow tests below need the board reachable.
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      'stockle.how_to_play_seen': true,
+    });
     dictionary = StockleDictionary(
       asOf: '2026-08-04',
       tickers: const <StockleTicker>[
@@ -74,6 +83,50 @@ void main() {
     expect(find.widgetWithText(OutlinedButton, 'Delete'), findsOneWidget);
   });
 
+  testWidgets('the rules open themselves on a first visit, once', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+
+    await pump(tester);
+    expect(find.text('How to play'), findsOneWidget);
+
+    // Dismissing it records the visit, so it does not greet the player again.
+    Navigator.of(tester.element(find.text('How to play'))).pop();
+    await tester.pumpAndSettle();
+
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    expect(prefs.getBool('stockle.how_to_play_seen'), isTrue);
+  });
+
+  testWidgets('a returning player is not shown the rules unasked', (
+    tester,
+  ) async {
+    await pump(tester);
+    expect(find.text('How to play'), findsNothing);
+  });
+
+  testWidgets('the ticker list button shows the whole playable set', (
+    tester,
+  ) async {
+    await pump(tester);
+
+    await tester.tap(find.text('View the ticker list'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Ticker list'), findsOneWidget);
+    for (final StockleTicker ticker in dictionary.tickers) {
+      expect(find.text(ticker.symbol), findsWidgets);
+      expect(find.text(ticker.name), findsOneWidget);
+    }
+
+    // Searching narrows it to what the player typed.
+    await tester.enterText(find.byType(TextField), 'micro');
+    await tester.pumpAndSettle();
+    expect(find.text('Microsoft'), findsOneWidget);
+    expect(find.text('Tesla'), findsNothing);
+  });
+
   testWidgets('a guess that is not in the list is refused with a reason', (
     tester,
   ) async {
@@ -85,7 +138,10 @@ void main() {
     await tester.tap(find.widgetWithText(FilledButton, 'Guess'));
     await tester.pump();
 
-    expect(find.text('Not a NASDAQ-100 ticker in today’s list.'), findsOneWidget);
+    expect(
+      find.text('Not a NASDAQ-100 ticker in today’s list.'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('Guess stays disabled until four letters are typed', (
@@ -111,9 +167,9 @@ void main() {
     await tester.pump();
 
     expect(
-      tester.widget<FilledButton>(
-        find.widgetWithText(FilledButton, 'Guess'),
-      ).onPressed,
+      tester
+          .widget<FilledButton>(find.widgetWithText(FilledButton, 'Guess'))
+          .onPressed,
       isNull,
     );
   });

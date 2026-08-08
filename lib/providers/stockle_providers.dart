@@ -34,6 +34,7 @@ class StockleController extends Notifier<StockleState?> {
   static const String _wonKey = 'stockle.days_won';
   static const String _streakKey = 'stockle.streak';
   static const String _lastWonDayKey = 'stockle.last_won_day';
+  static const String _howToPlaySeenKey = 'stockle.how_to_play_seen';
 
   SharedPreferences get _prefs => ref.read(sharedPreferencesProvider);
 
@@ -46,10 +47,7 @@ class StockleController extends Notifier<StockleState?> {
     if (dict == null) return null;
 
     final int today = ref.watch(stockleTodayProvider);
-    final StockleTicker answer = stockleAnswerFor(
-      DateTime.now().toUtc(),
-      dict,
-    );
+    final StockleTicker answer = stockleAnswerFor(DateTime.now().toUtc(), dict);
 
     // A stored game from an earlier day is not today's puzzle; start fresh
     // rather than showing yesterday's board.
@@ -71,6 +69,16 @@ class StockleController extends Notifier<StockleState?> {
           .toList(growable: false),
     );
   }
+
+  /// Whether the rules have already been shown once.
+  ///
+  /// Persisted so the explanation opens itself on a player's very first visit
+  /// and never again unasked — a first-timer should not have to work out the
+  /// tile colours from scratch, and a returning player should not be greeted by
+  /// a sheet they have to dismiss every day.
+  bool get hasSeenHowToPlay => _prefs.getBool(_howToPlaySeenKey) ?? false;
+
+  Future<void> markHowToPlaySeen() => _prefs.setBool(_howToPlaySeenKey, true);
 
   /// Submits a guess. Returns null on success, or the reason it was refused.
   Future<GuessRejection?> guess(String symbol) async {
@@ -147,8 +155,7 @@ class StockleStats {
 
   /// Null rather than zero when nothing has been played, so the UI can say
   /// "no games yet" instead of showing a discouraging 0%.
-  int? get winPercent =>
-      played == 0 ? null : ((won / played) * 100).round();
+  int? get winPercent => played == 0 ? null : ((won / played) * 100).round();
 }
 
 final Provider<StockleStats> stockleStatsProvider = Provider<StockleStats>((
