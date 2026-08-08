@@ -9,8 +9,10 @@ import '../../core/widgets/settings_button.dart';
 import '../../core/widgets/theme_toggle_button.dart';
 import '../../data/models/app_user.dart';
 import '../../data/models/learning_profile.dart';
+import '../../data/models/lesson_resume.dart';
 import '../../providers/auth_controller.dart';
 import '../../providers/lesson_providers.dart';
+import '../../providers/lesson_resume_controller.dart';
 import '../leaderboard/leaderboard_screen.dart';
 
 /// The Learn section — the lesson path and the Ranks board, as two tabs.
@@ -276,13 +278,13 @@ class _StatusBadge extends StatelessWidget {
   }
 }
 
-class _StatusLine extends StatelessWidget {
+class _StatusLine extends ConsumerWidget {
   const _StatusLine({required this.node});
 
   final LessonNode node;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final ThemeData theme = Theme.of(context);
     final TextStyle? style = theme.textTheme.labelSmall?.copyWith(
       color: theme.colorScheme.onSurfaceVariant,
@@ -300,14 +302,29 @@ class _StatusLine extends StatelessWidget {
       return Text('Locked', style: style);
     }
     if (node.needsQuiz) {
+      // A Q&A the learner is part-way through says so, and says where — the
+      // tile is the only place they can see that the run was kept.
+      final QuizResume? quiz = ref
+          .watch(lessonResumeControllerProvider)[node.lesson.id]
+          ?.quiz;
+
       return Row(
         children: <Widget>[
-          Icon(Icons.quiz_outlined, size: 13, color: theme.colorScheme.primary),
+          Icon(
+            quiz == null ? Icons.quiz_outlined : Icons.bookmark_outline,
+            size: 13,
+            color: theme.colorScheme.primary,
+          ),
           const SizedBox(width: 5),
-          Text(
-            'Cards read — Q&A next '
-            '(${node.lesson.quizQuestionCount} questions)',
-            style: style?.copyWith(color: theme.colorScheme.primary),
+          Flexible(
+            child: Text(
+              quiz == null
+                  ? 'Cards read — Q&A next '
+                        '(${node.lesson.quizQuestionCount} questions)'
+                  : 'Q&A in progress — question ${quiz.questionIndex + 1} '
+                        'of ${quiz.total}',
+              style: style?.copyWith(color: theme.colorScheme.primary),
+            ),
           ),
         ],
       );

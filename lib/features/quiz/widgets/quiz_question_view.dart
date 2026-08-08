@@ -20,6 +20,7 @@ class QuizQuestionView extends StatelessWidget {
     required this.onAnswer,
     required this.answerController,
     required this.onSubmitAnswer,
+    this.selectedChoice,
     super.key,
   });
 
@@ -28,7 +29,14 @@ class QuizQuestionView extends StatelessWidget {
   /// Null until answered, then whether it was right.
   final bool? verdict;
 
-  final void Function({required bool correct}) onAnswer;
+  /// The choice the learner already picked, for a multiple-choice question
+  /// being restored from a bookmark. Which tile was tapped is not recoverable
+  /// from [verdict] alone — several wrong answers can share a verdict — so a
+  /// resumed run has to be told.
+  final int? selectedChoice;
+
+  final void Function({required bool correct, required int choiceIndex})
+  onAnswer;
 
   /// Owned by the screen so the pinned footer button can read and submit it.
   /// A short-answer field must never depend on a button that scrolls with the
@@ -57,6 +65,7 @@ class QuizQuestionView extends StatelessWidget {
             final MultipleChoiceQuestion q => _MultipleChoiceView(
               question: q,
               verdict: verdict,
+              initialSelection: selectedChoice,
               onAnswer: onAnswer,
             ),
             final NumericQuestion q => _NumericView(
@@ -109,10 +118,7 @@ class _SetupPanel extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 6),
-          Text(
-            text,
-            style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
-          ),
+          Text(text, style: theme.textTheme.bodyMedium?.copyWith(height: 1.5)),
         ],
       ),
     );
@@ -123,12 +129,18 @@ class _MultipleChoiceView extends StatefulWidget {
   const _MultipleChoiceView({
     required this.question,
     required this.verdict,
+    required this.initialSelection,
     required this.onAnswer,
   });
 
   final MultipleChoiceQuestion question;
   final bool? verdict;
-  final void Function({required bool correct}) onAnswer;
+
+  /// The tile to start out selected, when this question is being restored.
+  final int? initialSelection;
+
+  final void Function({required bool correct, required int choiceIndex})
+  onAnswer;
 
   @override
   State<_MultipleChoiceView> createState() => _MultipleChoiceViewState();
@@ -137,6 +149,14 @@ class _MultipleChoiceView extends StatefulWidget {
 class _MultipleChoiceViewState extends State<_MultipleChoiceView> {
   int? _selected;
 
+  @override
+  void initState() {
+    super.initState();
+    // A resumed question comes back with its answer already given. The tile is
+    // still locked by the verdict, so this only restores what is shown.
+    _selected = widget.initialSelection;
+  }
+
   void _choose(int index) {
     // Both guards are needed. The parent's verdict only arrives on the next
     // rebuild, so two taps in the same frame would otherwise record the first
@@ -144,7 +164,10 @@ class _MultipleChoiceViewState extends State<_MultipleChoiceView> {
     if (_selected != null || widget.verdict != null) return;
 
     setState(() => _selected = index);
-    widget.onAnswer(correct: widget.question.isCorrectChoice(index));
+    widget.onAnswer(
+      correct: widget.question.isCorrectChoice(index),
+      choiceIndex: index,
+    );
   }
 
   @override

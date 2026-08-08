@@ -16,6 +16,7 @@ import 'package:optionsschool/pricing/payoff.dart';
 import 'package:optionsschool/providers/lesson_providers.dart';
 import 'package:optionsschool/providers/progress_controller.dart';
 import 'package:optionsschool/providers/repository_providers.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -441,7 +442,7 @@ void main() {
       expect(path[1].isUnlocked, isFalse);
     });
 
-    test('resume lands on the first unread card', () {
+    test('resume lands on the last card the learner was shown', () {
       const LessonProgress progress = LessonProgress(
         lessonId: 'one',
         cardsViewed: 1,
@@ -453,8 +454,25 @@ void main() {
       );
 
       expect(node.isStarted, isTrue);
-      expect(node.resumeCardIndex, 1);
+      // One card viewed means card index 0 was on screen — NOT that card 1 is
+      // owed. A card counts the moment it appears, so resuming past it would
+      // skip material the learner only glanced at.
+      expect(node.resumeCardIndex, 0);
       expect(node.fractionRead, 0.5);
+    });
+
+    test('resume never runs off the end of a part-read deck', () {
+      const LessonProgress progress = LessonProgress(
+        lessonId: 'one',
+        cardsViewed: 2,
+      );
+      final LessonNode node = LessonNode(
+        lesson: first,
+        progress: progress,
+        isUnlocked: true,
+      );
+
+      expect(node.resumeCardIndex, 1);
     });
   });
 
@@ -753,9 +771,14 @@ Future<void> _pumpPlayer(
     ],
   );
 
+  // The player bookmarks the card on screen after every swipe.
+  SharedPreferences.setMockInitialValues(<String, Object>{});
+  final SharedPreferences prefs = await SharedPreferences.getInstance();
+
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
         lessonRepoProvider.overrideWithValue(_FakeLessonRepo(<Lesson>[lesson])),
         progressControllerProvider.overrideWith(
           () => _RecordingProgress(completed),

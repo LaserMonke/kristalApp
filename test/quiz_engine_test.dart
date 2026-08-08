@@ -17,6 +17,7 @@ import 'package:optionsschool/providers/auth_controller.dart';
 import 'package:optionsschool/providers/lesson_providers.dart';
 import 'package:optionsschool/providers/progress_controller.dart';
 import 'package:optionsschool/providers/repository_providers.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -265,7 +266,7 @@ void main() {
 
   group('recording a result', () {
     test('completing the Q&A unlocks the next lesson', () async {
-      final ProviderContainer container = _containerWith(
+      final ProviderContainer container = await _containerWith(
         <String, LessonProgress>{},
       );
       addTearDown(container.dispose);
@@ -284,7 +285,7 @@ void main() {
     });
 
     test('a retake can raise the recorded score but never lower it', () async {
-      final ProviderContainer container = _containerWith(
+      final ProviderContainer container = await _containerWith(
         <String, LessonProgress>{},
       );
       addTearDown(container.dispose);
@@ -308,7 +309,7 @@ void main() {
     });
 
     test('an improved retake replaces the old score', () async {
-      final ProviderContainer container = _containerWith(
+      final ProviderContainer container = await _containerWith(
         <String, LessonProgress>{},
       );
       addTearDown(container.dispose);
@@ -329,7 +330,7 @@ void main() {
     });
 
     test('reading the cards alone does not unlock a lesson with a Q&A', () async {
-      final ProviderContainer container = _containerWith(
+      final ProviderContainer container = await _containerWith(
         <String, LessonProgress>{
           'one': const LessonProgress(
             lessonId: 'one',
@@ -691,9 +692,17 @@ final AppUser _learner = AppUser(
 /// Only the two things that need a device are replaced — the shared_preferences
 /// store and the signed-in session. The real [ProgressController] runs on top,
 /// so its best-score and attempt-counting rules are what these tests exercise.
-ProviderContainer _containerWith(Map<String, LessonProgress> seed) {
+Future<ProviderContainer> _containerWith(
+  Map<String, LessonProgress> seed,
+) async {
+  // Empty on purpose: the resume bookmarks the progress controller retires
+  // when a run finishes live here, and every test starts with none.
+  SharedPreferences.setMockInitialValues(<String, Object>{});
+  final SharedPreferences prefs = await SharedPreferences.getInstance();
+
   return ProviderContainer(
     overrides: [
+      sharedPreferencesProvider.overrideWithValue(prefs),
       lessonRepoProvider.overrideWithValue(
         _FakeLessonRepo(<Lesson>[_lesson, _second]),
       ),
@@ -727,9 +736,14 @@ Future<_MemoryProgressRepo> _pumpQuiz(WidgetTester tester) async {
     ],
   );
 
+  // A Q&A run in progress is bookmarked here, so the screen needs a store.
+  SharedPreferences.setMockInitialValues(<String, Object>{});
+  final SharedPreferences prefs = await SharedPreferences.getInstance();
+
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
         lessonRepoProvider.overrideWithValue(_FakeLessonRepo(<Lesson>[_lesson])),
         progressRepoProvider.overrideWithValue(repo),
         currentUserProvider.overrideWithValue(_learner),

@@ -14,6 +14,7 @@ import 'package:optionsschool/providers/auth_controller.dart';
 import 'package:optionsschool/providers/engagement_providers.dart';
 import 'package:optionsschool/providers/progress_controller.dart';
 import 'package:optionsschool/providers/repository_providers.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// The wiring between learning activity and the engagement system: points
 /// summed from real progress records, the streak fed by the progress
@@ -23,7 +24,7 @@ void main() {
 
   test('completing a deck and its Q&A feeds points and the streak', () async {
     final _MemoryProgressRepo repo = _MemoryProgressRepo();
-    final ProviderContainer container = _container(repo);
+    final ProviderContainer container = await _container(repo);
     addTearDown(container.dispose);
 
     await container.read(progressControllerProvider.future);
@@ -48,7 +49,7 @@ void main() {
   });
 
   test('two quizzes in one day still count as one streak day', () async {
-    final ProviderContainer container = _container(_MemoryProgressRepo());
+    final ProviderContainer container = await _container(_MemoryProgressRepo());
     addTearDown(container.dispose);
 
     await container.read(progressControllerProvider.future);
@@ -64,7 +65,7 @@ void main() {
 
   test('the certificate waits for every lesson, then reports earned',
       () async {
-    final ProviderContainer container = _container(_MemoryProgressRepo());
+    final ProviderContainer container = await _container(_MemoryProgressRepo());
     addTearDown(container.dispose);
 
     await container.read(progressControllerProvider.future);
@@ -140,9 +141,15 @@ final AppUser _learner = AppUser(
   createdAt: DateTime(2026),
 );
 
-ProviderContainer _container(_MemoryProgressRepo repo) {
+Future<ProviderContainer> _container(_MemoryProgressRepo repo) async {
+  // The progress controller retires the learner's resume bookmarks when a run
+  // finishes, and those live in shared_preferences.
+  SharedPreferences.setMockInitialValues(<String, Object>{});
+  final SharedPreferences prefs = await SharedPreferences.getInstance();
+
   return ProviderContainer(
     overrides: [
+      sharedPreferencesProvider.overrideWithValue(prefs),
       lessonRepoProvider.overrideWithValue(_FakeLessonRepo()),
       progressRepoProvider.overrideWithValue(repo),
       currentUserProvider.overrideWithValue(_learner),

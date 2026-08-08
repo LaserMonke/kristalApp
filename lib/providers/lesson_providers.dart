@@ -32,15 +32,16 @@ final Provider<LearningProfile> learningProfileProvider =
 final FutureProvider<List<Lesson>> lessonsProvider =
     FutureProvider<List<Lesson>>((Ref ref) async {
       final LearningProfile profile = ref.watch(learningProfileProvider);
-      final List<Lesson> raw = await ref.watch(lessonRepoProvider).loadLessons();
+      final List<Lesson> raw = await ref
+          .watch(lessonRepoProvider)
+          .loadLessons();
 
       final List<Lesson> personalised = <Lesson>[
         for (final Lesson lesson in raw) lesson.forProfile(profile),
       ];
       personalised.sort(
-        (Lesson a, Lesson b) => a.orderFor(profile).compareTo(
-          b.orderFor(profile),
-        ),
+        (Lesson a, Lesson b) =>
+            a.orderFor(profile).compareTo(b.orderFor(profile)),
       );
       return personalised;
     });
@@ -88,9 +89,16 @@ class LessonNode {
       lesson.hasQuiz && progress.lessonCompleted && !progress.quizCompleted;
 
   /// Where to drop the learner back in, clamped to a valid card index.
+  ///
+  /// The LAST card reached, not the one after it: `cardsViewed` counts a card
+  /// the moment it appears, so a learner who swiped to card three and left has
+  /// three viewed — and dropping them on card four would skip past one they
+  /// only glanced at. The player prefers its own exact bookmark over this and
+  /// falls back here when there isn't one (a different device, a reinstall);
+  /// see `LessonResume`.
   int get resumeCardIndex {
     if (isFinished || lesson.cards.isEmpty) return 0;
-    return progress.cardsViewed.clamp(0, lesson.cards.length - 1);
+    return (progress.cardsViewed - 1).clamp(0, lesson.cards.length - 1);
   }
 
   double get fractionRead => lesson.cards.isEmpty

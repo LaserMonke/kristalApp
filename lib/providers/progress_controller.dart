@@ -6,6 +6,7 @@ import '../data/repositories/progress_repo.dart';
 import '../engagement/points.dart';
 import 'auth_controller.dart';
 import 'engagement_providers.dart';
+import 'lesson_resume_controller.dart';
 import 'repository_providers.dart';
 
 /// Every lesson's progress for the signed-in learner, keyed by lesson id.
@@ -15,6 +16,12 @@ import 'repository_providers.dart';
 class ProgressController extends AsyncNotifier<Map<String, LessonProgress>> {
   ProgressRepo get _repo => ref.read(progressRepoProvider);
   String? get _userId => ref.read(currentUserProvider)?.id;
+
+  /// Where the learner left off. Retiring a bookmark belongs here rather than
+  /// in the screens, because it is finishing a run — not leaving one — that
+  /// makes the bookmark wrong, and this is where finishing is recorded.
+  LessonResumeController get _bookmarks =>
+      ref.read(lessonResumeControllerProvider.notifier);
 
   @override
   Future<Map<String, LessonProgress>> build() async {
@@ -34,13 +41,12 @@ class ProgressController extends AsyncNotifier<Map<String, LessonProgress>> {
   }) async {
     final LessonProgress current = _existing(lessonId);
     final int furthest = cardIndex + 1;
-    if (furthest <= current.cardsViewed) return; // Never rewind on a swipe back.
+    // Never rewind on a swipe back. The exact card is kept separately, in the
+    // learner's resume bookmark, which does follow a backwards swipe.
+    if (furthest <= current.cardsViewed) return;
 
     await _write(
-      current.copyWith(
-        cardsViewed: furthest,
-        lastOpenedAt: DateTime.now(),
-      ),
+      current.copyWith(cardsViewed: furthest, lastOpenedAt: DateTime.now()),
     );
     // A NEW card read is real learning, so it keeps the streak alive; swiping
     // back through old cards (caught by the guard above) does not.
@@ -69,6 +75,9 @@ class ProgressController extends AsyncNotifier<Map<String, LessonProgress>> {
         completedAt: current.completedAt ?? now,
       ),
     );
+    // The deck is read: a bookmark pointing at its last card would reopen the
+    // lesson at the end of it. Any half-finished Q&A bookmark stays.
+    await _bookmarks.clearCard(lessonId);
     await _touchStreak();
   }
 
@@ -84,8 +93,8 @@ class ProgressController extends AsyncNotifier<Map<String, LessonProgress>> {
     required int total,
   }) async {
     final LessonProgress current = _existing(lessonId);
-    final bool improved = correct > current.correctAnswers ||
-        current.totalQuestions != total;
+    final bool improved =
+        correct > current.correctAnswers || current.totalQuestions != total;
     final int bestCorrect = improved ? correct : current.correctAnswers;
 
     await _write(
@@ -105,6 +114,10 @@ class ProgressController extends AsyncNotifier<Map<String, LessonProgress>> {
         completedAt: current.completedAt ?? DateTime.now(),
       ),
     );
+    // This run is scored and recorded, so there is nothing left to resume —
+    // and a stale bookmark would drop a returning learner back into questions
+    // they have already been marked on.
+    await _bookmarks.clearQuiz(lessonId);
     await _touchStreak();
   }
 
@@ -114,6 +127,9 @@ class ProgressController extends AsyncNotifier<Map<String, LessonProgress>> {
     if (userId == null) return;
 
     await _repo.clear(userId);
+    // Reset has to mean reset: leaving bookmarks behind would reopen a
+    // "not started" lesson half-way through its deck.
+    await _bookmarks.clearAll();
     state = const AsyncValue<Map<String, LessonProgress>>.data(
       <String, LessonProgress>{},
     );
@@ -131,10 +147,7 @@ class ProgressController extends AsyncNotifier<Map<String, LessonProgress>> {
 
     await _repo.saveLesson(userId: userId, progress: progress);
     state = AsyncValue<Map<String, LessonProgress>>.data(
-      <String, LessonProgress>{
-        ...?state.value,
-        progress.lessonId: progress,
-      },
+      <String, LessonProgress>{...?state.value, progress.lessonId: progress},
     );
   }
 }

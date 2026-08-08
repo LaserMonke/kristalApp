@@ -3,9 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/router/app_router.dart';
+import '../../core/widgets/resume_note.dart';
 import '../../data/models/lesson.dart';
 import '../../data/models/lesson_progress.dart';
+import '../../data/models/lesson_resume.dart';
 import '../../providers/lesson_providers.dart';
+import '../../providers/lesson_resume_controller.dart';
 import '../../providers/progress_controller.dart';
 import 'widgets/lesson_card_view.dart';
 
@@ -26,6 +29,11 @@ class _LessonPlayerScreenState extends ConsumerState<LessonPlayerScreen> {
   PageController? _controller;
   int _index = 0;
 
+  /// True while the learner is still standing on the card they were dropped
+  /// back onto, so the deck can say why it did not start at the beginning.
+  /// Cleared by the first swipe.
+  bool _resumed = false;
+
   @override
   void dispose() {
     _controller?.dispose();
@@ -34,25 +42,55 @@ class _LessonPlayerScreenState extends ConsumerState<LessonPlayerScreen> {
 
   /// Resumes where the learner left off, so a half-read lesson isn't restarted
   /// from card one. Read once, when the deck first becomes available.
-  void _ensureController(Lesson lesson) {
+  void _ensureController(Lesson lesson, LessonProgress? progress) {
     if (_controller != null) return;
 
-    final LessonProgress? saved = ref
-        .read(progressControllerProvider)
-        .value?[lesson.id];
-    final int resume = saved == null || saved.lessonCompleted
-        ? 0
-        : saved.cardsViewed.clamp(0, lesson.cards.length - 1);
-
+    final int resume = _resumeIndex(lesson, progress);
     _index = resume;
+    _resumed = resume > 0;
     _controller = PageController(initialPage: resume);
   }
 
+  /// The card to open on: the one that was on screen when the learner left.
+  int _resumeIndex(Lesson lesson, LessonProgress? progress) {
+    // A deck that has been read through starts again at the top — the learner
+    // came back to review it, not to look at its last card.
+    if (progress == null || progress.lessonCompleted) return 0;
+
+    final int last = lesson.cards.length - 1;
+
+    // The bookmark is the exact card, backwards swipes included, so it is what
+    // to trust when this device has one.
+    final LessonResume? bookmark = ref.read(
+      lessonResumeControllerProvider,
+    )[lesson.id];
+    if (bookmark != null && bookmark.cardIndex > 0) {
+      return bookmark.cardIndex.clamp(0, last);
+    }
+
+    // No bookmark — progress synced from another device, or a reinstall. All
+    // that survives is how far the learner got, so open on the last card the
+    // record says they reached rather than the one after it: `cardsViewed`
+    // counts a card the moment it appears, and skipping past one they only
+    // glanced at is worse than showing it twice.
+    return (progress.cardsViewed - 1).clamp(0, last);
+  }
+
   void _onPageChanged(Lesson lesson, int index) {
-    setState(() => _index = index);
+    setState(() {
+      _index = index;
+      _resumed = false;
+    });
     ref
         .read(progressControllerProvider.notifier)
         .recordCardViewed(lessonId: lesson.id, cardIndex: index);
+    // Separate from the progress write above, which only ever moves forward.
+    // The bookmark follows the learner in both directions: someone who swipes
+    // back two cards to re-read something and then leaves expects to come back
+    // to the card they were actually looking at.
+    ref
+        .read(lessonResumeControllerProvider.notifier)
+        .saveCard(lessonId: lesson.id, cardIndex: index);
   }
 
   void _next() {
@@ -102,6 +140,13 @@ class _LessonPlayerScreenState extends ConsumerState<LessonPlayerScreen> {
     final AsyncValue<Lesson?> lesson = ref.watch(
       lessonProvider(widget.lessonId),
     );
+    // Watched, not read at open time: a lesson reached straight from a
+    // notification or a link has no warmed-up path behind it, so the progress
+    // record may still be in flight when the cards arrive. Opening on card one
+    // and jumping a frame later is worse than a beat of spinner.
+    final AsyncValue<Map<String, LessonProgress>> progress = ref.watch(
+      progressControllerProvider,
+    );
 
     return Scaffold(
       body: SafeArea(
@@ -118,7 +163,18 @@ class _LessonPlayerScreenState extends ConsumerState<LessonPlayerScreen> {
             if (data == null || data.cards.isEmpty) {
               return _LoadFailure(onClose: _close);
             }
-            _ensureController(data);
+            if (_controller == null && progress.isLoading) {
+              return const Center(
+                child: SizedBox(
+                  height: 26,
+                  width: 26,
+                  child: CircularProgressIndicator(strokeWidth: 2.5),
+                ),
+              );
+            }
+            // Progress that failed to load is not worth blocking a lesson
+            // over: the deck simply starts at the beginning.
+            _ensureController(data, progress.value?[data.id]);
             return _buildPlayer(context, data);
           },
         ),
@@ -135,6 +191,7 @@ class _LessonPlayerScreenState extends ConsumerState<LessonPlayerScreen> {
           title: lesson.title,
           cardCount: lesson.cards.length,
           currentIndex: _index,
+          showResumeNote: _resumed,
           onClose: _close,
           onGoDeeper: _deeper.isEmpty ? null : () => _showDeeper(context),
           deeperCount: _deeper.length,
@@ -195,10 +252,7 @@ class _LessonPlayerScreenState extends ConsumerState<LessonPlayerScreen> {
           controller: scroll,
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
           children: <Widget>[
-            Text(
-              'Going deeper',
-              style: Theme.of(sheet).textTheme.titleLarge,
-            ),
+            Text('Going deeper', style: Theme.of(sheet).textTheme.titleLarge),
             const SizedBox(height: 4),
             Text(
               'Written for a more advanced level than the one you picked. '
@@ -322,7 +376,8 @@ class _DeckCard extends StatelessWidget {
         // 0 = on top; -1 = one swipe above (leaving); 1 = next in the pile.
         double delta = 0;
         if (controller.hasClients && controller.position.haveDimensions) {
-          delta = (controller.page ?? controller.initialPage.toDouble()) - index;
+          delta =
+              (controller.page ?? controller.initialPage.toDouble()) - index;
         }
         final double t = delta.clamp(-1.0, 1.0).abs();
 
@@ -359,6 +414,7 @@ class _PlayerHeader extends StatelessWidget {
     required this.title,
     required this.cardCount,
     required this.currentIndex,
+    required this.showResumeNote,
     required this.onClose,
     required this.onGoDeeper,
     required this.deeperCount,
@@ -367,6 +423,11 @@ class _PlayerHeader extends StatelessWidget {
   final String title;
   final int cardCount;
   final int currentIndex;
+
+  /// Whether to explain that the deck opened part-way through. Starting on
+  /// card five with no word about why reads as a bug.
+  final bool showResumeNote;
+
   final VoidCallback onClose;
 
   /// Null when this lesson has nothing written above the learner's level.
@@ -431,7 +492,9 @@ class _PlayerHeader extends StatelessWidget {
                   Expanded(
                     child: Container(
                       height: 3,
-                      margin: EdgeInsets.only(right: i == cardCount - 1 ? 0 : 3),
+                      margin: EdgeInsets.only(
+                        right: i == cardCount - 1 ? 0 : 3,
+                      ),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(2),
                         color: i <= currentIndex
@@ -443,6 +506,9 @@ class _PlayerHeader extends StatelessWidget {
               ],
             ),
           ),
+          // Slides away on the first swipe and gives its height back, the same
+          // way the footer's swipe hint does.
+          ResumeNote(visible: showResumeNote),
         ],
       ),
     );

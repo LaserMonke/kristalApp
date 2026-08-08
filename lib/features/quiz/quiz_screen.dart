@@ -4,13 +4,16 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/feedback/haptics.dart';
 import '../../core/widgets/confetti_overlay.dart';
+import '../../core/widgets/resume_note.dart';
 import '../../core/router/app_router.dart';
 import '../../data/models/lesson.dart';
+import '../../data/models/lesson_resume.dart';
 import '../../data/models/quiz.dart';
 import '../../engagement/levels.dart';
 import '../../engagement/streak.dart';
 import '../../providers/engagement_providers.dart';
 import '../../providers/lesson_providers.dart';
+import '../../providers/lesson_resume_controller.dart';
 import '../../providers/progress_controller.dart';
 import 'widgets/quiz_question_view.dart';
 import 'widgets/quiz_results_view.dart';
@@ -50,6 +53,20 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
   /// Bumped on a retake so every question widget is rebuilt from scratch.
   int _run = 0;
 
+  /// The shuffle seed behind [_session]. Kept so the run can be written into
+  /// the bookmark and replayed identically — see [QuizResume.seed].
+  int _seed = 0;
+
+  /// What the learner answered, question by question, in the form the question
+  /// asked for. The session only records right/wrong; this also remembers the
+  /// choice they tapped and the number they typed, which is what a restored
+  /// screen has to show back to them.
+  final Map<String, QuizResponse> _responses = <String, QuizResponse>{};
+
+  /// True while the learner is still on the question they were dropped back
+  /// onto, so the header can say why the Q&A did not start at question one.
+  bool _resumed = false;
+
   /// The short-answer field, owned here rather than by the question widget so
   /// the pinned footer button can grade what is in it. On iOS the numeric
   /// keypad has no return key, so the submit control has to sit above the
@@ -62,8 +79,39 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
     super.dispose();
   }
 
+  /// Picks up an unfinished run, or starts a new one. Called once, when the
+  /// lesson first becomes available.
+  ///
+  /// A Q&A left half-answered is worth resuming for the same reason a lesson
+  /// is: the learner did the work. Answers are locked to a single attempt, so
+  /// losing a run to a phone call would mean re-answering questions they had
+  /// already thought through.
   void _ensureSession(Lesson lesson) {
-    _session ??= _newSession(lesson);
+    if (_session != null) return;
+
+    final QuizResume? saved = ref
+        .read(lessonResumeControllerProvider)[widget.lessonId]
+        ?.quiz;
+
+    // A bookmark whose questions no longer match the lesson — content updated,
+    // or the learner changed their education level, which changes which
+    // questions are asked — is dropped rather than replayed against the wrong
+    // prompts.
+    if (saved == null || !saved.matches(lesson.questions)) {
+      _session = _newSession(lesson);
+      return;
+    }
+
+    _seed = saved.seed;
+    _session = saved.restore(lesson.questions);
+    _responses.addAll(saved.responses);
+    _index = saved.questionIndex.clamp(0, lesson.questions.length - 1);
+    _resumed = _index > 0 || _responses.isNotEmpty;
+
+    // A short answer already graded has to reappear in the field, which the
+    // screen owns rather than the question widget.
+    final String? typed = _responses[_session!.questions[_index].id]?.text;
+    if (typed != null) _answer.text = typed;
   }
 
   /// A fresh run, with the multiple-choice answers reordered.
@@ -71,18 +119,30 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
   /// Seeded from the clock so each attempt differs, and captured once per
   /// session so the order holds steady while the learner works through it —
   /// the question view and the results recap have to agree.
-  QuizSession _newSession(Lesson lesson) => QuizSession.shuffled(
-    questions: lesson.questions,
-    seed: DateTime.now().microsecondsSinceEpoch,
-  );
+  QuizSession _newSession(Lesson lesson) {
+    _seed = DateTime.now().microsecondsSinceEpoch;
+    return QuizSession.shuffled(questions: lesson.questions, seed: _seed);
+  }
 
-  void _onAnswer(QuizQuestion question, {required bool correct}) {
+  void _onAnswer(
+    QuizQuestion question, {
+    required bool correct,
+    int? choiceIndex,
+    String? text,
+  }) {
     setState(() {
       _session = _session!.answer(question.id, correct: correct);
+      _responses[question.id] = QuizResponse(
+        correct: correct,
+        choiceIndex: choiceIndex,
+        text: text,
+      );
+      _resumed = false;
     });
     // A marked answer is worth feeling. Same tick either way — a heavier buzz
     // for a wrong answer would punish a learner for learning.
     ref.read(hapticsProvider).impact();
+    _bookmark();
   }
 
   /// Grades whatever is in the field. No-op unless there is a number to grade,
@@ -92,14 +152,40 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
     if (parseNumericAnswer(_answer.text) == null) return;
 
     FocusScope.of(context).unfocus();
-    _onAnswer(question, correct: question.acceptsInput(_answer.text));
+    _onAnswer(
+      question,
+      correct: question.acceptsInput(_answer.text),
+      text: _answer.text,
+    );
+  }
+
+  /// Writes the run to the device so leaving the screen — or the app — does
+  /// not throw away answers the learner has already committed to.
+  void _bookmark() {
+    ref
+        .read(lessonResumeControllerProvider.notifier)
+        .saveQuiz(
+          lessonId: widget.lessonId,
+          quiz: QuizResume(
+            seed: _seed,
+            questionIndex: _index,
+            questionIds: <String>[
+              for (final QuizQuestion q in _session!.questions) q.id,
+            ],
+            responses: Map<String, QuizResponse>.of(_responses),
+          ),
+        );
   }
 
   Future<void> _advance(Lesson lesson) async {
     if (_saving) return;
     if (_index < _session!.total - 1) {
       _answer.clear(); // The next question starts on an empty field.
-      setState(() => _index++);
+      setState(() {
+        _index++;
+        _resumed = false;
+      });
+      _bookmark();
       return;
     }
     await _complete(lesson);
@@ -134,7 +220,10 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
     setState(() {
       _finished = true;
       _attempts =
-          ref.read(progressControllerProvider).value?[lesson.id]?.quizAttempts ??
+          ref
+              .read(progressControllerProvider)
+              .value?[lesson.id]
+              ?.quizAttempts ??
           1;
       _pointsGained = pointsAfter - pointsBefore;
       _reachedLevel = levelAfter.rank > levelBefore.rank ? levelAfter : null;
@@ -148,13 +237,21 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
 
   void _retry(Lesson lesson) {
     _answer.clear();
+    _responses.clear();
     setState(() {
       _session = _newSession(lesson);
       _index = 0;
       _finished = false;
       _saving = false;
+      _resumed = false;
       _run++;
     });
+    // The previous run is scored and gone; the new one is bookmarked from its
+    // first answer, not before, so abandoning it immediately leaves nothing to
+    // resume.
+    ref
+        .read(lessonResumeControllerProvider.notifier)
+        .clearQuiz(widget.lessonId);
   }
 
   void _reviewLesson() =>
@@ -216,9 +313,8 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
               child: CircularProgressIndicator(strokeWidth: 2.5),
             ),
           ),
-          error: (Object error, StackTrace _) => _QuizUnavailable(
-            onClose: _close,
-          ),
+          error: (Object error, StackTrace _) =>
+              _QuizUnavailable(onClose: _close),
           data: (Lesson? data) {
             if (data == null || data.questions.isEmpty) {
               return _QuizUnavailable(onClose: _close);
@@ -279,6 +375,7 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
           label: 'Question ${_index + 1} of ${session.total}',
           answered: _index,
           total: session.total,
+          showResumeNote: _resumed,
           onClose: _close,
         ),
         Expanded(
@@ -286,19 +383,26 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
             // A numeric keypad cannot be dismissed with a return key, so
             // dragging the question is the way out of it.
-            keyboardDismissBehavior:
-                ScrollViewKeyboardDismissBehavior.onDrag,
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             child: QuizQuestionView(
               // Identity per question AND per run: a retake starts clean.
               key: ValueKey<String>('$_run:${question.id}'),
               question: question,
               verdict: verdict,
+              // Non-null only on a restored question: puts the tile the
+              // learner tapped back under their answer, so a resumed screen
+              // shows the same thing they were looking at when they left.
+              selectedChoice: _responses[question.id]?.choiceIndex,
               answerController: _answer,
               onSubmitAnswer: question is NumericQuestion
                   ? () => _submitNumeric(question)
                   : () {},
-              onAnswer: ({required bool correct}) =>
-                  _onAnswer(question, correct: correct),
+              onAnswer: ({required bool correct, required int choiceIndex}) =>
+                  _onAnswer(
+                    question,
+                    correct: correct,
+                    choiceIndex: choiceIndex,
+                  ),
             ),
           ),
         ),
@@ -342,18 +446,17 @@ class _Footer extends StatelessWidget {
     final Widget button = switch ((question, verdict)) {
       // Short answer, not yet graded: the button checks it, and stays disabled
       // until there is actually a number to check.
-      (final NumericQuestion q, null) => ValueListenableBuilder<
-        TextEditingValue
-      >(
-        valueListenable: answer,
-        builder: (BuildContext context, TextEditingValue value, Widget? _) {
-          final bool ready = parseNumericAnswer(value.text) != null;
-          return FilledButton(
-            onPressed: ready ? () => onSubmitNumeric(q) : null,
-            child: const Text('Check answer'),
-          );
-        },
-      ),
+      (final NumericQuestion q, null) =>
+        ValueListenableBuilder<TextEditingValue>(
+          valueListenable: answer,
+          builder: (BuildContext context, TextEditingValue value, Widget? _) {
+            final bool ready = parseNumericAnswer(value.text) != null;
+            return FilledButton(
+              onPressed: ready ? () => onSubmitNumeric(q) : null,
+              child: const Text('Check answer'),
+            );
+          },
+        ),
       // Anything else: advance, once the question has been answered.
       _ => FilledButton(
         onPressed: verdict == null ? null : onAdvance,
@@ -375,6 +478,7 @@ class _QuizHeader extends StatelessWidget {
     required this.answered,
     required this.total,
     required this.onClose,
+    this.showResumeNote = false,
   });
 
   final String lessonTitle;
@@ -384,6 +488,9 @@ class _QuizHeader extends StatelessWidget {
   final int answered;
   final int total;
   final VoidCallback onClose;
+
+  /// Whether to explain that the run opened part-way through.
+  final bool showResumeNote;
 
   @override
   Widget build(BuildContext context) {
@@ -445,6 +552,10 @@ class _QuizHeader extends StatelessWidget {
               ],
             ),
           ),
+          ResumeNote(
+            visible: showResumeNote,
+            text: 'Picked up where you left off',
+          ),
         ],
       ),
     );
@@ -466,10 +577,7 @@ class _QuizUnavailable extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            Icon(
-              Icons.help_outline,
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
+            Icon(Icons.help_outline, color: theme.colorScheme.onSurfaceVariant),
             const SizedBox(height: 12),
             Text(
               'This lesson has no Q&A yet.',

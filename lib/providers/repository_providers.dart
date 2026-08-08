@@ -10,6 +10,7 @@ import '../data/local/local_market_repo.dart';
 import '../data/local/local_portfolio_repo.dart';
 import '../data/local/local_profile_repo.dart';
 import '../data/local/local_progress_repo.dart';
+import '../data/local/lesson_resume_store.dart';
 import '../data/repositories/auth_repo.dart';
 import '../data/repositories/leaderboard_repo.dart';
 import '../data/repositories/lesson_repo.dart';
@@ -111,6 +112,16 @@ final Provider<ProgressRepo> progressRepoProvider = Provider<ProgressRepo>((
   // without signal is never lost.
   return SupabaseProgressRepo(client: client, cache: local, prefs: prefs);
 });
+
+/// Where the learner left off in each lesson — the card on screen and any Q&A
+/// run in progress.
+///
+/// Device-local with no server half, unlike the progress repository above: a
+/// bookmark is not an achievement (see `LessonResume`).
+final Provider<LessonResumeStore> lessonResumeStoreProvider =
+    Provider<LessonResumeStore>(
+      (Ref ref) => LessonResumeStore(ref.watch(sharedPreferencesProvider)),
+    );
 
 final Provider<LeaderboardRepo> leaderboardRepoProvider =
     Provider<LeaderboardRepo>((Ref ref) {
