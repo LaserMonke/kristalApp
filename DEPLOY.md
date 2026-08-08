@@ -265,9 +265,13 @@ DONE in Phase 6 — this section is now a description of what is wired, not a to
    Google Play remains $25 one-time, and a personal account still needs 12 testers opted in
    for 14 consecutive days on a closed test before production. That is the longest lead
    time in the whole launch — start it first.
-10. Still to do: publish the privacy policy (Phase 10) — data now leaves the device and
-    usernames plus point totals are visible to other learners on the leaderboard, so the
-    policy is a release requirement. Settings → "Data we collect" discloses both.
+10. DONE: the privacy policy is published and its URL is filed with Play (August 2026).
+    PRIVACY.md in this repo is the source text — edit it here, then re-publish the hosted
+    copy, or the two drift and the published one is the one that counts. Settings → "Data
+    we collect" discloses the leaderboard visibility in-app; the policy is not linked from
+    there, which is allowed (Play wants it on the listing) but would be worth adding.
+    §7 states a 3+ content rating and a 13+ account floor (decided 8 August 2026) — the
+    Play "target audience" answer must stay 13+ to match. See PLAY_LISTING.md.
     Worth deciding before release: whether learners can opt out of appearing on the
     leaderboard. Not built, because it was not asked for — but the audience may include
     under-18 users (CLAUDE.md rule 6), and "my username is visible to strangers" is the kind

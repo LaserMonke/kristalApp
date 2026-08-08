@@ -186,7 +186,36 @@ Rate as **Reference, News, or Educational**.
 | Users can interact / share content | **Yes, limited** — usernames and point totals on a leaderboard. No chat, no messaging, no user-generated content, no photo sharing |
 | Shares user location | No |
 | Allows purchase of digital goods | **No** — nothing in the app is for sale |
-| Target age | 16+ |
+
+Answered honestly, this questionnaire returns a **3+ / Everyone** content
+rating, which is what Play issued (August 2026). That is a statement about the
+CONTENT, and it is not the audience setting — see below.
+
+### Target audience is a separate question
+
+"Target audience and content" is its own section of App content, and it is the
+one that carries obligations. Select **13+ and over** — matching the 13+
+account floor stated in PRIVACY.md §7 — and do NOT tick any under-13 group.
+
+Ticking one would put the app in the Designed for Families programme: COPPA
+applies, verifiable parental consent is required, and publicly displaying a
+child's username — which is exactly what the leaderboard does — becomes a
+problem in itself. The 3+ content rating does not put you there; only the
+target-audience answer does. Note that 13+ still leaves some EU learners under
+their national digital consent age (13-16 by member state), which is why the
+policy asks 13-to-15s to involve a parent.
+
+Play also asks whether the app could unintentionally appeal to children. Answer
+honestly: it teaches derivatives pricing, so no.
+
+### Username moderation, if asked
+
+The interaction answer above invites a follow-up about moderation. Usernames
+are filtered against a blocklist on the device and again in the database
+(`lib/core/moderation/username_words.dart`, and the username-moderation
+migration), covering profanity, slurs, leetspeak evasions and impersonation of
+staff or of the labelled leaderboard bots. There is no chat, no messaging, and
+no other user-authored text anywhere in the app.
 
 ### The gambling question
 

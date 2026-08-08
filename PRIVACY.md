@@ -1,6 +1,6 @@
 # Privacy Policy — Stock Options Academy
 
-**Last updated: 4 August 2026**
+**Last updated: 8 August 2026**
 
 <!--
   CONFIRM BEFORE PUBLISHING — three values were filled in on assumption:
@@ -171,13 +171,16 @@ required to retain by law. Backups are overwritten on a rolling basis.
 
 ## 7. Age
 
-This app is rated **16+** and is not directed at children.
+This app carries a **3+ content rating** on Google Play. That rating is about
+what is *in* the app — no violence, no gambling, no purchases, nothing
+otherwise unsuitable — and it is not the same thing as who the app is for.
 
-We ask for a coarse education level, but we do not ask for your age or date of
-birth, and we cannot verify it. If you are under 16 (or under the age of
-consent where you live, which is between 13 and 16 across the EU), please do
-not create an account without a parent or guardian's involvement. If you
-believe someone under that age has created an account, contact
+**Accounts are for learners aged 13 and over.** We ask for a coarse education
+level, but we do not ask for your age or date of birth, and we cannot verify
+it. If you are under 13, please do not create an account. If you are 13 to 15,
+you may be below the digital consent age where you live — it ranges from 13 to
+16 across the EU — so please involve a parent or guardian before signing up. If
+you believe someone under 13 has created an account, contact
 okaysigma31@gmail.com and we will remove it.
 
 Options trading is not a suitable pursuit for children, and this app does not
